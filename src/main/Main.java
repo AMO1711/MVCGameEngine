@@ -3,12 +3,11 @@ package main;
 /**
  * TO-DO 
  * ===== 
- * 1) Improve unacopled architecture using Interfaces
- * 2) Create HUD for player info
- * 2) Colision detection 
- * 3) Basic Fx 
+ * 1) Create HUD for player info
+ * 2) Colision detection
+ * 3) Game rules
  * 4) Create a new physic engine with a gravitational field 
- * 5) Game rules
+ * 5) Basic Fx
  * 6) Comms
  * =====
  */
@@ -49,8 +48,8 @@ public class Main {
                 SceneGenerator worldGenerator = new SceneGenerator(controller, worldDef);
 
                 LifeConfigDTO lifeConfig = new LifeConfigDTO(
-                                1500, // maxCreationDelay
-                                12, 6, // maxSize, minSize
+                                1200, // maxCreationDelay
+                                15, 6, // maxSize, minSize
                                 1000, 10, // maxMass, minMass
                                 175, // maxSpeedModule
                                 0); // maxAccModule

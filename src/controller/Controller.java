@@ -5,6 +5,7 @@ import controller.mappers.DynamicRenderableMapper;
 import controller.mappers.RenderableMapper;
 import controller.mappers.WeaponMapper;
 import controller.ports.DomainEventProcesor;
+import controller.ports.EngineState;
 import controller.ports.WorldEvolver;
 import controller.ports.WorldInitializer;
 
@@ -12,17 +13,21 @@ import java.awt.Dimension;
 import view.renderables.DynamicRenderDTO;
 import view.View;
 import model.Model;
-import model.bodies.AbstractBody;
-import model.bodies.BodyDTO;
-import model.weapons.WeaponDto;
-import model.ActionType;
-import model.EventType;
+
+import model.bodies.core.AbstractBody;
+import model.bodies.core.BodyDTO;
+
+import model.weapons.ports.WeaponDto;
+import model.ports.ActionDTO;
+import model.ports.ActionExecutor;
+import model.ports.ActionPriority;
+import model.ports.ActionType;
+import model.ports.EventDTO;
+import model.ports.EventType;
+
 import java.util.ArrayList;
 import java.util.List;
-import model.ActionDTO;
-import model.ActionExecutor;
-import model.ActionPriority;
-import model.EventDTO;
+
 import view.renderables.RenderDTO;
 import world.WorldDefWeaponDto;
 
@@ -172,7 +177,7 @@ public class Controller implements WorldEvolver, WorldInitializer, DomainEventPr
                 accX, accY, angle, angularSpeed, angularAcc, thrust);
 
         if (entityId == null || entityId.isEmpty()) {
-            return; // ======= Max entity quantity reached =======>>
+            return; // ======= Max entity quantity reached =======>
         }
         this.view.addDynamicRenderable(entityId, assetId);
     }
@@ -181,7 +186,7 @@ public class Controller implements WorldEvolver, WorldInitializer, DomainEventPr
         String entityId = this.model.addDecorator(size, posX, posY, angle);
 
         if (entityId == null || entityId.isEmpty()) {
-            return; // ======= Max entity quantity reached =======>>
+            return; // ======= Max entity quantity reached =======>
         }
         this.view.addStaticRenderable(entityId, assetId);
         ArrayList<BodyDTO> bodiesData = this.model.getStaticsData();

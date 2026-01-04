@@ -1,18 +1,16 @@
 package view;
 
-import view.huds.ImagesHud;
+import view.huds.SystemHud;
+import view.huds.PlayerHud;
 import view.renderables.DynamicRenderDTO;
 import view.renderables.Renderable;
 import view.renderables.DynamicRenderable;
-import controller.EngineState;
 import images.ImageCache;
 import images.Images;
 
 import java.awt.AlphaComposite;
 import java.awt.Canvas;
-import java.awt.Color;
 import java.awt.Dimension;
-import java.awt.Font;
 import java.awt.Graphics2D;
 import java.awt.GraphicsConfiguration;
 import java.awt.GraphicsEnvironment;
@@ -24,6 +22,7 @@ import java.util.ArrayList;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
+import controller.ports.EngineState;
 import view.renderables.RenderDTO;
 
 /**
@@ -124,7 +123,7 @@ public class Renderer extends Canvas implements Runnable {
 
     private Dimension viewDimension;
     private View view;
-    private int delayInMillis = 5;
+    private int delayInMillis = 1;
     private long currentFrame = 0;
     private Thread thread;
 
@@ -132,7 +131,8 @@ public class Renderer extends Canvas implements Runnable {
     private Images images;
     private ImageCache imagesCache;
     private VolatileImage viBackground;
-    private final ImagesHud hud = new ImagesHud();
+    private final PlayerHud playerHud = new PlayerHud();
+    private final SystemHud imagesHud = new SystemHud();
 
     private final Map<String, DynamicRenderable> dynamicRenderables = new ConcurrentHashMap<>();
     private volatile Map<String, Renderable> staticRenderables = new ConcurrentHashMap<>();
@@ -277,18 +277,21 @@ public class Renderer extends Canvas implements Runnable {
 
     private void drawHUD(Graphics2D g) {
 
-        String[] data = {
-                "" + this.fps,
+        this.imagesHud.draw(g,
+                this.fps,
                 String.format("%.0f", this.renderTimeInMs) + " ms",
-                "" + this.imagesCache.size(),
-                this.imagesCache.getHits() + " (" + String.format("%.2f", this.imagesCache.getHitsPercentage()) + "%)",
-                "" + this.view.getEntityAliveQuantity(),
-                "" + this.view.getEntityDeadQuantity()
-        };
+                this.imagesCache.size(),
+                String.format("%.0f", this.imagesCache.getHitsPercentage()) + "%",
+                this.view.getEntityAliveQuantity(),
+                this.view.getEntityDeadQuantity());
 
-        ImagesHud hud = new ImagesHud();
-
-        hud.draw(g, data);
+        this.playerHud.draw(g,
+                0.1d,
+                0.7d,
+                0.6d,
+                0.3d,
+                0.2d,
+                0.9d);
     }
 
     private void drawStaticRenderables(Graphics2D g) {
@@ -310,8 +313,9 @@ public class Renderer extends Canvas implements Runnable {
 
                 gg.setComposite(AlphaComposite.SrcOver); // With transparency
                 this.drawStaticRenderables(gg);
-                this.drawDynamicRenderable(gg);
                 this.drawHUD(gg);
+
+                this.drawDynamicRenderable(gg);
 
             } finally {
                 gg.dispose();

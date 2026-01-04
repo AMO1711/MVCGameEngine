@@ -1,6 +1,9 @@
-package model.weapons;
+package model.weapons.ports;
 
-import model.weapons.ports.Weapon;
+import model.weapons.BasicWeapon;
+import model.weapons.BurstWeapon;
+import model.weapons.MineLauncher;
+import model.weapons.MissileLauncher;
 
 public class WeaponFactory {
 

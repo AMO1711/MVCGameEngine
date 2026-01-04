@@ -1,10 +1,12 @@
-package model.bodies;
+package model.bodies.core;
 
 import java.util.UUID;
 
 import model.Model;
-import model.physics.PhysicsValuesDTO;
+import model.bodies.ports.BodyState;
+import model.bodies.ports.BodyType;
 import model.physics.ports.PhysicsEngine;
+import model.physics.ports.PhysicsValuesDTO;
 
 /**
  *
@@ -12,13 +14,13 @@ import model.physics.ports.PhysicsEngine;
  */
 public abstract class AbstractBody {
 
-    /* TO-DO: Replace individual static counters by one static array of counters */
     private static volatile int aliveQuantity = 0;
     private static volatile int createdQuantity = 0;
     private static volatile int deadQuantity = 0;
 
     private Model model = null;
     private volatile BodyState state;
+    private final BodyType type;
     private final String entityId;
     private final PhysicsEngine phyEngine;
     private final long bornTime = System.nanoTime();
@@ -27,16 +29,17 @@ public abstract class AbstractBody {
     /**
      * CONSTRUCTORS
      */
-    public AbstractBody(PhysicsEngine phyEngine) {
-        this(phyEngine, -1D);
+    public AbstractBody(PhysicsEngine phyEngine, BodyType type) {
+        this(phyEngine, -1D, type);
     }
 
-    public AbstractBody(PhysicsEngine phyEngine, double maxLifeInSeconds) {
+    public AbstractBody(PhysicsEngine phyEngine, double maxLifeInSeconds, BodyType type) {
         this.entityId = UUID.randomUUID().toString();
 
         this.phyEngine = phyEngine;
         this.state = BodyState.STARTING;
         this.maxLifeInSeconds = maxLifeInSeconds;
+        this.type = type;
     }
 
     public synchronized void activate() {
@@ -80,6 +83,14 @@ public abstract class AbstractBody {
         }
 
         return this.getLifeInSeconds() >= this.maxLifeInSeconds;
+    }
+
+    public double getLifePercentage() {
+        if (this.maxLifeInSeconds <= 0) {
+            return 1D;
+        }
+
+        return Math.min(1D, this.getLifeInSeconds() / this.maxLifeInSeconds);
     }
 
     public double getMaxLife() {
