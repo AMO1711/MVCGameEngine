@@ -48,8 +48,8 @@ public class Main {
                 SceneGenerator worldGenerator = new SceneGenerator(controller, worldDef);
 
                 LifeConfigDTO lifeConfig = new LifeConfigDTO(
-                                1200, // maxCreationDelay
-                                15, 6, // maxSize, minSize
+                                2000, // maxCreationDelay
+                                24, 6, // maxSize, minSize
                                 1000, 10, // maxMass, minMass
                                 175, // maxSpeedModule
                                 0); // maxAccModule

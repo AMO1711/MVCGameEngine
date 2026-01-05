@@ -20,11 +20,13 @@ public class PlayerHud extends Hud {
         this.addTitle("PLAYER STATUS");
         this.addBar("Damage", 125);
         this.addBar("Energy", 125);
+        this.addBar("Shield", 125);
+        this.addTextItem("Temperature");
         this.addTitle("Weapons");
-        this.addBar("Guns", 125, false);
-        this.addBar("Burst", 125, false);
-        this.addBar("Mines", 125, false);
-        this.addBar("Missiles", 125, false);
+        this.addBar("Guns", 125);
+        this.addBar("Burst", 125);
+        this.addBar("Mines", 125);
+        this.addBar("Missiles", 125);
         this.prepareHud();
     }
 }

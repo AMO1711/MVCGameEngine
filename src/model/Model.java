@@ -20,6 +20,7 @@ import model.physics.ports.PhysicsValuesDTO;
 import model.bodies.ports.BodyDTO;
 import model.bodies.ports.BodyState;
 import model.bodies.ports.BodyType;
+import model.bodies.ports.PlayerDTO;
 import model.ports.ActionDTO;
 import model.ports.ActionType;
 import model.ports.EventDTO;
@@ -197,7 +198,7 @@ public class Model {
             double thrust) {
 
         if (AbstractBody.getAliveQuantity() >= this.maxDBody) {
-            return null; // ========= Max vObject quantity reached ==========>>
+            return null; // ========= Max vObject quantity reached ==========>
         }
 
         PhysicsValuesDTO phyVals = new PhysicsValuesDTO(
@@ -286,6 +287,28 @@ public class Model {
 
     public int getDeadQuantity() {
         return AbstractBody.getDeadQuantity();
+    }
+
+    public PlayerDTO getPlayerData(String playerId) {
+        PlayerBody pBody = (PlayerBody) this.playerBodies.get(playerId);
+        if (pBody == null) {
+            return null;
+        }
+
+        PlayerDTO playerData = new PlayerDTO(
+                pBody.getEntityId(),
+                "",
+                pBody.getDamage(),
+                pBody.getEnergy(),
+                pBody.getShield(),
+                pBody.getTemperature(),
+                pBody.getActiveWeaponIndex(),
+                pBody.getAmmoStatusPrimary(),
+                pBody.getAmmoStatusSecondary(),
+                pBody.getAmmoStatusMines(),
+                pBody.getAmmoStatusMissiles());
+
+        return playerData;
     }
 
     public Dimension getWorldDimension() {

@@ -15,6 +15,7 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 import images.Images;
+import model.bodies.ports.PlayerDTO;
 import images.ImageCache;
 import view.huds.SystemHud;
 import view.huds.PlayerHud;
@@ -22,6 +23,7 @@ import view.renderables.Renderable;
 import view.renderables.DynamicRenderable;
 
 import view.renderables.ports.DynamicRenderDTO;
+import view.renderables.ports.PlayerRenderDTO;
 import view.renderables.ports.RenderDTO;
 import controller.ports.EngineState;
 
@@ -132,7 +134,7 @@ public class Renderer extends Canvas implements Runnable {
     private ImageCache imagesCache;
     private VolatileImage viBackground;
     private final PlayerHud playerHud = new PlayerHud();
-    private final SystemHud imagesHud = new SystemHud();
+    private final SystemHud systemHud = new SystemHud();
 
     private final Map<String, DynamicRenderable> dynamicRenderables = new ConcurrentHashMap<>();
     private volatile Map<String, Renderable> staticRenderables = new ConcurrentHashMap<>();
@@ -277,7 +279,7 @@ public class Renderer extends Canvas implements Runnable {
 
     private void drawHUD(Graphics2D g) {
 
-        this.imagesHud.draw(g,
+        this.systemHud.draw(g,
                 this.fps,
                 String.format("%.0f", this.renderTimeInMs) + " ms",
                 this.imagesCache.size(),
@@ -285,13 +287,21 @@ public class Renderer extends Canvas implements Runnable {
                 this.view.getEntityAliveQuantity(),
                 this.view.getEntityDeadQuantity());
 
-        this.playerHud.draw(g,
-                0.1d,
-                0.7d,
-                0.6d,
-                0.3d,
-                0.2d,
-                0.9d);
+        PlayerRenderDTO playerData = this.view.getLocalPlayerRenderData();
+        if (playerData != null) {
+            // if (playerData.activeWeapon==1)
+            // this.playerHud.
+
+            this.playerHud.draw(g,
+                    playerData.damage,
+                    playerData.energy,
+                    playerData.shield,
+                    playerData.temperature,
+                    playerData.primaryAmmoStatus,
+                    playerData.secondaryAmmoStatus,
+                    playerData.minesStatus,
+                    playerData.missilesStatus);
+        }
     }
 
     private void drawStaticRenderables(Graphics2D g) {

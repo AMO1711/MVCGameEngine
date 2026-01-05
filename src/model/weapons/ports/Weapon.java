@@ -2,6 +2,8 @@ package model.weapons.ports;
 
 public interface Weapon {
 
+    public double getAmmoStatus();
+
     public WeaponDto getWeaponConfig();
 
 

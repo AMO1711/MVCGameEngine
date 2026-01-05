@@ -18,6 +18,7 @@ import images.Images;
 
 import controller.ports.EngineState;
 import view.renderables.ports.DynamicRenderDTO;
+import view.renderables.ports.PlayerRenderDTO;
 import view.renderables.ports.RenderDTO;
 
 /**
@@ -190,16 +191,24 @@ public class View extends JFrame implements KeyListener {
         return this.controller.getEngineState();
     }
 
-    protected int getEntityCreatedQuantity() {
-        return this.controller.getEntityCreatedQuantity();
-    }
-
     protected int getEntityAliveQuantity() {
         return this.controller.getEntityAliveQuantity();
     }
 
+    protected int getEntityCreatedQuantity() {
+        return this.controller.getEntityCreatedQuantity();
+    }
+
     protected int getEntityDeadQuantity() {
         return this.controller.getEntityDeadQuantity();
+    }
+
+    protected PlayerRenderDTO getLocalPlayerRenderData() {
+        if (this.localPlayerId == null || this.localPlayerId.isEmpty()) {
+            return null;
+        }
+
+        return this.controller.getPlayerRenderData(this.localPlayerId);
     }
 
     /**

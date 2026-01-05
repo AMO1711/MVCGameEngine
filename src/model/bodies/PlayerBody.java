@@ -12,8 +12,10 @@ public class PlayerBody extends DynamicBody {
     private double angularSpeed = 30; // degrees*s^-1
     private final java.util.List<Weapon> weapons = new java.util.ArrayList<>(4);
     private int currentWeaponIndex = -1; // -1 = sin arma
-    private double healthPercentage = 1D;
-    
+    private double damage = 0D;
+    private double energye = 1D;
+    private int temperature = 1;
+    private double shield = 1D;
 
     public PlayerBody(BasicPhysicsEngine physicsEngine) {
         super(physicsEngine);
@@ -36,9 +38,66 @@ public class PlayerBody extends DynamicBody {
         return this.weapons.get(this.currentWeaponIndex);
     }
 
+    public int getActiveWeaponIndex() {
+        if (this.currentWeaponIndex < 0 || this.currentWeaponIndex >= this.weapons.size()) {
+            return -1;
+        }
+
+        return this.currentWeaponIndex;
+    }
+
     public WeaponDto getActiveWeaponConfig() {
         Weapon weapon = getActiveWeapon();
         return (weapon != null) ? weapon.getWeaponConfig() : null;
+    }
+
+    public double getAmmoStatusPrimary() {
+        return getAmmoStatus(0);
+    }
+
+    public double getAmmoStatusSecondary() {
+        return getAmmoStatus(1);
+    }
+
+    public double getAmmoStatusMines() {
+        return getAmmoStatus(2);
+    }
+
+    public double getAmmoStatusMissiles() {
+        return getAmmoStatus(3);
+    }
+
+    private double getAmmoStatus(int weaponIndex) {
+        if (weaponIndex < 0 || weaponIndex >= this.weapons.size()) {
+            return 0D;
+        }
+
+        Weapon weapon = this.weapons.get(weaponIndex);
+        if (weapon == null) {
+            return 0D;
+        }
+
+        return weapon.getAmmoStatus();
+    }
+
+    public double getDamage() {
+        return damage;
+    }
+
+    public void setDamage(double damage) {
+        this.damage = damage;
+    }
+
+    public double getEnergy() {
+        return energye;
+    }
+
+    public double getShield() {
+        return shield;
+    }
+
+    public int getTemperature() {
+        return this.temperature;
     }
 
     public void thrustOn() {
@@ -107,6 +166,10 @@ public class PlayerBody extends DynamicBody {
         }
     }
 
+    public void setEnergye(double energye) {
+        this.energye = energye;
+    }
+
     public void setMaxThrustForce(double maxThrust) {
         this.maxThrustForce = maxThrust;
     }
@@ -114,6 +177,10 @@ public class PlayerBody extends DynamicBody {
     public void setMaxAngularAcceleration(double maxAngularAcc) {
         this.setAngularSpeed(this.angularSpeed);
         this.maxAngularAcc = maxAngularAcc;
+    }
+
+    public void setTemperature(int temperature) {
+        this.temperature = temperature;
     }
 
     public boolean mustFireNow(PhysicsValuesDTO newPhyValues) {

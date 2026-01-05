@@ -1,6 +1,7 @@
 package model.weapons.core;
 
 import java.util.UUID;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
 import model.weapons.ports.Weapon;
@@ -96,10 +97,10 @@ public abstract class AbstractWeapon implements Weapon {
     private final String id;
     private final WeaponDto weaponConfig;
     private final AtomicLong lastFireRequest = new AtomicLong(0L);
-    private WeaponState state;
-    private long lastHandledRequest = 0L;
-    private int currentAmmo;
-    private double cooldown = 0.0; // seconds
+    private volatile WeaponState state;
+    private AtomicLong lastHandledRequest = new AtomicLong(0L);
+    private AtomicInteger currentAmmo = new AtomicInteger(0);
+    private volatile double cooldown = 0.0; // seconds
 
     public AbstractWeapon(WeaponDto weaponConfig) {
 
@@ -110,7 +111,7 @@ public abstract class AbstractWeapon implements Weapon {
 
         this.id = UUID.randomUUID().toString();
         this.weaponConfig = weaponConfig;
-        this.currentAmmo = weaponConfig.maxAmmo;
+        this.currentAmmo.set(weaponConfig.maxAmmo);
         this.state = WeaponState.READY;
     }
 
@@ -119,7 +120,7 @@ public abstract class AbstractWeapon implements Weapon {
     }
 
     public void decCurrentAmmo() {
-        this.currentAmmo --;
+        this.currentAmmo.decrementAndGet();
     }
 
     @Override
@@ -127,9 +128,12 @@ public abstract class AbstractWeapon implements Weapon {
         return this.id;
     }
 
-    @Override
-    public WeaponDto getWeaponConfig() {
-        return new WeaponDto(this.weaponConfig);
+    public double getAmmoStatus() {
+        if (this.weaponConfig.maxAmmo <= 0) {
+            return 1D; // Ammo not applicable
+        }
+
+        return ((double) this.currentAmmo.get()) / (double) this.weaponConfig.maxAmmo;
     }
 
     public double getCooldown() {
@@ -137,27 +141,32 @@ public abstract class AbstractWeapon implements Weapon {
     }
 
     public int getCurrentAmmo() {
-        return this.currentAmmo;
+        return this.currentAmmo.get();
     }
 
     public int getMaxAmmo() {
         return this.weaponConfig.maxAmmo;
     }
 
-    public WeaponState getState() {
-        return this.state;
-    }
-
     public double getReloadTime() {
         return this.weaponConfig.reloadTime;
     }
 
+    public WeaponState getState() {
+        return this.state;
+    }
+
+    @Override
+    public WeaponDto getWeaponConfig() {
+        return new WeaponDto(this.weaponConfig);
+    }
+
     protected boolean hasRequest() {
-        return this.lastFireRequest.get() > this.lastHandledRequest;
+        return this.lastFireRequest.get() > this.lastHandledRequest.get();
     }
 
     protected void markAllRequestsHandled() {
-        this.lastHandledRequest = this.lastFireRequest.get();
+        this.lastHandledRequest.set(this.lastFireRequest.get());
     }
 
     @Override
@@ -169,8 +178,8 @@ public abstract class AbstractWeapon implements Weapon {
         this.cooldown = cooldown;
     }
 
-    public void setCurrentAmmo(int currentAmmo) {
-        this.currentAmmo = currentAmmo;
+    public void setCurrentAmmo(int ammo) {
+        this.currentAmmo.set(ammo);
     }
 
     public void setState(WeaponState state) {

@@ -9,6 +9,7 @@ import view.View;
 import model.Model;
 
 import controller.mappers.DynamicRenderableMapper;
+import controller.mappers.PlayerRenderableMapper;
 import controller.mappers.RenderableMapper;
 import controller.mappers.WeaponMapper;
 
@@ -27,6 +28,7 @@ import model.ports.ActionType;
 import model.ports.EventDTO;
 import model.ports.EventType;
 import view.renderables.ports.DynamicRenderDTO;
+import view.renderables.ports.PlayerRenderDTO;
 import view.renderables.ports.RenderDTO;
 import world.ports.WorldDefWeaponDto;
 
@@ -309,12 +311,12 @@ public class Controller implements WorldEvolver, WorldInitializer, DomainEventPr
         return renderables;
     }
 
-    public int getEntityCreatedQuantity() {
-        return this.model.getCreatedQuantity();
-    }
-
     public int getEntityAliveQuantity() {
         return this.model.getAliveQuantity();
+    }
+
+    public int getEntityCreatedQuantity() {
+        return this.model.getCreatedQuantity();
     }
 
     public int getEntityDeadQuantity() {
@@ -327,6 +329,10 @@ public class Controller implements WorldEvolver, WorldInitializer, DomainEventPr
 
     public Dimension getWorldDimension() {
         return this.worldDimension;
+    }
+
+    public PlayerRenderDTO getPlayerRenderData(String playerId) {
+        return PlayerRenderableMapper.fromPlayerDTO(this.model.getPlayerData(playerId));
     }
 
     public void loadAssets(AssetCatalog assets) {
