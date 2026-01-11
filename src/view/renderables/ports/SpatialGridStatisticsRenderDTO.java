@@ -37,10 +37,13 @@ public class SpatialGridStatisticsRenderDTO {
     }
 
     public Object[] toObjectArray() {
+        int totalCells = this.nonEmptyCells + this.emptyCells;
+        double emptyCellRatio = totalCells == 0 ? 0.0 : (double) this.emptyCells / (double) totalCells;
+
         return new Object[] {
                 this.cellSize,
-                this.nonEmptyCells + this.emptyCells,
-                (double)this.emptyCells/(double)(this.nonEmptyCells + this.emptyCells),
+                totalCells,
+                emptyCellRatio,
                 String.format("%.1f", this.avgBucketSizeNonEmpty),
                 this.maxBucketSize,
                 this.estimatedPairChecks,
