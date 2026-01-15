@@ -318,9 +318,8 @@ public class Renderer extends Canvas implements Runnable {
 
                 gg.setComposite(AlphaComposite.SrcOver); // With transparency
                 this.drawStaticRenderables(gg);
-                this.drawHUDs(gg);
-
                 this.drawDynamicRenderable(gg);
+                this.drawHUDs(gg);
 
             } finally {
                 gg.dispose();

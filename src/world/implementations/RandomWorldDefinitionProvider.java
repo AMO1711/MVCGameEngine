@@ -30,6 +30,7 @@ public class RandomWorldDefinitionProvider implements WorldDefinitionProvider {
 
     private ArrayList<WorldDefItemDTO> asteroidsDef = new ArrayList<>();
     private ArrayList<WorldDefItemDTO> spaceshipsDef = new ArrayList<>();
+    private ArrayList<WorldDefItemDTO> trailsDef = new ArrayList<>();
 
     private ArrayList<WorldDefWeaponDTO> primaryWeapon = new ArrayList<>();
     private ArrayList<WorldDefWeaponDTO> secondaryWeaponDef = new ArrayList<>();
@@ -61,6 +62,13 @@ public class RandomWorldDefinitionProvider implements WorldDefinitionProvider {
 
         this.dynamicBodies(this.spaceshipsDef, 1, AssetType.SPACESHIP, 40, 40);
 
+        ArrayList<String> trailIds = new ArrayList<>();
+        trailIds.add("bubbles_3");
+        trailIds.add("halo_9");
+        trailIds.add("meteor_1");
+        trailIds.add("meteor_3");
+        this.dynamicBodies(this.trailsDef, trailIds, 20, 10);
+
         this.primaryWeapon(this.primaryWeapon, 1, AssetType.BULLET,
                 15, 15, 350d, 8);
 
@@ -76,7 +84,7 @@ public class RandomWorldDefinitionProvider implements WorldDefinitionProvider {
                 6000d, 1d, 4);
 
         WorldDefinition worlDef = new WorldDefinition(this.width, this.height, this.gameAssets,
-                background, decoratorsDef, gravityBodiesDef, asteroidsDef, spaceshipsDef,
+                background, decoratorsDef, gravityBodiesDef, asteroidsDef, spaceshipsDef, trailsDef,
                 primaryWeapon, secondaryWeaponDef, missilLaunchersDef, mineLaunchersDef);
 
         return worlDef;
@@ -127,6 +135,28 @@ public class RandomWorldDefinitionProvider implements WorldDefinitionProvider {
         }
     }
 
+    private void dynamicBodies(ArrayList<WorldDefItemDTO> dBodies,
+            ArrayList<String> assetIds, int maxSize, int minSize) {
+
+        AssetInfoDTO assetInfo;
+
+        for (String assetId : assetIds) {
+            assetInfo = this.projectAssets.catalog.get(assetId);
+
+            if (assetInfo == null) {
+                throw new IllegalStateException(
+                        "No asset found in catalog for id: " + assetId);
+            }
+
+            this.gameAssets.register(assetInfo);
+
+            dBodies.add(new WorldDefItemDTO(
+                    assetId,
+                    this.randomSize(maxSize, minSize),
+                    this.randomAngle()));
+        }
+    }
+
     private void staticBodies(
             ArrayList<WorldDefPositionItemDTO> sBodies,
             int num, AssetType type,
@@ -150,8 +180,12 @@ public class RandomWorldDefinitionProvider implements WorldDefinitionProvider {
     }
 
     private WorldDefBackgroundDTO randomBackgroundDef() {
-        String randomId = this.projectAssets.catalog.randomId(AssetType.BACKGROUND);
+        // String randomId = this.projectAssets.catalog.randomId(AssetType.BACKGROUND);
+        String randomId = "back_7";
         AssetInfoDTO assetInfo = this.projectAssets.catalog.get(randomId);
+        if (assetInfo == null) {
+            throw new IllegalStateException("No background asset found in catalog.");
+        }
         this.gameAssets.register(assetInfo);
 
         return new WorldDefBackgroundDTO(randomId, 0.0d, 0.0d);

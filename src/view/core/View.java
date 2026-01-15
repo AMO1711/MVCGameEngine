@@ -133,7 +133,6 @@ public class View extends JFrame implements KeyListener {
         }
 
         this.renderer.SetViewDimension(this.viewDimension);
-        this.renderer.setImages(this.background, this.images);
         this.renderer.activate();
         this.pack();
     }
@@ -153,11 +152,19 @@ public class View extends JFrame implements KeyListener {
         for (String assetId : assets.getAssetIds()) {
             fileName = assets.get(assetId).fileName;
             this.images.add(assetId, path + fileName);
+            System.out.println("View: Asset loaded <" + assetId + ">");
         }
 
         // Setting background
         String backgroundId = assets.randomId(AssetType.BACKGROUND);
+        System.out.println("View: Setting background image <" + backgroundId + ">");
         this.background = this.images.getImage(backgroundId).image;
+
+        if (this.background == null) {
+            throw new IllegalArgumentException("Background image could not be loaded");
+        }
+
+        this.renderer.setImages(this.background, this.images);
     }
 
     public void setController(Controller controller) {
@@ -176,9 +183,10 @@ public class View extends JFrame implements KeyListener {
         this.renderer.updateStaticRenderables(renderablesData);
     }
 
-    /**
-     * PROTECTED
-     */
+    //
+    // PROTECTED
+    //
+
     protected ArrayList<DynamicRenderDTO> getDynamicRenderablesData() {
         if (this.controller == null) {
             throw new IllegalArgumentException("Controller not setted");

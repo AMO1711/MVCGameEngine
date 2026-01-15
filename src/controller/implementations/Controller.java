@@ -128,13 +128,12 @@ public class Controller implements WorldEvolver, WorldInitializer, DomainEventPr
     private Dimension worldDimension;
 
     public Controller(int worldWidth, int worldHigh,
-            View view, Model model, AssetCatalog assets) {
+            View view, Model model) {
 
         this.engineState = EngineState.STARTING;
         this.setWorldDimension(worldWidth, worldHigh);
         this.setModel(model);
         this.setView(view);
-        this.view.loadAssets(assets);
     }
 
     /**

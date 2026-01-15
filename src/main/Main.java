@@ -37,8 +37,7 @@ public class Main {
         Controller controller = new Controller(
                 worldWidth, worldHeight, // World dimensions
                 new View(),
-                new Model(worldWidth, worldHeight, maxDynamicBodies),
-                worldDef.gameAssets);
+                new Model(worldWidth, worldHeight, maxDynamicBodies));
 
         controller.activate();
 

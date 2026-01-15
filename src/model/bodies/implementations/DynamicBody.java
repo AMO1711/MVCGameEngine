@@ -2,7 +2,6 @@ package model.bodies.implementations;
 
 import model.physics.ports.PhysicsEngine;
 import model.physics.ports.PhysicsValuesDTO;
-import model.ports.ModelState;
 import model.spatial.core.SpatialGrid;
 import model.bodies.core.AbstractPhysicsBody;
 import model.bodies.ports.BodyEventProcessor;
