@@ -283,8 +283,8 @@ public class Renderer extends Canvas implements Runnable {
         this.systemHUD.draw(g,
                 this.fps,
                 String.format("%.0f", this.renderTimeInMs) + " ms",
-                this.imagesCache.size(),
-                String.format("%.0f", this.imagesCache.getHitsPercentage()) + "%",
+                this.imagesCache==null? 0 : this.imagesCache.size(),
+                String.format("%.0f", this.imagesCache==null? 0 : this.imagesCache.getHitsPercentage()) + "%",
                 this.view.getEntityAliveQuantity(),
                 this.view.getEntityDeadQuantity());
 
