@@ -156,8 +156,7 @@ public class DynamicBody extends AbstractPhysicsBody implements Runnable {
     }
 
     public void thrustOff() {
-        this.resetAcceleration();
-        this.setThrust(0.0d);
+        this.getPhysicsEngine().stopPushing();
     }
 
 }

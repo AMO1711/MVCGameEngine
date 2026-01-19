@@ -103,8 +103,18 @@ public abstract class AbstractPhysicsEngine implements PhysicsEngine {
                                 thrust));
         }
 
-        public boolean isThrusting() {
-            // TODO Auto-generated method stub
-            throw new UnsupportedOperationException("Unimplemented method 'isThrusting'");
+        @Override
+        public void stopPushing() {
+                PhysicsValuesDTO old = this.getPhysicsValues();
+                this.setPhysicsValues(new PhysicsValuesDTO(
+                                old.timeStamp,
+                                old.posX, old.posY, old.angle,
+                                old.size,
+                                old.speedX, old.speedY,
+                                0, 0, // Reset accelerations
+                                old.angularSpeed,
+                                old.angularAcc,
+                                0.0d)); // Reset thrust
+
         }
 }
