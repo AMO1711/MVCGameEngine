@@ -156,14 +156,14 @@ public class RandomWorldDefinitionProvider implements WorldDefinitionProvider {
                     0,
                     0,
                     0,
-                    50,
+                    100,
                     true,
                     true,
                     false,
                     -1,
                     0,
                     0,
-                    1.5D));
+                    1D));
         }
     }
 

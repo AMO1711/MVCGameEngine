@@ -34,7 +34,7 @@ public class PlayerBody extends DynamicBody {
                 BodyType.PLAYER,
                 maxLifeInSeconds);
 
-        this.setMaxThrustForce(80);
+        this.setMaxThrustForce(800);
         this.setMaxAngularAcceleration(1000);
         this.setAngularSpeed(30);
     }
