@@ -8,6 +8,7 @@ import model.bodies.ports.Body;
 import model.bodies.ports.BodyEventProcessor;
 import model.bodies.ports.BodyState;
 import model.bodies.ports.BodyType;
+import model.emitter.implementations.BasicEmitter;
 import model.physics.ports.PhysicsEngine;
 import model.physics.ports.PhysicsValuesDTO;
 import model.spatial.core.SpatialGrid;
