@@ -67,17 +67,14 @@ public class RandomWorldDefinitionProvider implements WorldDefinitionProvider {
         this.dynamicBodies(this.spaceshipsDef, 1, AssetType.SPACESHIP, 40, 40);
 
         ArrayList<String> trailIds = new ArrayList<>();
-        trailIds.add("bubbles_3");
-        trailIds.add("halo_9");
-        trailIds.add("meteor_1");
-        trailIds.add("meteor_3");
-        this.emitters(this.trailEmitterDef, trailIds, 20, 10);
+        trailIds.add("stars_6");
+        this.emitters(this.trailEmitterDef, trailIds, 75, 75);
 
         this.primaryWeapon(this.primaryWeapon, 1, AssetType.BULLET,
                 15, 15, 350d, 8);
 
         this.secondaryWeapon(this.secondaryWeaponDef, 1, AssetType.BULLET,
-                7, 7, 1000d, 8,
+                10, 10, 1000d, 10,
                 190, 5);
 
         this.mineLaunchers(this.mineLaunchersDef, 1, AssetType.MINE,
@@ -247,23 +244,26 @@ public class RandomWorldDefinitionProvider implements WorldDefinitionProvider {
         for (String assetId : assetIds) {
             assetInfo = this.projectAssets.catalog.get(assetId);
             this.gameAssets.register(assetInfo);
+
             emitters.add(new WorldDefEmitterDTO(
-                    BodyType.TEMPORARY_DECO,
+                    BodyType.DECORATOR,
                     assetId,
                     this.randomSize(maxSize, minSize),
-                    100,
-                    100,
+                    -75,
                     0,
                     0,
                     0,
                     0,
                     0,
                     0,
-                    20,
+                    0,
+                    33,
+                    true,
+                    true,
                     1000,
                     0,
                     0,
-                    5));
+                    2D));
         }
     }
 

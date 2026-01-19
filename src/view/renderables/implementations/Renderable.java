@@ -18,6 +18,13 @@ public class Renderable {
     private BufferedImage image = null;
 
     public Renderable(RenderDTO renderInfo, String assetId, ImageCache cache, long currentFrame) {
+        if (assetId == null || assetId.isEmpty()) {
+            throw new IllegalArgumentException("Asset ID not set");
+        }
+        if (cache == null) {
+            throw new IllegalArgumentException("Image cache not set");
+        }
+
         this.entityId = renderInfo.entityId;
         this.assetId = assetId;
         this.lastFrameSeen = currentFrame;
@@ -39,8 +46,10 @@ public class Renderable {
 
         this.entityId = entityId;
         this.assetId = assetId;
-        this.cache = cache;
         this.lastFrameSeen = currentFrame;
+        this.cache = cache;
+        this.image = null;
+        this.renderableValues = null;
     }
 
     /**

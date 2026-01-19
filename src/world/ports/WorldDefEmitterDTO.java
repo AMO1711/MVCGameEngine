@@ -15,6 +15,8 @@ public class WorldDefEmitterDTO {
     public final double angularSpeed;
     public final double angularAcc;
     public final double thrust;
+    public final boolean randomAngle;
+    public final boolean randomSize;
     public final int emisionRate;
     public final int maxBodiesEmitted;
     public final double reloadTime;
@@ -34,6 +36,8 @@ public class WorldDefEmitterDTO {
             double angularAcc,
             double thrust,
             int emisionRate,
+            boolean randomAngle,
+            boolean randomSize,
             int maxBodiesEmitted,
             double reloadTime,
             double bodyMass,
@@ -50,6 +54,8 @@ public class WorldDefEmitterDTO {
         this.angularSpeed = angularSpeed;
         this.angularAcc = angularAcc;
         this.thrust = thrust;
+        this.randomAngle = randomAngle;
+        this.randomSize = randomSize;
         this.emisionRate = emisionRate;
         this.maxBodiesEmitted = maxBodiesEmitted;
         this.reloadTime = reloadTime;
@@ -71,6 +77,8 @@ public class WorldDefEmitterDTO {
         this.angularSpeed = other.angularSpeed;
         this.angularAcc = other.angularAcc;
         this.thrust = other.thrust;
+        this.randomAngle = other.randomAngle;
+        this.randomSize = other.randomSize;
         this.maxBodiesEmitted = other.maxBodiesEmitted;
         this.reloadTime = other.reloadTime;
         this.bodyMass = other.bodyMass;

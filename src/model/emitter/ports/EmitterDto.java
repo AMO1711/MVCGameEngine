@@ -16,6 +16,9 @@ public class EmitterDto {
     public final double angularAcc;
     public final double thrust;
 
+    public final boolean randomAngle;
+    public final boolean randomSize;
+
     public final int emisionRate;
     public final int maxBodiesEmitted;
     public final double reloadTime;
@@ -34,6 +37,8 @@ public class EmitterDto {
             double angularSpeed,
             double angularAcc,
             double thrust,
+            boolean randomAngle,
+            boolean randomSize,
             int emisionRate,
             int maxBodiesEmitted,
             double reloadTime,
@@ -51,6 +56,8 @@ public class EmitterDto {
         this.angularSpeed = angularSpeed;
         this.angularAcc = angularAcc;
         this.thrust = thrust;
+        this.randomAngle = randomAngle;
+        this.randomSize = randomSize;
         this.emisionRate = emisionRate;
         this.maxBodiesEmitted = maxBodiesEmitted;
         this.reloadTime = reloadTime;
@@ -71,6 +78,8 @@ public class EmitterDto {
         this.angularSpeed = other.angularSpeed;
         this.angularAcc = other.angularAcc;
         this.thrust = other.thrust;
+        this.randomAngle = other.randomAngle;
+        this.randomSize = other.randomSize;
         this.emisionRate = other.emisionRate;
         this.maxBodiesEmitted = other.maxBodiesEmitted;
         this.reloadTime = other.reloadTime;

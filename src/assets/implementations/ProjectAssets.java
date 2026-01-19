@@ -86,6 +86,7 @@ public final class ProjectAssets {
         this.catalog.register("stars_3", "stars-3-mini.png", AssetType.STARS, AssetIntensity.HIGH);
         this.catalog.register("stars_4", "stars-4-mini.png", AssetType.STARS, AssetIntensity.HIGH);
         this.catalog.register("stars_5", "stars-5-mini.png", AssetType.STARS, AssetIntensity.HIGH);
+        this.catalog.register("stars_6", "stars-6-mini.png", AssetType.STARS, AssetIntensity.HIGH);
 
         this.catalog.register("rocket_1", "rocket-1.png", AssetType.ROCKET, AssetIntensity.HIGH);
         this.catalog.register("rocket_2", "rocket-2.png", AssetType.ROCKET, AssetIntensity.HIGH);

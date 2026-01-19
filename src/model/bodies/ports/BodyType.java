@@ -1,11 +1,9 @@
 package model.bodies.ports;
 
 public enum BodyType {
-    STATIC,
+    DECORATOR,
+    GRAVITY,
     DYNAMIC,
     PLAYER,
-    PROJECTILE,
-    DECO,
-    TEMPORARY_DECO,
-    UNKNOWN
+    PROJECTILE
 }

@@ -44,7 +44,7 @@ public class BasicPhysicsEngine extends AbstractPhysicsEngine {
     @Override
     public boolean isThrusting() {
         PhysicsValuesDTO phyValues = this.getPhysicsValues();
-        return phyValues.thrust > 0;
+        return phyValues.thrust != 0.0d;
     }
 
     @Override

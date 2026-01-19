@@ -14,7 +14,6 @@ import model.weapons.ports.WeaponDto;
 
 public class PlayerBody extends DynamicBody {
 
-    private BasicEmitter emitter;
     private final List<Weapon> weapons = new java.util.ArrayList<>(4);
     private int currentWeaponIndex = -1; // -1 = sin arma
     private double damage = 0D;
@@ -37,13 +36,6 @@ public class PlayerBody extends DynamicBody {
         this.setMaxThrustForce(80);
         this.setMaxAngularAcceleration(1000);
         this.setAngularSpeed(30);
-    }
-
-    public void addEmitter(BasicEmitter emitter) {
-        if (emitter == null) {
-            throw new IllegalStateException("Emitter is null. Cannot add to player body.");
-        }
-        this.emitter = emitter;
     }
 
     public void addWeapon(Weapon weapon) {
@@ -138,10 +130,6 @@ public class PlayerBody extends DynamicBody {
         return this.temperature;
     }
 
-    public BasicEmitter getEmitter() {
-        return this.emitter;
-    }
-
     public void registerFireRequest() {
         if (this.currentWeaponIndex < 0 || this.currentWeaponIndex >= this.weapons.size()) {
             System.out.println("> No weapon active or no weapons!");
@@ -154,7 +142,7 @@ public class PlayerBody extends DynamicBody {
             return;
         }
 
-        weapon.registerFireRequest();
+        weapon.registerRequest();
     }
 
     public void reverseThrust() {
@@ -187,10 +175,6 @@ public class PlayerBody extends DynamicBody {
 
     public void setDamage(double damage) {
         this.damage = damage;
-    }
-
-    public void setEmitter(BasicEmitter emitter) {
-        this.emitter = emitter;
     }
 
     public void setEnergye(double energye) {
@@ -234,16 +218,5 @@ public class PlayerBody extends DynamicBody {
         double dtSeconds = dtNanos / 1_000_000_000;
 
         return weapon.mustFireNow(dtSeconds);
-    }
-
-    public boolean mustTrailEmit(PhysicsValuesDTO newPhyValues) {
-        if (this.emitter == null) {
-            return false;
-        }
-
-        double dtNanos = newPhyValues.timeStamp - this.getPhysicsValues().timeStamp;
-        double dtSeconds = dtNanos / 1_000_000_000;
-
-        return this.emitter.mustEmitNow(dtSeconds);
     }
 }

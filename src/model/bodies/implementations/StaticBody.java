@@ -1,6 +1,7 @@
 package model.bodies.implementations;
 
 import model.bodies.core.AbstractPhysicsBody;
+import model.bodies.ports.Body;
 import model.bodies.ports.BodyEventProcessor;
 import model.bodies.ports.BodyState;
 import model.bodies.ports.BodyType;
@@ -41,20 +42,22 @@ import model.spatial.core.SpatialGrid;
  * This separation keeps the codebase clean and prevents unnecessary overhead
  * for entities that never move.
  */
-public class StaticBody extends AbstractPhysicsBody {
+public class StaticBody extends AbstractPhysicsBody implements Runnable {
 
-    /**
-     * CONSTRUCTORS
-     */
+    //
+    // CONSTRUCTORS
+    //
+
     public StaticBody(
             BodyEventProcessor bodyEventProcessor, SpatialGrid spatialGrid,
+            BodyType bodyType,
             double size, double x, double y, double angle,
-            long maxLifeInSeconds) {
+            double maxLifeInSeconds) {
 
         super(
                 bodyEventProcessor, spatialGrid,
                 new NullPhysicsEngine(size, x, y, angle),
-                BodyType.STATIC,
+                bodyType,
                 maxLifeInSeconds);
     }
 
@@ -66,6 +69,32 @@ public class StaticBody extends AbstractPhysicsBody {
     public synchronized void activate() {
         super.activate();
 
+        Thread thread = new Thread(this);
+        thread.setName("Body " + this.getEntityId());
+        thread.setPriority(Thread.NORM_PRIORITY - 1);
+        thread.start();
+
+        this.setThread(thread);
+
         this.setState(BodyState.ALIVE);
+    }
+
+    @Override
+    public void run() {
+        while (this.getState() != BodyState.DEAD) {
+
+            if (this.getState() == BodyState.ALIVE) {
+
+                if (this.isLifeOver()) {
+                    this.processBodyEvents(this, getPhysicsValues(), getPhysicsValues());
+                }
+            }
+
+            try {
+                Thread.sleep(30);
+            } catch (InterruptedException ex) {
+                System.err.println("ERROR Sleeping in vObject thread! (VObject) · " + ex.getMessage());
+            }
+        }
     }
 }

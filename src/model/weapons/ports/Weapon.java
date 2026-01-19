@@ -10,7 +10,7 @@ public interface Weapon {
     public String getId();
 
 
-    public void registerFireRequest();
+    public void registerRequest();
 
 
     public boolean mustFireNow(double dtSeconds);

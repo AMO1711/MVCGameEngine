@@ -2,11 +2,13 @@ package model.bodies.ports;
 
 public class PlayerDTO {
    public final String entityId;
+
     public final String playerName;
     public final double damage;
     public final double energy;
     public final double shieldLevel;
     public final int temperature;
+    
     public final int activeWeapon;
     public final double prymaryAmmoStatus;
     public final double secondaryAmmoStatus;
@@ -16,6 +18,7 @@ public class PlayerDTO {
 
     public PlayerDTO(
             String entityId,
+
             String playerName,
             double damage,
             double energy,

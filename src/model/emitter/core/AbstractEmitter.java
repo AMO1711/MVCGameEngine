@@ -21,7 +21,7 @@ public abstract class AbstractEmitter {
 
         if (config.emisionRate <= 0) {
             throw new IllegalArgumentException(
-                    "emisionRate must be > 0. Trail not created");
+                    "emisionRate must be > 0. Emitter not created");
         }
 
         this.id = UUID.randomUUID().toString();

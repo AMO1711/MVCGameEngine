@@ -5,9 +5,10 @@ import model.physics.ports.PhysicsValuesDTO;
 
 public class NullPhysicsEngine extends AbstractPhysicsEngine {
 
-    /**
-     * CONSTRUCTORS
-     */
+    //
+    // CONSTRUCTORS
+    //
+
     public NullPhysicsEngine(PhysicsValuesDTO phyVals) {
         super(phyVals);
     }
@@ -16,10 +17,9 @@ public class NullPhysicsEngine extends AbstractPhysicsEngine {
         super(size, posX, posY, angle);
     }
 
-    /**
-     * PUBLICS
-     *
-     */
+    //
+    // PUBLICS
+    //
 
     @Override
     public void addAngularAcceleration(double angularAcc) {

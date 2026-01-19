@@ -37,7 +37,6 @@ public abstract class AbstractBody implements Body {
     private final ArrayList<String> scratchCandidateIds;
     private final HashSet<String> scratchSeenCandidateIds = new HashSet<>(64);
 
-
     /**
      * CONSTRUCTORS
      */
@@ -147,7 +146,7 @@ public abstract class AbstractBody implements Body {
 
     @Override
     public boolean isLifeOver() {
-        if (this.maxLifeInSeconds <= 0) {
+        if (this.maxLifeInSeconds < 0) {
             return false;
         }
 

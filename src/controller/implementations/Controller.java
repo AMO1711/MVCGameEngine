@@ -181,16 +181,16 @@ public class Controller implements WorldEvolver, WorldInitializer, DomainEventPr
         if (entityId == null || entityId.isEmpty()) {
             return; // ======= Max entity quantity reached =======>
         }
+
         this.view.addStaticRenderable(entityId, assetId);
+
         ArrayList<BodyDTO> bodiesData = this.model.getStaticsData();
         ArrayList<RenderDTO> renderablesData = RenderableMapper.fromBodyDTO(bodiesData);
-
         this.view.updateStaticRenderables(renderablesData);
     }
 
     @Override
     public void addEmitterToPlayer(String playerId, WorldDefEmitterDTO bodyEmitterDef) {
-
         EmitterDto bodyEmitter = EmitterMapper.fromWorldDef(bodyEmitterDef);
         this.model.addEmitterToPlayer(playerId, bodyEmitter);
     }
@@ -199,7 +199,7 @@ public class Controller implements WorldEvolver, WorldInitializer, DomainEventPr
             double speedX, double speedY, double accX, double accY,
             double angle, double angularSpeed, double angularAcc, double thrust) {
 
-        String entityId = this.model.addPlayer(size, posX, posY, speedX, speedY,
+        String entityId = this.model.addPlayerBody(size, posX, posY, speedX, speedY,
                 accX, accY, angle, angularSpeed, angularAcc, thrust, -1L);
 
         if (entityId == null) {
@@ -212,7 +212,7 @@ public class Controller implements WorldEvolver, WorldInitializer, DomainEventPr
 
     public void addStaticBody(String assetId, double size, double posX, double posY, double angle) {
 
-        String entityId = this.model.addStaticBody(size, posX, posY, angle, -1L);
+        String entityId = this.model.addDecorator(size, posX, posY, angle, -1L);
         ArrayList<BodyDTO> bodiesData = this.model.getStaticsData();
         ArrayList<RenderDTO> renderablesData = RenderableMapper.fromBodyDTO(bodiesData);
 
@@ -296,6 +296,11 @@ public class Controller implements WorldEvolver, WorldInitializer, DomainEventPr
                 this.model.getSpatialGridStatistics());
     }
 
+    @Override
+    public void notifyPlayerIsDead(String entityId) {
+        this.view.notifyPlayerIsDead(entityId);
+    }
+
     public void loadAssets(AssetCatalog assets) {
         this.view.loadAssets(assets);
     }
@@ -303,10 +308,19 @@ public class Controller implements WorldEvolver, WorldInitializer, DomainEventPr
     public void notifyNewDynamic(String entityId, String assetId) {
         this.view.addDynamicRenderable(entityId, assetId);
     }
-
+  
     public void notifyNewStatic(String entityId, String assetId) {
-        System.out.println("Controller.notifyNewStatic: entityId=" + entityId + ", assetId=" + assetId);
         this.view.addStaticRenderable(entityId, assetId);
+
+        ArrayList<BodyDTO> bodiesData = this.model.getStaticsData();
+        ArrayList<RenderDTO> renderablesData = RenderableMapper.fromBodyDTO(bodiesData);
+        this.view.updateStaticRenderables(renderablesData);
+    }
+
+    public void notiyStaticIsDead(String entityId) {
+        ArrayList<BodyDTO> bodiesData = this.model.getStaticsData();
+        ArrayList<RenderDTO> renderablesData = RenderableMapper.fromBodyDTO(bodiesData);
+        this.view.updateStaticRenderables(renderablesData);
     }
 
     public void playerFire(String playerId) {
@@ -368,42 +382,67 @@ public class Controller implements WorldEvolver, WorldInitializer, DomainEventPr
 
         switch (event.eventType) {
             case REACHED_NORTH_LIMIT:
-                actions.add(new ActionDTO(event.entityIdPrimaryBody,
-                        ActionType.DIE, ActionExecutor.PHYSICS_BODY, ActionPriority.HIGH));
+                actions.add(new ActionDTO(
+                        event.entityIdPrimaryBody,
+                        event.primaryBodyType,
+                        ActionType.DIE,
+                        ActionExecutor.MODEL,
+                        ActionPriority.HIGH));
                 break;
 
             case REACHED_SOUTH_LIMIT:
-                actions.add(new ActionDTO(event.entityIdPrimaryBody,
-                        ActionType.DIE, ActionExecutor.PHYSICS_BODY, ActionPriority.HIGH));
+                actions.add(new ActionDTO(
+                        event.entityIdPrimaryBody,
+                        event.primaryBodyType,
+                        ActionType.DIE,
+                        ActionExecutor.MODEL,
+                        ActionPriority.HIGH));
                 break;
 
             case REACHED_EAST_LIMIT:
-                actions.add(new ActionDTO(event.entityIdPrimaryBody,
-                        ActionType.DIE, ActionExecutor.PHYSICS_BODY, ActionPriority.HIGH));
+                actions.add(new ActionDTO(
+                        event.entityIdPrimaryBody,
+                        event.primaryBodyType,
+                        ActionType.DIE,
+                        ActionExecutor.MODEL,
+                        ActionPriority.HIGH));
                 break;
 
             case REACHED_WEST_LIMIT:
-                actions.add(new ActionDTO(event.entityIdPrimaryBody,
-                        ActionType.DIE, ActionExecutor.PHYSICS_BODY, ActionPriority.HIGH));
+                actions.add(new ActionDTO(
+                        event.entityIdPrimaryBody,
+                        event.primaryBodyType,
+                        ActionType.DIE,
+                        ActionExecutor.MODEL,
+                        ActionPriority.HIGH));
                 break;
 
             case MUST_FIRE:
-                actions.add(new ActionDTO(event.entityIdPrimaryBody,
-                        ActionType.SPAWN_PROJECTILE, ActionExecutor.MODEL, ActionPriority.LOW));
+                actions.add(new ActionDTO(
+                        event.entityIdPrimaryBody,
+                        event.primaryBodyType,
+                        ActionType.SPAWN_PROJECTILE,
+                        ActionExecutor.MODEL,
+                        ActionPriority.LOW));
                 break;
 
             case LIFE_OVER:
-                actions.add(new ActionDTO(event.entityIdPrimaryBody,
-                        ActionType.DIE, ActionExecutor.MODEL, ActionPriority.HIGH));
+                actions.add(new ActionDTO(
+                        event.entityIdPrimaryBody,
+                        event.primaryBodyType,
+                        ActionType.DIE,
+                        ActionExecutor.MODEL,
+                        ActionPriority.HIGH));
                 break;
 
             case COLLISION:
                 this.resolveCollision(event, actions);
                 break;
 
-            case THRUST_ON:
+            case MUST_EMIT:
                 actions.add(new ActionDTO(
                         event.entityIdPrimaryBody,
+                        event.primaryBodyType,
                         ActionType.SPAWN_BODY,
                         ActionExecutor.MODEL,
                         ActionPriority.NORMAL));
@@ -417,33 +456,12 @@ public class Controller implements WorldEvolver, WorldInitializer, DomainEventPr
         return actions;
     }
 
-    private boolean containsDeathLikeAction(List<ActionDTO> actions) {
-        if (actions == null || actions.isEmpty()) {
-            return false;
-        }
-
-        for (ActionDTO a : actions) {
-            if (a != null && a.type != null) {
-                if (a.type == ActionType.DIE || a.type == ActionType.EXPLODE_IN_FRAGMENTS) {
-                    return true;
-                }
-            }
-        }
-
-        return false;
-    }
-
     private void resolveCollision(Event event, List<ActionDTO> actions) {
         BodyType primary = event.primaryBodyType;
         BodyType secondary = event.secondaryBodyType;
 
-        // Ignore collisions with DECO bodies
-        if (primary == BodyType.DECO || secondary == BodyType.DECO) {
-            return;
-        }
-
-        // Ignore collisions with STATIC bodies
-        if (primary == BodyType.STATIC || secondary == BodyType.STATIC) {
+        // Ignore collisions with DECORATOR bodies
+        if (primary == BodyType.DECORATOR || secondary == BodyType.DECORATOR) {
             return;
         }
 
@@ -453,9 +471,9 @@ public class Controller implements WorldEvolver, WorldInitializer, DomainEventPr
         }
 
         // Default: Both die
-        actions.add(new ActionDTO(event.entityIdPrimaryBody,
+        actions.add(new ActionDTO(event.entityIdPrimaryBody, event.primaryBodyType,
                 ActionType.DIE, ActionExecutor.MODEL, ActionPriority.HIGH));
-        actions.add(new ActionDTO(event.entityIdSecondaryBody,
+        actions.add(new ActionDTO(event.entityIdSecondaryBody, event.secondaryBodyType,
                 ActionType.DIE, ActionExecutor.MODEL, ActionPriority.HIGH));
     }
 }

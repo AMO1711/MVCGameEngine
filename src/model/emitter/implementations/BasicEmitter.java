@@ -11,7 +11,7 @@ public class BasicEmitter extends AbstractEmitter {
 
     public boolean mustEmitNow(double dtSeconds) {
         if (this.getCooldown() > 0) {
-            // Cool down trail emitter. Any pending requests are discarded.
+            // Cool down time. Any pending requests are discarded.
             this.decCooldown(dtSeconds);
             this.markAllRequestsHandled();
             return false; // ======== Trail Emiter is overheated =========>
@@ -20,7 +20,7 @@ public class BasicEmitter extends AbstractEmitter {
         if (!this.hasRequest()) {
             // Nothing to do
             this.setCooldown(0);
-            return false; // ==================>
+            return false; // ======== No requests =========>
         }
 
         // Emit

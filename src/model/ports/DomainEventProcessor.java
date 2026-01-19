@@ -9,4 +9,8 @@ public interface DomainEventProcessor {
     public void notifyNewStatic(String entityId, String assetId);
 
     public List<ActionDTO> decideActions(List<Event> events);
+
+    public void notifyPlayerIsDead(String entityId);
+
+    public void notiyStaticIsDead(String entityId);
 }

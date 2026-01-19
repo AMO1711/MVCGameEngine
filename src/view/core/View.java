@@ -180,6 +180,10 @@ public class View extends JFrame implements KeyListener {
         this.localPlayerId = localPlayerId;
     }
 
+    public void notifyPlayerIsDead(String entityId) {
+        this.setLocalPlayer(null);
+    }
+
     public void updateStaticRenderables(ArrayList<RenderDTO> renderablesData) {
         this.renderer.updateStaticRenderables(renderablesData);
     }

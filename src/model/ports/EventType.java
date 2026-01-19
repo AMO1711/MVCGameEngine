@@ -6,6 +6,7 @@ import java.io.Serializable;
 
 public enum EventType implements Serializable {
     COLLISION,
+    MUST_EMIT,
     MUST_FIRE,
     NONE,
     REACHED_NORTH_LIMIT,
@@ -14,5 +15,4 @@ public enum EventType implements Serializable {
     REACHED_WEST_LIMIT,
     TRY_TO_GO_INSIDE,
     LIFE_OVER, 
-    THRUST_ON
 }
