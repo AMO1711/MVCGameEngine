@@ -19,7 +19,7 @@ public class Main {
         int worldWidth = 2450;
         int worldHeight = 1450;
         int maxDynamicBodies = 5000;
-        int maxAsteroidCreationDelay = 1500;
+        int maxAsteroidCreationDelay = 5000;
         int minAsteroidSize = 8;
         int maxAsteroidSize = 16;
         int maxAsteroidMass = 1000;
@@ -29,31 +29,39 @@ public class Main {
 
         ProjectAssets projectAssets = new ProjectAssets();
 
-        WorldDefinitionProvider world = new RandomWorldDefinitionProvider(worldWidth, worldHeight,
+        WorldDefinitionProvider world = new RandomWorldDefinitionProvider(
+                worldWidth,
+                worldHeight,
                 projectAssets);
 
         WorldDefinition worldDef = world.provide();
 
         Controller controller = new Controller(
-                worldWidth, worldHeight, // World dimensions
+                worldWidth,
+                worldHeight,
                 new View(),
-                new Model(worldWidth, worldHeight, maxDynamicBodies),
-                worldDef.gameAssets);
+                new Model(worldWidth, worldHeight, maxDynamicBodies));
 
         controller.activate();
 
-        SceneGenerator worldGenerator = new SceneGenerator(controller, worldDef);
+        SceneGenerator worldGenerator = new SceneGenerator(
+                controller,
+                worldDef);
 
         LifeConfigDTO lifeConfig = new LifeConfigDTO(
-                maxAsteroidCreationDelay, // maxCreationDelay
+                maxAsteroidCreationDelay,
                 maxAsteroidSize,
-                minAsteroidSize, // maxSize, minSize
+                minAsteroidSize,
                 maxAsteroidMass,
-                minAsteroidMass, // maxMass, minMass
-                maxAsteroidSpeedModule, // maxSpeedModule
-                maxAsteroidAccModule); // maxAccModule
+                minAsteroidMass,
+                maxAsteroidSpeedModule,
+                maxAsteroidAccModule);
 
-        LifeGenerator lifeGenerator = new LifeGenerator(controller, worldDef, lifeConfig);
+        LifeGenerator lifeGenerator = new LifeGenerator(
+                controller,
+                worldDef,
+                lifeConfig);
+
         lifeGenerator.activate();
     }
 }

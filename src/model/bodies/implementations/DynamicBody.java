@@ -2,7 +2,6 @@ package model.bodies.implementations;
 
 import model.physics.ports.PhysicsEngine;
 import model.physics.ports.PhysicsValuesDTO;
-import model.ports.ModelState;
 import model.spatial.core.SpatialGrid;
 import model.bodies.core.AbstractPhysicsBody;
 import model.bodies.ports.BodyEventProcessor;
@@ -45,11 +44,14 @@ import model.bodies.ports.BodyType;
  */
 public class DynamicBody extends AbstractPhysicsBody implements Runnable {
 
-    private Thread thread;
+    private double maxThrustForce; //
+    private double maxAngularAcc; // degrees*s^-2
+    private double angularSpeed; // degrees*s^-1
 
-    /**
-     * CONSTRUCTORS
-     */
+    //
+    // CONSTRUCTORS
+    //
+
     public DynamicBody(BodyEventProcessor bodyEventProcessor, SpatialGrid spatialGrid,
             PhysicsEngine phyEngine, BodyType bodyType, double maxLifeInSeconds) {
 
@@ -59,17 +61,19 @@ public class DynamicBody extends AbstractPhysicsBody implements Runnable {
                 maxLifeInSeconds);
     }
 
-    /**
-     * PUBLICS
-     */
+    //
+    // PUBLICS
+    //
+
     @Override
     public synchronized void activate() {
         super.activate();
 
-        this.thread = new Thread(this);
-        this.thread.setName("Body " + this.getEntityId());
-        this.thread.setPriority(Thread.NORM_PRIORITY - 1);
-        this.thread.start();
+        Thread thread = new Thread(this);
+        thread.setName("Body " + this.getEntityId());
+        thread.setPriority(Thread.NORM_PRIORITY - 1);
+        thread.start();
+        this.setThread(thread);
         this.setState(BodyState.ALIVE);
     }
 
@@ -99,6 +103,10 @@ public class DynamicBody extends AbstractPhysicsBody implements Runnable {
                 this.getSpatialGrid().upsert(
                         this.getEntityId(), minX, maxX, minY, maxY, this.getScratchIdxs());
 
+                if (this.isThrusting()) {
+                    this.getEmitter().registerRequest();
+                }
+
                 this.processBodyEvents(this, newPhyValues, this.getPhysicsEngine().getPhysicsValues());
             }
 
@@ -110,6 +118,18 @@ public class DynamicBody extends AbstractPhysicsBody implements Runnable {
         }
     }
 
+    public double getAngularSpeed() {
+        return this.angularSpeed;
+    }
+
+    public double getMaxThrustForce() {
+        return this.maxThrustForce;
+    }
+
+    public double getMaxAngularAcceleration() {
+        return this.maxAngularAcc;
+    }
+
     public void setAngularAcceleration(double angularAcc) {
         this.getPhysicsEngine().setAngularAcceleration(angularAcc);
     }
@@ -118,7 +138,26 @@ public class DynamicBody extends AbstractPhysicsBody implements Runnable {
         this.getPhysicsEngine().setAngularSpeed(angularSpeed);
     }
 
+    public void setMaxThrustForce(double maxThrust) {
+        this.maxThrustForce = maxThrust;
+    }
+
+    public void setMaxAngularAcceleration(double maxAngularAcc) {
+        this.setAngularSpeed(this.angularSpeed);
+        this.maxAngularAcc = maxAngularAcc;
+    }
+
     public void setThrust(double thrust) {
         this.getPhysicsEngine().setThrust(thrust);
     }
+
+    public void thrustOn() {
+        this.setThrust(this.maxThrustForce);
+    }
+
+    public void thrustOff() {
+        this.resetAcceleration();
+        this.setThrust(0.0d);
+    }
+
 }

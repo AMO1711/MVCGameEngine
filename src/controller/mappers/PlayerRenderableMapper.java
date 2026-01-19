@@ -6,6 +6,9 @@ import view.renderables.ports.PlayerRenderDTO;
 public class PlayerRenderableMapper {
 
     public static PlayerRenderDTO fromPlayerDTO(PlayerDTO playerDto) {
+        if (playerDto == null) {
+            return null;
+        }
         if (playerDto.entityId == null) {
             return null;
         }

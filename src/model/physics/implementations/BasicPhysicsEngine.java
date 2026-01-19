@@ -42,6 +42,12 @@ public class BasicPhysicsEngine extends AbstractPhysicsEngine {
     }
 
     @Override
+    public boolean isThrusting() {
+        PhysicsValuesDTO phyValues = this.getPhysicsValues();
+        return phyValues.thrust != 0.0d;
+    }
+
+    @Override
     public void reboundInEast(PhysicsValuesDTO newPhyVals, PhysicsValuesDTO oldPhyVals,
             double worldDim_x, double worldDim_y) {
 

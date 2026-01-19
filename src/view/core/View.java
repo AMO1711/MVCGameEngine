@@ -114,9 +114,10 @@ public class View extends JFrame implements KeyListener {
     private Dimension viewDimension;
     private boolean fireKeyDown = false;
 
-    /**
-     * CONSTRUCTOR
-     */
+    //
+    // CONSTRUCTOR
+    //
+
     public View() {
         this.images = new Images("");
         this.controlPanel = new ControlPanel(this);
@@ -124,16 +125,16 @@ public class View extends JFrame implements KeyListener {
         this.createFrame();
     }
 
-    /**
-     * PUBLIC
-     */
+    //
+    // PUBLIC
+    //
+
     public void activate() {
         if (this.viewDimension == null) {
             throw new IllegalArgumentException("View dimensions not setted");
         }
 
         this.renderer.SetViewDimension(this.viewDimension);
-        this.renderer.setImages(this.background, this.images);
         this.renderer.activate();
         this.pack();
     }
@@ -157,7 +158,14 @@ public class View extends JFrame implements KeyListener {
 
         // Setting background
         String backgroundId = assets.randomId(AssetType.BACKGROUND);
+        System.out.println("View: Setting background image <" + backgroundId + ">");
         this.background = this.images.getImage(backgroundId).image;
+
+        if (this.background == null) {
+            throw new IllegalArgumentException("Background image could not be loaded");
+        }
+
+        this.renderer.setImages(this.background, this.images);
     }
 
     public void setController(Controller controller) {
@@ -172,13 +180,18 @@ public class View extends JFrame implements KeyListener {
         this.localPlayerId = localPlayerId;
     }
 
+    public void notifyPlayerIsDead(String entityId) {
+        this.setLocalPlayer(null);
+    }
+
     public void updateStaticRenderables(ArrayList<RenderDTO> renderablesData) {
         this.renderer.updateStaticRenderables(renderablesData);
     }
 
-    /**
-     * PROTECTED
-     */
+    //
+    // PROTECTED
+    //
+
     protected ArrayList<DynamicRenderDTO> getDynamicRenderablesData() {
         if (this.controller == null) {
             throw new IllegalArgumentException("Controller not setted");
@@ -215,9 +228,10 @@ public class View extends JFrame implements KeyListener {
         return this.controller.getSpatialGridStatistics();
     }
 
-    /**
-     * PRIVATE
-     */
+    //
+    // PRIVATE
+    //
+
     private void addRendererCanva(Container container) {
         GridBagConstraints c = new GridBagConstraints();
 
@@ -249,9 +263,10 @@ public class View extends JFrame implements KeyListener {
 
     }
 
-    /**
-     * OVERRIDES
-     */
+    //
+    // OVERRIDES
+    //
+    
     @Override
     public void keyPressed(KeyEvent e) {
         if (this.localPlayerId == null) {

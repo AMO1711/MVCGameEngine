@@ -170,7 +170,7 @@ public abstract class AbstractWeapon implements Weapon {
     }
 
     @Override
-    public void registerFireRequest() {
+    public void registerRequest() {
         this.lastFireRequest.set(System.nanoTime());
     }
 

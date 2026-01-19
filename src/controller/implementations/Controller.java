@@ -7,6 +7,7 @@ import java.util.List;
 import assets.core.AssetCatalog;
 
 import controller.mappers.DynamicRenderableMapper;
+import controller.mappers.EmitterMapper;
 import controller.mappers.PlayerRenderableMapper;
 import controller.mappers.RenderableMapper;
 import controller.mappers.SpatialGridStatisticsMapper;
@@ -17,6 +18,7 @@ import controller.ports.WorldInitializer;
 
 import model.bodies.ports.BodyDTO;
 import model.bodies.ports.BodyType;
+import model.emitter.ports.EmitterDto;
 import model.implementations.Model;
 import model.weapons.ports.WeaponDto;
 import model.ports.ActionDTO;
@@ -31,6 +33,7 @@ import view.renderables.ports.DynamicRenderDTO;
 import view.renderables.ports.PlayerRenderDTO;
 import view.renderables.ports.RenderDTO;
 import view.renderables.ports.SpatialGridStatisticsRenderDTO;
+import world.ports.WorldDefEmitterDTO;
 import world.ports.WorldDefWeaponDTO;
 
 /**
@@ -128,18 +131,18 @@ public class Controller implements WorldEvolver, WorldInitializer, DomainEventPr
     private Dimension worldDimension;
 
     public Controller(int worldWidth, int worldHigh,
-            View view, Model model, AssetCatalog assets) {
+            View view, Model model) {
 
         this.engineState = EngineState.STARTING;
         this.setWorldDimension(worldWidth, worldHigh);
         this.setModel(model);
         this.setView(view);
-        this.view.loadAssets(assets);
     }
 
-    /**
-     * PUBLICS
-     */
+    //
+    // PUBLICS
+    //
+
     public void activate() {
         if (this.worldDimension == null) {
             throw new IllegalArgumentException("Null world dimension");
@@ -178,18 +181,25 @@ public class Controller implements WorldEvolver, WorldInitializer, DomainEventPr
         if (entityId == null || entityId.isEmpty()) {
             return; // ======= Max entity quantity reached =======>
         }
+
         this.view.addStaticRenderable(entityId, assetId);
+
         ArrayList<BodyDTO> bodiesData = this.model.getStaticsData();
         ArrayList<RenderDTO> renderablesData = RenderableMapper.fromBodyDTO(bodiesData);
-
         this.view.updateStaticRenderables(renderablesData);
+    }
+
+    @Override
+    public void addEmitterToPlayer(String playerId, WorldDefEmitterDTO bodyEmitterDef) {
+        EmitterDto bodyEmitter = EmitterMapper.fromWorldDef(bodyEmitterDef);
+        this.model.addEmitterToPlayer(playerId, bodyEmitter);
     }
 
     public String addPlayer(String assetId, double size, double posX, double posY,
             double speedX, double speedY, double accX, double accY,
             double angle, double angularSpeed, double angularAcc, double thrust) {
 
-        String entityId = this.model.addPlayer(size, posX, posY, speedX, speedY,
+        String entityId = this.model.addPlayerBody(size, posX, posY, speedX, speedY,
                 accX, accY, angle, angularSpeed, angularAcc, thrust, -1L);
 
         if (entityId == null) {
@@ -202,7 +212,7 @@ public class Controller implements WorldEvolver, WorldInitializer, DomainEventPr
 
     public void addStaticBody(String assetId, double size, double posX, double posY, double angle) {
 
-        String entityId = this.model.addStaticBody(size, posX, posY, angle, -1L);
+        String entityId = this.model.addDecorator(size, posX, posY, angle, -1L);
         ArrayList<BodyDTO> bodiesData = this.model.getStaticsData();
         ArrayList<RenderDTO> renderablesData = RenderableMapper.fromBodyDTO(bodiesData);
 
@@ -232,11 +242,6 @@ public class Controller implements WorldEvolver, WorldInitializer, DomainEventPr
                 }
             }
         }
-
-        // if (!containsDeathLikeAction(actions)) {
-        // actions.add(new ActionDTO(
-        // ActionType.MOVE, ActionExecutor.PHYSICS_BODY, ActionPriority.NORMAL));
-        // }
 
         return actions;
     }
@@ -291,12 +296,31 @@ public class Controller implements WorldEvolver, WorldInitializer, DomainEventPr
                 this.model.getSpatialGridStatistics());
     }
 
+    @Override
+    public void notifyPlayerIsDead(String entityId) {
+        this.view.notifyPlayerIsDead(entityId);
+    }
+
     public void loadAssets(AssetCatalog assets) {
         this.view.loadAssets(assets);
     }
 
-    public void notifyNewProjectileFired(String entityId, String assetId) {
+    public void notifyNewDynamic(String entityId, String assetId) {
         this.view.addDynamicRenderable(entityId, assetId);
+    }
+  
+    public void notifyNewStatic(String entityId, String assetId) {
+        this.view.addStaticRenderable(entityId, assetId);
+
+        ArrayList<BodyDTO> bodiesData = this.model.getStaticsData();
+        ArrayList<RenderDTO> renderablesData = RenderableMapper.fromBodyDTO(bodiesData);
+        this.view.updateStaticRenderables(renderablesData);
+    }
+
+    public void notiyStaticIsDead(String entityId) {
+        ArrayList<BodyDTO> bodiesData = this.model.getStaticsData();
+        ArrayList<RenderDTO> renderablesData = RenderableMapper.fromBodyDTO(bodiesData);
+        this.view.updateStaticRenderables(renderablesData);
     }
 
     public void playerFire(String playerId) {
@@ -349,45 +373,79 @@ public class Controller implements WorldEvolver, WorldInitializer, DomainEventPr
         this.worldDimension = new Dimension(width, height);
     }
 
-    /**
-     * PRIVATE
-     */
+    //
+    // PRIVATE
+    //
+
     private List<ActionDTO> applyGameRules(Event event) {
         List<ActionDTO> actions = new ArrayList<>(8);
 
         switch (event.eventType) {
             case REACHED_NORTH_LIMIT:
-                actions.add(new ActionDTO(event.entityIdPrimaryBody,
-                        ActionType.REBOUND_IN_NORTH, ActionExecutor.PHYSICS_BODY, ActionPriority.HIGH));
+                actions.add(new ActionDTO(
+                        event.entityIdPrimaryBody,
+                        event.primaryBodyType,
+                        ActionType.DIE,
+                        ActionExecutor.MODEL,
+                        ActionPriority.HIGH));
                 break;
 
             case REACHED_SOUTH_LIMIT:
-                actions.add(new ActionDTO(event.entityIdPrimaryBody,
-                        ActionType.REBOUND_IN_SOUTH, ActionExecutor.PHYSICS_BODY, ActionPriority.HIGH));
+                actions.add(new ActionDTO(
+                        event.entityIdPrimaryBody,
+                        event.primaryBodyType,
+                        ActionType.DIE,
+                        ActionExecutor.MODEL,
+                        ActionPriority.HIGH));
                 break;
 
             case REACHED_EAST_LIMIT:
-                actions.add(new ActionDTO(event.entityIdPrimaryBody,
-                        ActionType.REBOUND_IN_EAST, ActionExecutor.PHYSICS_BODY, ActionPriority.HIGH));
+                actions.add(new ActionDTO(
+                        event.entityIdPrimaryBody,
+                        event.primaryBodyType,
+                        ActionType.DIE,
+                        ActionExecutor.MODEL,
+                        ActionPriority.HIGH));
                 break;
 
             case REACHED_WEST_LIMIT:
-                actions.add(new ActionDTO(event.entityIdPrimaryBody,
-                        ActionType.REBOUND_IN_WEST, ActionExecutor.PHYSICS_BODY, ActionPriority.HIGH));
+                actions.add(new ActionDTO(
+                        event.entityIdPrimaryBody,
+                        event.primaryBodyType,
+                        ActionType.DIE,
+                        ActionExecutor.MODEL,
+                        ActionPriority.HIGH));
                 break;
 
             case MUST_FIRE:
-                actions.add(new ActionDTO(event.entityIdPrimaryBody,
-                        ActionType.FIRE, ActionExecutor.MODEL, ActionPriority.LOW));
+                actions.add(new ActionDTO(
+                        event.entityIdPrimaryBody,
+                        event.primaryBodyType,
+                        ActionType.SPAWN_PROJECTILE,
+                        ActionExecutor.MODEL,
+                        ActionPriority.LOW));
                 break;
 
             case LIFE_OVER:
-                actions.add(new ActionDTO(event.entityIdPrimaryBody,
-                        ActionType.DIE, ActionExecutor.MODEL, ActionPriority.HIGH));
+                actions.add(new ActionDTO(
+                        event.entityIdPrimaryBody,
+                        event.primaryBodyType,
+                        ActionType.DIE,
+                        ActionExecutor.MODEL,
+                        ActionPriority.HIGH));
                 break;
 
-            case COLLISIONED:
+            case COLLISION:
                 this.resolveCollision(event, actions);
+                break;
+
+            case MUST_EMIT:
+                actions.add(new ActionDTO(
+                        event.entityIdPrimaryBody,
+                        event.primaryBodyType,
+                        ActionType.SPAWN_BODY,
+                        ActionExecutor.MODEL,
+                        ActionPriority.NORMAL));
                 break;
 
             case NONE:
@@ -398,64 +456,24 @@ public class Controller implements WorldEvolver, WorldInitializer, DomainEventPr
         return actions;
     }
 
-    private boolean containsDeathLikeAction(List<ActionDTO> actions) {
-        if (actions == null || actions.isEmpty()) {
-            return false;
-        }
-
-        for (ActionDTO a : actions) {
-            if (a != null && a.type != null) {
-                if (a.type == ActionType.DIE || a.type == ActionType.EXPLODE_IN_FRAGMENTS) {
-                    return true;
-                }
-            }
-        }
-
-        return false;
-    }
-
-    /**
-     * Resolves collision based on body types and shooter tracking.
-     * 
-     * Default rule: Both bodies die in collision.
-     * 
-     * Exceptions:
-     * - PLAYER vs own PROJECTILE (during 0.2s immunity): No collision (passes through)
-     * - STATIC or DECO bodies: Ignored (no collision rules applied)
-     */
     private void resolveCollision(Event event, List<ActionDTO> actions) {
         BodyType primary = event.primaryBodyType;
         BodyType secondary = event.secondaryBodyType;
 
-        // Ignore collisions with STATIC or DECO bodies
-        if (primary == BodyType.STATIC || primary == BodyType.DECO ||
-            secondary == BodyType.STATIC || secondary == BodyType.DECO) {
+        // Ignore collisions with DECORATOR bodies
+        if (primary == BodyType.DECORATOR || secondary == BodyType.DECORATOR) {
             return;
         }
 
-        // Check shooter immunity for PLAYER vs PROJECTILE
-        if ((primary == BodyType.PLAYER && secondary == BodyType.PROJECTILE) ||
-            (primary == BodyType.PROJECTILE && secondary == BodyType.PLAYER)) {
-            
-            boolean isImmuneCollision = 
-                (primary == BodyType.PLAYER && secondary == BodyType.PROJECTILE &&
-                 event.secondaryShooterId != null && 
-                 event.secondaryShooterId.equals(event.entityIdPrimaryBody) &&
-                 event.secondaryImmuneToShooter) ||
-                (primary == BodyType.PROJECTILE && secondary == BodyType.PLAYER &&
-                 event.primaryShooterId != null && 
-                 event.primaryShooterId.equals(event.entityIdSecondaryBody) &&
-                 event.primaryImmuneToShooter);
-            
-            if (isImmuneCollision) {
-                return; // Projectile passes through its shooter during immunity period
-            }
+        // Check shooter immunity for PLAYER vs PROJECTILE and viceversa
+        if (event.shooterInmunity) {
+            return; // Projectile passes through its shooter during immunity period
         }
 
         // Default: Both die
-        actions.add(new ActionDTO(event.entityIdPrimaryBody,
+        actions.add(new ActionDTO(event.entityIdPrimaryBody, event.primaryBodyType,
                 ActionType.DIE, ActionExecutor.MODEL, ActionPriority.HIGH));
-        actions.add(new ActionDTO(event.entityIdSecondaryBody,
+        actions.add(new ActionDTO(event.entityIdSecondaryBody, event.secondaryBodyType,
                 ActionType.DIE, ActionExecutor.MODEL, ActionPriority.HIGH));
     }
 }

@@ -125,7 +125,7 @@ public class Renderer extends Canvas implements Runnable {
 
     private Dimension viewDimension;
     private View view;
-    private int delayInMillis = 0;
+    private int delayInMillis = 10;
     private long currentFrame = 0;
     private Thread thread;
 
@@ -283,8 +283,8 @@ public class Renderer extends Canvas implements Runnable {
         this.systemHUD.draw(g,
                 this.fps,
                 String.format("%.0f", this.renderTimeInMs) + " ms",
-                this.imagesCache.size(),
-                String.format("%.0f", this.imagesCache.getHitsPercentage()) + "%",
+                this.imagesCache==null? 0 : this.imagesCache.size(),
+                String.format("%.0f", this.imagesCache==null? 0 : this.imagesCache.getHitsPercentage()) + "%",
                 this.view.getEntityAliveQuantity(),
                 this.view.getEntityDeadQuantity());
 
@@ -318,9 +318,8 @@ public class Renderer extends Canvas implements Runnable {
 
                 gg.setComposite(AlphaComposite.SrcOver); // With transparency
                 this.drawStaticRenderables(gg);
-                this.drawHUDs(gg);
-
                 this.drawDynamicRenderable(gg);
+                this.drawHUDs(gg);
 
             } finally {
                 gg.dispose();
