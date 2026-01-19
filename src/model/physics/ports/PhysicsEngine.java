@@ -35,4 +35,6 @@ public interface PhysicsEngine {
         public void setPhysicsValues(PhysicsValuesDTO phyValues);
 
         public void setThrust(double thrust);
+
+        public void stopPushing();
 }

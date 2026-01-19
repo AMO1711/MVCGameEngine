@@ -31,6 +31,11 @@ public class NullPhysicsEngine extends AbstractPhysicsEngine {
     }
 
     @Override
+    public boolean isThrusting() {
+        return false;
+    }
+
+    @Override
     public void reboundInEast(PhysicsValuesDTO newPhyVals, PhysicsValuesDTO oldPhyVals,
             double worldDim_x, double worldDim_y) {
     }
@@ -60,5 +65,9 @@ public class NullPhysicsEngine extends AbstractPhysicsEngine {
 
     @Override
     public void setThrust(double thrust) {
+    }
+
+    @Override
+    public void stopPushing() {
     }
 }
