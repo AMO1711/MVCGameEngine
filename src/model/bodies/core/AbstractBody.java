@@ -4,11 +4,12 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.UUID;
 
+import events.domain.ports.BodyRefDTO;
+import events.domain.ports.DomainEventDTO;
 import model.bodies.ports.Body;
 import model.bodies.ports.BodyEventProcessor;
 import model.bodies.ports.BodyState;
 import model.bodies.ports.BodyType;
-import model.emitter.implementations.BasicEmitter;
 import model.physics.ports.PhysicsEngine;
 import model.physics.ports.PhysicsValuesDTO;
 import model.spatial.core.SpatialGrid;
@@ -39,6 +40,10 @@ public abstract class AbstractBody implements Body {
     private final ArrayList<String> scratchCandidateIds;
     private final HashSet<String> scratchSeenCandidateIds = new HashSet<>(64);
 
+    // Buffers and precomputed DTOs for events processing
+    private final BodyRefDTO bodyRef;
+    private final ArrayList<DomainEventDTO> scratchEvents = new ArrayList<>(32);
+
     /**
      * CONSTRUCTORS
      */
@@ -65,6 +70,7 @@ public abstract class AbstractBody implements Body {
 
         this.entityId = UUID.randomUUID().toString();
         this.state = BodyState.STARTING;
+        this.bodyRef = new BodyRefDTO(this.entityId, this.bodyType);
     }
 
     @Override

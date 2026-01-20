@@ -2,11 +2,10 @@ package model.bodies.implementations;
 
 import java.util.List;
 
+import events.domain.ports.BodyToEmitDTO;
 import model.bodies.ports.BodyEventProcessor;
 import model.bodies.ports.BodyType;
 import model.bodies.ports.PlayerDTO;
-import model.emitter.implementations.BasicEmitter;
-import model.emitter.ports.BodyEmittedDTO;
 import model.physics.ports.PhysicsEngine;
 import model.physics.ports.PhysicsValuesDTO;
 import model.spatial.core.SpatialGrid;
@@ -123,7 +122,7 @@ public class PlayerBody extends DynamicBody {
         return energye;
     }
 
-    public BodyEmittedDTO getProjectileConfig() {
+    public BodyToEmitDTO getProjectileConfig() {
         if (this.currentWeaponIndex < 0 || this.currentWeaponIndex >= this.weapons.size()) {
             return null;
         }

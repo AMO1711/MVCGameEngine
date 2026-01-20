@@ -1,8 +1,8 @@
 package model.ports;
 
+import model.bodies.implementations.ProjectileBody;
 import model.bodies.ports.Body;
 import model.bodies.ports.BodyType;
-import model.bodies.implementations.ProjectileBody;
 
 public class Event {
 

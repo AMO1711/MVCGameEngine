@@ -4,14 +4,17 @@ import static java.lang.System.nanoTime;
 import java.util.ArrayList;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+
+import events.domain.ports.BodyToEmitDTO;
+
 import java.awt.Dimension;
 import java.util.HashSet;
 import java.util.List;
 
+import model.physics.ports.PhysicsValuesDTO;
 import model.bodies.core.AbstractBody;
 import model.bodies.implementations.DynamicBody;
 import model.bodies.implementations.PlayerBody;
-import model.physics.ports.PhysicsValuesDTO;
 import model.bodies.ports.Body;
 import model.bodies.ports.BodyDTO;
 import model.bodies.ports.BodyEventProcessor;
@@ -21,9 +24,8 @@ import model.bodies.ports.BodyType;
 import model.bodies.ports.PhysicsBody;
 import model.bodies.ports.PlayerDTO;
 import model.emitter.implementations.BasicEmitter;
-import model.emitter.ports.BodyEmittedDTO;
 import model.emitter.ports.Emitter;
-import model.emitter.ports.EmitterDto;
+import model.emitter.ports.EmitterConfigDto;
 import model.ports.ActionDTO;
 import model.ports.ActionExecutor;
 import model.ports.ActionPriority;
@@ -269,7 +271,7 @@ public class Model implements BodyEventProcessor {
         pBody.addWeapon(weapon);
     }
 
-    public void addEmitterToPlayer(String playerId, EmitterDto emitterConfig) {
+    public void addEmitterToPlayer(String playerId, EmitterConfigDto emitterConfig) {
         PlayerBody pBody = (PlayerBody) this.dynamicBodies.get(playerId);
         if (pBody == null) {
             return; // ========= Player not found =========>
@@ -279,7 +281,7 @@ public class Model implements BodyEventProcessor {
         pBody.setEmitter(emitter);
     }
 
-    public void addTrailEmitter(String playerId, EmitterDto trailConfig) {
+    public void addTrailEmitter(String playerId, EmitterConfigDto trailConfig) {
         PlayerBody pBody = (PlayerBody) this.dynamicBodies.get(playerId);
         if (pBody == null) {
             return; // ========= Player not found =========>
@@ -622,9 +624,11 @@ public class Model implements BodyEventProcessor {
                 bodyType == BodyType.DYNAMIC) {
             DynamicBody pBody = (DynamicBody) checkBody;
 
-            if (pBody.mustEmitNow(newPhyValues)) {
+            double dtSeconds = (newPhyValues.timeStamp - oldPhyValues.timeStamp) / 1_000_000_000.0;
+            if (pBody.mustEmitNow(dtSeconds)) {
                 if (events == null)
                     events = new ArrayList<>(2);
+
                 events.add(new Event(checkBody, null, EventType.MUST_EMIT));
             }
         }
@@ -775,7 +779,8 @@ public class Model implements BodyEventProcessor {
                 if (!(body instanceof Emitter)) {
                     throw new IllegalArgumentException("Body is not an emitter and cannot spawn bodies!");
                 }
-                this.spawnBody(body, ((Emitter) body).getBodyEmittedConfig(), newPhyValues);
+
+                this.spawnBody(body, ((Emitter) body).getBodyToEmitConfig(), newPhyValues);
             default:
         }
     }
@@ -833,7 +838,7 @@ public class Model implements BodyEventProcessor {
     private boolean isCollidable(Body body) {
         return body != null
                 && body.getState() != BodyState.DEAD
-                && (body.getSpatialGrid()!= null);
+                && (body.getSpatialGrid() != null);
     }
 
     private boolean isProcessable(Body entity) {
@@ -842,7 +847,7 @@ public class Model implements BodyEventProcessor {
                 && entity.getState() == BodyState.ALIVE;
     }
 
-    private void spawnBody(Body body, BodyEmittedDTO bodyConfig, PhysicsValuesDTO newPhyValues) {
+    private void spawnBody(Body body, BodyToEmitDTO bodyConfig, PhysicsValuesDTO newPhyValues) {
         if (body == null) {
             throw new IllegalArgumentException("Spawner body is null");
         }
@@ -861,11 +866,11 @@ public class Model implements BodyEventProcessor {
         double directorY = Math.sin(angleRad);
 
         // Apply Offsets
-        double posX = newPhyValues.posX + directorX * bodyConfig.xOffset;
-        double posY = newPhyValues.posY + directorY * bodyConfig.xOffset;
+        double posX = newPhyValues.posX + directorX * bodyConfig.forwardOffset;
+        double posY = newPhyValues.posY + directorY * bodyConfig.forwardOffset;
 
-        posX = posX - directorY * bodyConfig.yOffset;
-        posY = posY + directorX * bodyConfig.yOffset;
+        posX = posX - directorY * bodyConfig.sideOffset;
+        posY = posY + directorX * bodyConfig.sideOffset;
         // Body initial speed
         double speedX = bodyConfig.speed * directorX;
         double speedY = bodyConfig.speed * directorY;
@@ -885,6 +890,7 @@ public class Model implements BodyEventProcessor {
         double maxLifeTime = bodyConfig.maxLifeTime;
         maxLifeTime = maxLifeTime * (0.5 + 2 * Math.random());
 
+        System.out.println("Spawn body");
         String entityId = this.addBody(bodyConfig.type,
                 size, posX, posY, speedX, speedY, accX, accY,
                 angleDeg, 0, 0,
