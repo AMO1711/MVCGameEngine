@@ -7,7 +7,6 @@ import assets.core.AssetCatalog;
 import assets.implementations.ProjectAssets;
 import assets.ports.AssetInfoDTO;
 import assets.ports.AssetType;
-import model.bodies.ports.Body;
 import model.bodies.ports.BodyType;
 import world.ports.WorldDefBackgroundDTO;
 import world.ports.WorldDefEmitterDTO;

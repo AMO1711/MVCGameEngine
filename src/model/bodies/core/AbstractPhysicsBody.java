@@ -5,7 +5,6 @@ import model.bodies.ports.BodyEventProcessor;
 import model.bodies.ports.BodyType;
 import model.bodies.ports.PhysicsBody;
 import model.emitter.implementations.BasicEmitter;
-import model.emitter.ports.Emitter;
 import model.emitter.ports.EmitterConfigDto;
 import model.physics.ports.PhysicsEngine;
 import model.physics.ports.PhysicsValuesDTO;

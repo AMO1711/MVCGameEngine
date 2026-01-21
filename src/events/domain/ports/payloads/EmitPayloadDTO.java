@@ -1,5 +1,7 @@
-package events.domain.ports;
+package events.domain.ports.payloads;
 
+import events.domain.ports.BodyRefDTO;
+import events.domain.ports.BodyToEmitDTO;
 
 public final class EmitPayloadDTO implements DomainEventPayload {
 

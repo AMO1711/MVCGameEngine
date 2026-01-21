@@ -71,8 +71,8 @@ public class BodyToEmitDTO {
             throw new IllegalArgumentException("assetId required");
         if (!Double.isFinite(size) || size <= 0)
             throw new IllegalArgumentException("size must be finite and > 0");
-        if (!Double.isFinite(bodyMass) || bodyMass <= 0)
-            throw new IllegalArgumentException("bodyMass must be finite and > 0");
+        if (!Double.isFinite(bodyMass) || bodyMass < 0)
+            throw new IllegalArgumentException("bodyMass must be finite and >= 0");
         if (!Double.isFinite(maxLifeTime) || (maxLifeTime <= 0 && maxLifeTime != -1D))
             throw new IllegalArgumentException("maxLifeTime must be -1 or finite and > 0");
 
