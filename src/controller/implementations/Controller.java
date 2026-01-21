@@ -398,7 +398,8 @@ public class Controller implements WorldEvolver, WorldInitializer, DomainEventPr
                         e.primaryBodyRef.type(),
                         ActionType.DIE,
                         ActionExecutor.MODEL,
-                        ActionPriority.HIGH));
+                        ActionPriority.HIGH,
+                        event));
 
             case LifeOver e ->
                 actions.add(new ActionDTO(
@@ -406,17 +407,17 @@ public class Controller implements WorldEvolver, WorldInitializer, DomainEventPr
                         e.primaryBodyRef.type(),
                         ActionType.DIE,
                         ActionExecutor.MODEL,
-                        ActionPriority.HIGH));
+                        ActionPriority.HIGH,
+                        event));
 
             case EmitEvent e -> {
                 if (e.type == DomainEventType.EMIT_REQUESTED) {
-                    System.out.println("Controller.applyGameRules: Emit Event");
                     actions.add(new ActionDTO(
                             e.primaryBodyRef.id(),
                             e.primaryBodyRef.type(),
                             ActionType.SPAWN_BODY,
                             ActionExecutor.MODEL,
-                            ActionPriority.LOW));
+                            ActionPriority.LOW, event));
 
                 } else {
                     actions.add(new ActionDTO(
@@ -424,7 +425,7 @@ public class Controller implements WorldEvolver, WorldInitializer, DomainEventPr
                             e.primaryBodyRef.type(),
                             ActionType.SPAWN_PROJECTILE,
                             ActionExecutor.MODEL,
-                            ActionPriority.LOW));
+                            ActionPriority.LOW, event));
                 }
             }
 
@@ -449,9 +450,9 @@ public class Controller implements WorldEvolver, WorldInitializer, DomainEventPr
 
         // Default: Both die
         actions.add(new ActionDTO(event.primaryBodyRef.id(), event.primaryBodyRef.type(),
-                ActionType.DIE, ActionExecutor.MODEL, ActionPriority.HIGH));
+                ActionType.DIE, ActionExecutor.MODEL, ActionPriority.HIGH, event));
         actions.add(new ActionDTO(event.secondaryBodyRef.id(), event.secondaryBodyRef.type(),
-                ActionType.DIE, ActionExecutor.MODEL, ActionPriority.HIGH));
+                ActionType.DIE, ActionExecutor.MODEL, ActionPriority.HIGH, event));
     }
 
 }

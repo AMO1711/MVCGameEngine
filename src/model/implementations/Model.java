@@ -625,7 +625,7 @@ public class Model implements BodyEventProcessor {
             // MOVE is the default action to commit physics values when no other
             // PHYSICS_BODY action (rebound, teleport, etc.) is already doing it
             actions.add(new ActionDTO(body.getEntityId(), body.getBodyType(),
-                    ActionType.MOVE, ActionExecutor.PHYSICS_BODY, ActionPriority.NORMAL));
+                    ActionType.MOVE, ActionExecutor.PHYSICS_BODY, ActionPriority.NORMAL, null));
 
     }
 
@@ -708,7 +708,7 @@ public class Model implements BodyEventProcessor {
                     break;
 
                 case MODEL:
-                    this.doModelAction(action.type, targetBody, newPhyValues, oldPhyValues);
+                    this.doModelAction(action, targetBody, newPhyValues, oldPhyValues);
                     break;
 
                 default:
@@ -778,19 +778,27 @@ public class Model implements BodyEventProcessor {
         }
     }
 
-    private void doModelAction(ActionType action, AbstractBody body,
+    private void doModelAction(ActionDTO action, AbstractBody body,
             PhysicsValuesDTO newPhyValues, PhysicsValuesDTO oldPhyValues) {
 
         if (body == null) {
-            return;
+            throw new IllegalArgumentException("doModelAction() -> body is null");
+        }
+        if (action == null) {
+            throw new IllegalArgumentException("doModelAction() -> action is null");
         }
 
-        switch (action) {
+        switch (action.type) {
+            case SPAWN_BODY:
             case SPAWN_PROJECTILE:
-                if (!(body instanceof PlayerBody)) {
-                    throw new IllegalArgumentException("Body is not a player and cannot spawn projectiles!");
-                }
-                this.spawnBody(body, ((PlayerBody) body).getProjectileConfig(), newPhyValues);
+                if (!(action.relatedEvent instanceof EmitEvent emitEvent))
+                    break;
+
+                EmitPayloadDTO payload = emitEvent.payload;
+                if (payload == null || payload.bodyConfig == null)
+                    break;
+
+                this.spawnBody(body, payload.bodyConfig, newPhyValues);
                 break;
 
             case DIE:
@@ -800,14 +808,9 @@ public class Model implements BodyEventProcessor {
             case EXPLODE_IN_FRAGMENTS:
                 break;
 
-            case SPAWN_BODY:
-                if (!(body instanceof Emitter)) {
-                    throw new IllegalArgumentException("Body is not an emitter and cannot spawn bodies!");
-                }
-
-                this.spawnBody(body, ((Emitter) body).getBodyToEmitConfig(), newPhyValues);
             default:
         }
+
     }
 
     private ArrayList<BodyDTO> getBodiesData(Map<String, AbstractBody> bodies) {
@@ -915,7 +918,6 @@ public class Model implements BodyEventProcessor {
         double maxLifeTime = bodyConfig.maxLifeTime;
         maxLifeTime = maxLifeTime * (0.5 + 2 * Math.random());
 
-        System.out.println("Spawn body");
         String entityId = this.addBody(bodyConfig.type,
                 size, posX, posY, speedX, speedY, accX, accY,
                 angleDeg, 0, 0,
