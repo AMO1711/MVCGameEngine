@@ -311,7 +311,7 @@ public class View extends JFrame implements KeyListener {
                 break;
 
             case KeyEvent.VK_1:
-                this.controller.selectNextWeapon(this.localPlayerId);
+                this.controller.playerSelectNextWeapon(this.localPlayerId);
                 break;
         }
     }

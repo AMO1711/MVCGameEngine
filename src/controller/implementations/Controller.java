@@ -142,7 +142,7 @@ public class Controller implements WorldEvolver, WorldInitializer, DomainEventPr
         this.setView(view);
     }
 
-    //// PUBLICS
+    // *** PUBLICS ***
 
     public void activate() {
         if (this.worldDimension == null) {
@@ -163,6 +163,7 @@ public class Controller implements WorldEvolver, WorldInitializer, DomainEventPr
         this.engineState = EngineState.ALIVE;
     }
 
+    // region Engine
     public void enginePause() {
         this.engineState = EngineState.PAUSED;
     }
@@ -170,7 +171,9 @@ public class Controller implements WorldEvolver, WorldInitializer, DomainEventPr
     public void engineStop() {
         this.engineState = EngineState.STOPPED;
     }
+    // endregion Engine
 
+    // region Getters
     public EngineState getEngineState() {
         return this.engineState;
     }
@@ -212,7 +215,9 @@ public class Controller implements WorldEvolver, WorldInitializer, DomainEventPr
 
                 this.model.getSpatialGridStatistics());
     }
+    // endregion Getters
 
+    // region Player commands
     public void playerFire(String playerId) {
         this.model.playerFire(playerId);
     }
@@ -241,10 +246,12 @@ public class Controller implements WorldEvolver, WorldInitializer, DomainEventPr
         this.model.playerRotateRightOn(playerId);
     }
 
-    public void selectNextWeapon(String playerId) {
-        this.model.selectNextWeapon(playerId);
+    public void playerSelectNextWeapon(String playerId) {
+        this.model.playerSelectNextWeapon(playerId);
     }
+    // endregion Player commands
 
+    // region setters
     public void setLocalPlayer(String playerId) {
         // System.out.println("Controller.setLocalPlayer");
         this.view.setLocalPlayer(playerId);
@@ -263,11 +270,12 @@ public class Controller implements WorldEvolver, WorldInitializer, DomainEventPr
     public void setWorldDimension(int width, int height) {
         this.worldDimension = new Dimension(width, height);
     }
+    // endregion setters
 
-    //// INTERFACE IMPLEMENTATIONS
+    // *** INTERFACE IMPLEMENTATIONS ***
 
-    // DomainEventProcessor
-    @Override // DomainEventProcessor
+    // region DomainEventProcessor
+    @Override
     public void decideActions(List<DomainEvent> domainEvents, List<ActionDTO> actions) {
         if (domainEvents != null) {
             for (DomainEvent event : domainEvents) {
@@ -276,34 +284,35 @@ public class Controller implements WorldEvolver, WorldInitializer, DomainEventPr
         }
     }
 
-    @Override // DomainEventProcessor
+    @Override
     public void notifyDynamicIsDead(String entityId) {
         this.view.notifyDynamicIsDead(entityId);
     }
 
-    @Override // DomainEventProcessor
+    @Override
     public void notifyPlayerIsDead(String entityId) {
         this.view.notifyPlayerIsDead(entityId);
     }
 
-    @Override // DomainEventProcessor
+    @Override
     public void notifyNewDynamic(String entityId, String assetId) {
         this.view.addDynamicRenderable(entityId, assetId);
     }
 
-    @Override // DomainEventProcessor
+    @Override
     public void notifyNewStatic(String entityId, String assetId) {
         this.view.addStaticRenderable(entityId, assetId);
 
         this.updateStaticRenderablesView();
     }
 
-    @Override // DomainEventProcessor
+    @Override
     public void notifyStaticIsDead(String entityId) {
         this.updateStaticRenderablesView();
     }
+    // endregion DomainEventProcessor
 
-    // WorldEvolver
+    // region WorldEvolver
     @Override // WorldEvolver
     public void addDynamicBody(String assetId, double size, double posX, double posY,
             double speedX, double speedY, double accX, double accY,
@@ -347,9 +356,10 @@ public class Controller implements WorldEvolver, WorldInitializer, DomainEventPr
 
         this.model.addWeaponToPlayer(playerId, weapon);
     }
+    // endregion WorldEvolver
 
-    // WorldInitializer
-    @Override // WorldInitializer
+    // region WorldInitializer
+    @Override
     public void addDecorator(String assetId, double size, double posX, double posY, double angle) {
         String entityId = this.model.addDecorator(size, posX, posY, angle, -1L);
 
@@ -361,7 +371,7 @@ public class Controller implements WorldEvolver, WorldInitializer, DomainEventPr
         this.updateStaticRenderablesView();
     }
 
-    @Override // WorldInitializer
+    @Override
     public void addStaticBody(String assetId, double size, double posX, double posY, double angle) {
 
         String entityId = this.model.addDecorator(size, posX, posY, angle, -1L);
@@ -373,12 +383,13 @@ public class Controller implements WorldEvolver, WorldInitializer, DomainEventPr
         this.updateStaticRenderablesView();
     }
 
-    @Override // WorldInitializer
+    @Override
     public void loadAssets(AssetCatalog assets) {
         this.view.loadAssets(assets);
     }
+    // endregion WorldInitializer
 
-    //// PRIVATE
+    // *** PRIVATE ***
 
     private void applyGameRules(DomainEvent event, List<ActionDTO> actions) {
         switch (event) {

@@ -460,6 +460,15 @@ public class Model implements BodyEventProcessor {
         }
     }
 
+    public void playerSelectNextWeapon(String playerId) {
+        PlayerBody pBody = (PlayerBody) this.dynamicBodies.get(playerId);
+        if (pBody == null) {
+            return;
+        }
+
+        pBody.selectNextWeapon();
+    }
+
     @Override // BodyEventProcessor
     public void processBodyEvents(AbstractBody body,
             PhysicsValuesDTO newPhyValues, PhysicsValuesDTO oldPhyValues) {
@@ -493,15 +502,6 @@ public class Model implements BodyEventProcessor {
                 body.setState(BodyState.ALIVE);
             }
         }
-    }
-
-    public void selectNextWeapon(String playerId) {
-        PlayerBody pBody = (PlayerBody) this.dynamicBodies.get(playerId);
-        if (pBody == null) {
-            return;
-        }
-
-        pBody.selectNextWeapon();
     }
 
     public void setDomainEventProcessor(DomainEventProcessor domainEventProcessor) {

@@ -99,7 +99,7 @@ public class ImageCache {
             return null;  // =================================================>
         }
 
-        BufferedImage image = gc.createCompatibleImage(size, size, Transparency.BITMASK);
+        BufferedImage image = gc.createCompatibleImage(size, size, Transparency.TRANSLUCENT);
         Graphics2D g2 = image.createGraphics();
 
         // Poner aquí la imagen que toca
