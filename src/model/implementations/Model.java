@@ -399,7 +399,7 @@ public class Model implements BodyEventProcessor {
 
             case DECORATOR:
                 this.decorators.remove(body.getEntityId());
-                this.domainEventProcessor.notiyStaticIsDead(body.getEntityId());
+                this.domainEventProcessor.notifyStaticIsDead(body.getEntityId());
                 break;
 
             case GRAVITY:

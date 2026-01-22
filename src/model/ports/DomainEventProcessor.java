@@ -17,6 +17,6 @@ public interface DomainEventProcessor {
 
     public void notifyPlayerIsDead(String entityId);
 
-    public void notiyStaticIsDead(String entityId);
+    public void notifyStaticIsDead(String entityId);
 
 }

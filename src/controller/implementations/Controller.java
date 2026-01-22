@@ -230,7 +230,7 @@ public class Controller implements WorldEvolver, WorldInitializer, DomainEventPr
     }
 
     public void playerRotateLeftOn(String playerId) {
-        model.playerRotateLeftOn(playerId);
+        this.model.playerRotateLeftOn(playerId);
     }
 
     public void playerRotateOff(String playerId) {
@@ -246,7 +246,7 @@ public class Controller implements WorldEvolver, WorldInitializer, DomainEventPr
     }
 
     public void setLocalPlayer(String playerId) {
-        System.out.println("Controller.setLocalPlayer");
+        // System.out.println("Controller.setLocalPlayer");
         this.view.setLocalPlayer(playerId);
     }
 
@@ -277,6 +277,11 @@ public class Controller implements WorldEvolver, WorldInitializer, DomainEventPr
     }
 
     @Override // DomainEventProcessor
+    public void notifyDynamicIsDead(String entityId) {
+        this.view.notifyDynamicIsDead(entityId);
+    }
+
+    @Override // DomainEventProcessor
     public void notifyPlayerIsDead(String entityId) {
         this.view.notifyPlayerIsDead(entityId);
     }
@@ -290,21 +295,12 @@ public class Controller implements WorldEvolver, WorldInitializer, DomainEventPr
     public void notifyNewStatic(String entityId, String assetId) {
         this.view.addStaticRenderable(entityId, assetId);
 
-        ArrayList<BodyDTO> bodiesData = this.model.getStaticsData();
-        ArrayList<RenderDTO> renderablesData = RenderableMapper.fromBodyDTO(bodiesData);
-        this.view.updateStaticRenderables(renderablesData);
+        this.updateStaticRenderablesView();
     }
 
     @Override // DomainEventProcessor
-    public void notifyDynamicIsDead(String entityId) {
-        this.view.notifyDynamicIsDead(entityId);
-    }
-
-    @Override // DomainEventProcessor
-    public void notiyStaticIsDead(String entityId) {
-        ArrayList<BodyDTO> bodiesData = this.model.getStaticsData();
-        ArrayList<RenderDTO> renderablesData = RenderableMapper.fromBodyDTO(bodiesData);
-        this.view.updateStaticRenderables(renderablesData);
+    public void notifyStaticIsDead(String entityId) {
+        this.updateStaticRenderablesView();
     }
 
     // WorldEvolver
@@ -362,25 +358,19 @@ public class Controller implements WorldEvolver, WorldInitializer, DomainEventPr
         }
 
         this.view.addStaticRenderable(entityId, assetId);
-
-        ArrayList<BodyDTO> bodiesData = this.model.getStaticsData();
-        ArrayList<RenderDTO> renderablesData = RenderableMapper.fromBodyDTO(bodiesData);
-        this.view.updateStaticRenderables(renderablesData);
+        this.updateStaticRenderablesView();
     }
 
     @Override // WorldInitializer
     public void addStaticBody(String assetId, double size, double posX, double posY, double angle) {
 
         String entityId = this.model.addDecorator(size, posX, posY, angle, -1L);
-        ArrayList<BodyDTO> bodiesData = this.model.getStaticsData();
-        ArrayList<RenderDTO> renderablesData = RenderableMapper.fromBodyDTO(bodiesData);
-
         if (entityId == null || entityId.isEmpty()) {
             return; // ======= Max entity quantity reached =======>>
         }
-        this.view.addStaticRenderable(entityId, assetId);
 
-        this.view.updateStaticRenderables(renderablesData);
+        this.view.addStaticRenderable(entityId, assetId);
+        this.updateStaticRenderablesView();
     }
 
     @Override // WorldInitializer
@@ -476,4 +466,9 @@ public class Controller implements WorldEvolver, WorldInitializer, DomainEventPr
                 ActionType.DIE, ActionExecutor.MODEL, ActionPriority.HIGH, event));
     }
 
+    private void updateStaticRenderablesView() {
+        ArrayList<BodyDTO> bodiesData = this.model.getStaticsData();
+        ArrayList<RenderDTO> renderablesData = RenderableMapper.fromBodyDTO(bodiesData);
+        this.view.updateStaticRenderables(renderablesData);
+    }
 }
