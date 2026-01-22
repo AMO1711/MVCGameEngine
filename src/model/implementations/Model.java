@@ -279,7 +279,7 @@ public class Model implements BodyEventProcessor {
         pBody.setEmitter(emitter);
     }
 
-    public void boydEquipTrail(String playerId, EmitterConfigDto trailConfig) {
+    public void bodyEquipTrail(String playerId, EmitterConfigDto trailConfig) {
         PlayerBody pBody = (PlayerBody) this.dynamicBodies.get(playerId);
         if (pBody == null) {
             return; // ========= Player not found =========>
@@ -535,7 +535,7 @@ public class Model implements BodyEventProcessor {
 
     // *** PRIVATE ***
 
-    // region CheckCollision
+    // region Check methodes (check***)
     private void checkCollisions(AbstractBody checkBody, PhysicsValuesDTO newPhyValues,
             List<DomainEvent> domainEvents) {
         if (checkBody == null)
