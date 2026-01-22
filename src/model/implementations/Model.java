@@ -51,75 +51,108 @@ import model.weapons.ports.WeaponFactory;
  * -----
  *
  * Core simulation layer of the MVC triad. The Model owns and manages all
- * entities (dynamic bodies, static bodies, players, decorators) and
- * orchestrates
- * their lifecycle, physics updates, and interactions.
+ * entities (dynamic bodies, gravity bodies, decorators) and orchestrates
+ * their lifecycle, physics updates, collision detection, and domain event
+ * processing.
  *
  * Responsibilities
  * ----------------
  * - Entity management: create, activate, and track all simulation entities
- * - Provide thread-safe snapshot data (EntityInfoDTO / DBodyInfoDTO) to the
- * Controller for rendering
+ * - Provide thread-safe snapshot data (BodyDTO) to the Controller for rendering
  * - Delegate physics updates to individual entity threads
- * - Maintain entity collections with appropriate concurrency strategies
+ * - Detect domain events (collisions, limits, emissions, life over)
+ * - Decide and execute actions based on domain events
+ * - Manage spatial partitioning for efficient collision detection
  * - Enforce world boundaries and entity limits
  *
  * Entity types
  * ------------
  * The Model manages several distinct entity categories:
  *
- * 1) Dynamic Bodies (dBodies)
- * - Entities with active physics simulation (ships, asteroids, projectiles)
+ * 1) Dynamic Bodies (dynamicBodies)
+ * - Entities with active physics simulation
+ * - Includes: DYNAMIC, PLAYER, and PROJECTILE body types
  * - Each runs on its own thread, continuously updating position/velocity
+ * - Players support thrust, rotation, firing commands, and weapon/emitter
+ * equipment
+ * - Projectiles track shooter ID and immunity period
  * - Stored in ConcurrentHashMap for thread-safe access
  *
- * 2) Player Bodies (pBodies)
- * - Special dynamic bodies with player controls and weapons
- * - Keyed by player ID string
- * - Support thrust, rotation, and firing commands
- *
- * 3) Static Bodies (sBodies)
- * - Non-moving entities with fixed positions (obstacles, platforms)
- * - No physics thread
- * - Push-updated to View when created/modified
- *
- * 4) Gravity Bodies (gravityBodies)
+ * 2) Gravity Bodies (gravityBodies)
  * - Static bodies that exert gravitational influence
+ * - No physics thread
  * - Used for planetary bodies or black holes
  *
- * 5) Decorators (decorators)
- * - Visual-only entities with no gameplay impact (background elements)
- * - Push-updated to View when created/modified
+ * 3) Decorators (decorators)
+ * - Visual-only entities with no gameplay impact (background elements,
+ * particles)
+ * - No physics thread
+ * - Support limited lifetime
  *
  * Lifecycle
  * ---------
  * Construction:
  * - Model is created in STARTING state
+ * - Requires worldWidth, worldHeight, and maxDynamicBodies parameters
  * - Entity maps are pre-allocated with expected capacities
+ * - SpatialGrid is initialized with cell size 48 and max entities per cell 24
  *
  * Activation (activate()):
- * - Validates that Controller, world dimensions, and max entities are set
+ * - Validates that DomainEventProcessor is set
  * - Transitions to ALIVE state
  * - After activation, entities can be created and activated
  *
  * Snapshot generation
  * -------------------
- * The Model provides snapshot methods that return immutable DTOs:
- * - getDBodyInfo(): returns List<DBodyInfoDTO> for all active dynamic bodies
- * - getSBodyInfo(): returns List<EntityInfoDTO> for all active static bodies
- * - getDecoratorInfo(): returns List<EntityInfoDTO> for all decorators
+ * The Model provides snapshot methods that return DTO lists:
+ * - getDynamicsData(): returns ArrayList<BodyDTO> for all dynamic bodies
+ * - getStaticsData(): returns ArrayList<BodyDTO> for decorators + gravity
+ * bodies
+ * - getPlayerData(playerId): returns PlayerDTO for specific player
  *
  * These snapshots are pulled by the Controller and pushed to the View/Renderer.
  * The pattern ensures clean separation: rendering never accesses mutable
  * entity state directly.
  *
+ * Event-Action Pipeline
+ * ---------------------
+ * The Model implements BodyEventProcessor interface to handle physics updates:
+ *
+ * 1) Event Detection (detectEvents):
+ * - Limit events: when bodies reach world boundaries
+ * - Collision events: detected via SpatialGrid broad-phase + circle
+ * intersection
+ * - Emission events: for particle systems and trails
+ * - Fire events: weapon discharge from players
+ * - Life over events: when maxLifeTime is reached
+ *
+ * 2) Action Decision (decideActions):
+ * - Domain events are forwarded to DomainEventProcessor
+ * - DomainEventProcessor returns ActionDTO list
+ * - Movement action is added by default (unless body rebounded)
+ *
+ * 3) Action Execution (doActions):
+ * - Actions are sorted by priority
+ * - BODY executor: movement and rebounds delegated to entity
+ * - MODEL executor: spawning, projectile emission, death handling
+ *
+ * Collision Detection
+ * -------------------
+ * - SpatialGrid provides O(1) broad-phase collision detection
+ * - Only nearby entities are tested for collision
+ * - Circle-circle intersection test for precise collision
+ * - Projectile immunity system prevents self-collision after firing
+ * - Collision deduplication via symmetry check (A-B = B-A)
+ *
  * Concurrency strategy
  * --------------------
  * - All entity maps use ConcurrentHashMap for thread-safe access
  * - Individual entities manage their own thread synchronization
+ * - Body state machine prevents concurrent event processing (HANDS_OFF state)
  * - Model state transitions are protected by volatile fields
  * - Snapshot methods create independent DTO lists to avoid concurrent
  * modification during rendering
+ * - Scratch buffers reduce allocation pressure during snapshot generation
  *
  * Design goals
  * ------------
@@ -127,6 +160,8 @@ import model.weapons.ports.WeaponFactory;
  * - Provide deterministic, thread-safe entity management
  * - Support high entity counts (up to MAX_ENTITIES = 5000)
  * - Enable efficient parallel physics updates via per-entity threads
+ * - Minimize garbage collection via object pooling (scratch buffers)
+ * - Spatial partitioning for O(n) collision detection instead of O(n²)
  */
 
 public class Model implements BodyEventProcessor {
