@@ -103,7 +103,7 @@ public class PlayerBody extends DynamicBody {
 
     public PlayerDTO getData() {
         PlayerDTO playerData = new PlayerDTO(
-                this.getEntityId(),
+                this.getBodyId(),
                 "",
                 this.damage,
                 this.energye,

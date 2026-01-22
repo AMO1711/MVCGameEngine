@@ -58,7 +58,7 @@ public class ProjectileBody extends AbstractBody implements Runnable {
         super.activate();
 
         this.thread = new Thread(this);
-        this.thread.setName("Projectile " + this.getEntityId());
+        this.thread.setName("Projectile " + this.getBodyId());
         this.thread.setPriority(Thread.NORM_PRIORITY - 1);
         this.thread.start();
         this.setState(BodyState.ALIVE);
@@ -103,9 +103,9 @@ public class ProjectileBody extends AbstractBody implements Runnable {
     public void run() {
         PhysicsValuesDTO newPhyValues;
 
-        while (this.getState() != BodyState.DEAD) {
+        while (this.getBodyState() != BodyState.DEAD) {
 
-            if (this.getState() == BodyState.ALIVE) {
+            if (this.getBodyState() == BodyState.ALIVE) {
                 newPhyValues = this.getPhysicsEngine().calcNewPhysicsValues();
 
                 double r = newPhyValues.size * 0.5;
@@ -115,7 +115,7 @@ public class ProjectileBody extends AbstractBody implements Runnable {
                 double maxY = newPhyValues.posY + r;
 
                 this.getSpatialGrid().upsert(
-                        this.getEntityId(), minX, maxX, minY, maxY, this.getScratchIdxs());
+                        this.getBodyId(), minX, maxX, minY, maxY, this.getScratchIdxs());
 
                 this.processBodyEvents(this, newPhyValues, this.getPhysicsEngine().getPhysicsValues());
             }

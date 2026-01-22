@@ -70,7 +70,7 @@ public class DynamicBody extends AbstractBody implements Runnable {
         super.activate();
 
         Thread thread = new Thread(this);
-        thread.setName("Body " + this.getEntityId());
+        thread.setName("Body " + this.getBodyId());
         thread.setPriority(Thread.NORM_PRIORITY - 1);
         thread.start();
         this.setThread(thread);
@@ -89,9 +89,9 @@ public class DynamicBody extends AbstractBody implements Runnable {
     public void run() {
         PhysicsValuesDTO newPhyValues;
 
-        while (this.getState() != BodyState.DEAD) {
+        while (this.getBodyState() != BodyState.DEAD) {
 
-            if (this.getState() == BodyState.ALIVE) {
+            if (this.getBodyState() == BodyState.ALIVE) {
                 newPhyValues = this.getPhysicsEngine().calcNewPhysicsValues();
 
                 double r = newPhyValues.size * 0.5;
@@ -101,7 +101,7 @@ public class DynamicBody extends AbstractBody implements Runnable {
                 double maxY = newPhyValues.posY + r;
 
                 this.getSpatialGrid().upsert(
-                        this.getEntityId(), minX, maxX, minY, maxY, this.getScratchIdxs());
+                        this.getBodyId(), minX, maxX, minY, maxY, this.getScratchIdxs());
 
                 if (this.isThrusting()) {
                     this.registerBodyEmissionRequest();

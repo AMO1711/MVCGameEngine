@@ -9,14 +9,11 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import actions.ActionDTO;
 import events.domain.ports.BodyRefDTO;
-import events.domain.ports.BodyToEmitDTO;
 import events.domain.ports.eventtype.DomainEvent;
 import model.bodies.ports.BodyEventProcessor;
 import model.bodies.ports.BodyState;
 import model.bodies.ports.BodyType;
-import model.emitter.implementations.BasicEmitter;
 import model.emitter.ports.Emitter;
-import model.emitter.ports.EmitterConfigDto;
 import model.physics.ports.PhysicsEngine;
 import model.physics.ports.PhysicsValuesDTO;
 import model.spatial.core.SpatialGrid;
@@ -106,37 +103,65 @@ public abstract class AbstractBody {
         engine.setPhysicsValues(phyValues);
     }
 
-    // region getters
+    // region Emitter management (emitter***())
+    public String emitterEquip(Emitter emitter) {
+        if (emitter == null) {
+            throw new IllegalArgumentException("Emitter cannot be null");
+        }
+
+        this.emitters.put(emitter.getEmitterId(), emitter);
+        return emitter.getEmitterId();
+    }
+
+    public void emitterRemove(String emitterId) {
+        this.emitters.remove(emitterId);
+    }
+
+    public void emitterRequest(String emitterId) {
+        Emitter emitter = emitters.get(emitterId);
+        if (emitter != null) {
+            emitter.registerRequest();
+        }
+    }
+
+    public List<Emitter> checkActiveEmitters(double dtSeconds) {
+        List<Emitter> active = new ArrayList<>();
+
+        for (Emitter emitter : emitters.values()) {
+            if (emitter.mustEmitNow(dtSeconds)) {
+                active.add(emitter);
+            }
+        }
+
+        return active;
+    }
+    // endregion
+
+    // region Body getters (getBody***())
+    public String getBodyId() {
+        return this.entityId;
+    }
+
     public BodyRefDTO getBodyRef() {
         return this.bodyRef;
     }
 
-    public long getBornTime() {
+    public BodyState getBodyState() {
+        return this.state;
+    }
+
+    public BodyType getBodyType() {
+        return this.type;
+    }
+    // endregion
+
+    public Emitter getEmitter(String emitterId) {
+        return this.emitters.get(emitterId);
+    }
+
+    // region Life getters (getLife***())
+    public long getLifeBorn() {
         return this.bornTime;
-    }
-
-    public List<ActionDTO> getClearScratchActions() {
-        this.scratchActions.clear();
-        return this.scratchActions;
-    }
-
-    public ArrayList<String> getClearScratchCandidateIds() {
-        this.scratchCandidateIds.clear();
-        return scratchCandidateIds;
-    }
-
-    public HashSet<String> getClearScratchSeenCandidateIds() {
-        this.scratchSeenCandidateIds.clear();
-        return this.scratchSeenCandidateIds;
-    }
-
-    public ArrayList<DomainEvent> getClearScratchEvents() {
-        this.scratchEvents.clear();
-        return this.scratchEvents;
-    }
-
-    public String getEntityId() {
-        return this.entityId;
     }
 
     public double getLifeInSeconds() {
@@ -151,10 +176,12 @@ public abstract class AbstractBody {
         return Math.min(1D, this.getLifeInSeconds() / this.maxLifeInSeconds);
     }
 
-    public double getMaxLife() {
+    public double getLifeMax() {
         return this.maxLifeInSeconds;
     }
+    // endregion
 
+    // region Physics getters (getPhysics***())
     public PhysicsEngine getPhysicsEngine() {
         return this.phyEngine;
     }
@@ -162,25 +189,42 @@ public abstract class AbstractBody {
     public PhysicsValuesDTO getPhysicsValues() {
         return this.phyEngine.getPhysicsValues();
     }
+    // endregion
+
+    // region Scratch getters (getScratch***())
+    public List<ActionDTO> getScratchClearActions() {
+        this.scratchActions.clear();
+        return this.scratchActions;
+    }
+
+    public ArrayList<String> getScratchClearCandidateIds() {
+        this.scratchCandidateIds.clear();
+        return scratchCandidateIds;
+    }
+
+    public HashSet<String> getScratchClearSeenCandidateIds() {
+        this.scratchSeenCandidateIds.clear();
+        return this.scratchSeenCandidateIds;
+    }
+
+    public ArrayList<DomainEvent> getScratchClearEvents() {
+        this.scratchEvents.clear();
+        return this.scratchEvents;
+    }
 
     public int[] getScratchIdxs() {
         return this.scratchIdxs;
     }
+    // endregion
 
     public SpatialGrid getSpatialGrid() {
         return this.spatialGrid;
     }
 
-    public BodyState getState() {
-        return this.state;
+    public boolean hasEmitters() {
+        return !this.emitters.isEmpty();
     }
 
-    public BodyType getType() {
-        return this.type;
-    }
-    // endregion
-
-    // region Boolean getters is***()
     public boolean isThrusting() {
         return this.getPhysicsEngine().isThrusting();
     }
@@ -193,7 +237,6 @@ public abstract class AbstractBody {
         boolean lifeOver = this.getLifeInSeconds() >= this.maxLifeInSeconds;
         return lifeOver;
     }
-    // endregion
 
     public void processBodyEvents(AbstractBody body, PhysicsValuesDTO newPhyValues, PhysicsValuesDTO oldPhyValues) {
         this.bodyEventProcessor.processBodyEvents(body, newPhyValues, oldPhyValues);
@@ -251,28 +294,28 @@ public abstract class AbstractBody {
         final double minY = phyValues.posY - r;
         final double maxY = phyValues.posY + r;
 
-        this.spatialGrid.upsert(this.getEntityId(), minX, maxX, minY, maxY, this.getScratchIdxs());
+        this.spatialGrid.upsert(this.getBodyId(), minX, maxX, minY, maxY, this.getScratchIdxs());
     }
 
     // *** STATICS ***
 
     // region Body counters management
-    static public int getCreatedQuantity() {
-        return AbstractBody.createdQuantity;
+    static protected int decAliveQuantity() {
+        AbstractBody.aliveQuantity--;
+
+        return AbstractBody.aliveQuantity;
     }
 
     static public int getAliveQuantity() {
         return AbstractBody.aliveQuantity;
     }
 
-    static public int getDeadQuantity() {
-        return AbstractBody.deadQuantity;
+    static public int getCreatedQuantity() {
+        return AbstractBody.createdQuantity;
     }
 
-    static protected int incCreatedQuantity() {
-        AbstractBody.createdQuantity++;
-
-        return AbstractBody.createdQuantity;
+    static public int getDeadQuantity() {
+        return AbstractBody.deadQuantity;
     }
 
     static protected int incAliveQuantity() {
@@ -281,10 +324,10 @@ public abstract class AbstractBody {
         return AbstractBody.aliveQuantity;
     }
 
-    static protected int decAliveQuantity() {
-        AbstractBody.aliveQuantity--;
+    static protected int incCreatedQuantity() {
+        AbstractBody.createdQuantity++;
 
-        return AbstractBody.aliveQuantity;
+        return AbstractBody.createdQuantity;
     }
 
     static protected int incDeadQuantity() {
@@ -294,49 +337,4 @@ public abstract class AbstractBody {
     }
     // endregion
 
-    // *** INTERFACES IMPLEMENTATIONS ***
-
-    // region New emitter map based methods
-    public void addEmitter(Emitter emitter) {
-        if (emitter == null) {
-            throw new IllegalArgumentException("Emitter cannot be null");
-        }
-        this.emitters.put(emitter.getId(), emitter);
-    }
-
-    public void removeEmitter(String emitterId) {
-        this.emitters.remove(emitterId);
-    }
-
-    public Emitter getEmitter(String emitterId) {
-        return this.emitters.get(emitterId);
-    }
-
-    public boolean hasEmitters() {
-        return !this.emitters.isEmpty();
-    }
-
-    public int getEmitterCount() {
-        return this.emitters.size();
-    }
-
-    public void requestEmit(String emitterId) {
-        Emitter emitter = emitters.get(emitterId);
-        if (emitter != null) {
-            emitter.registerRequest();
-        }
-    }
-
-    public List<Emitter> checkActiveEmitters(double dtSeconds) {
-        List<Emitter> active = new ArrayList<>();
-
-        for (Emitter emitter : emitters.values()) {
-            if (emitter.mustEmitNow(dtSeconds)) {
-                active.add(emitter);
-            }
-        }
-
-        return active;
-    }
-    // endregion
 }

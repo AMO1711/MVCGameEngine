@@ -36,7 +36,7 @@ public abstract class AbstractEmitter implements Emitter {
     }
 
     @Override
-    public String getId() {
+    public String getEmitterId() {
         return this.id;
     }
 

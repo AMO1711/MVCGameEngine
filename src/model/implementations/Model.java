@@ -243,10 +243,10 @@ public class Model implements BodyEventProcessor {
         body.activate();
 
         Map<String, AbstractBody> bodyMap = this.getBodyMap(bodyType);
-        bodyMap.put(body.getEntityId(), body);
+        bodyMap.put(body.getBodyId(), body);
         this.spatialGridUpsert(body); // &++
 
-        return body.getEntityId();
+        return body.getBodyId();
     }
 
     public String addDecorator(double size, double posX, double posY, double angle, double maxLifeInSeconds) {
@@ -361,7 +361,7 @@ public class Model implements BodyEventProcessor {
         this.scratchDynamicsBuffer.clear();
 
         this.dynamicBodies.forEach((entityId, body) -> {
-            BodyDTO bodyInfo = new BodyDTO(entityId, body.getType(), body.getPhysicsValues());
+            BodyDTO bodyInfo = new BodyDTO(entityId, body.getBodyType(), body.getPhysicsValues());
             if (bodyInfo != null) {
                 this.scratchDynamicsBuffer.add(bodyInfo);
             }
@@ -490,27 +490,27 @@ public class Model implements BodyEventProcessor {
     public void removeBody(AbstractBody body) {
         body.die();
 
-        switch (body.getType()) {
+        switch (body.getBodyType()) {
             case PLAYER:
-                this.domainEventProcessor.notifyPlayerIsDead(body.getEntityId());
-                this.spatialGrid.remove(body.getEntityId());
-                this.dynamicBodies.remove(body.getEntityId());
+                this.domainEventProcessor.notifyPlayerIsDead(body.getBodyId());
+                this.spatialGrid.remove(body.getBodyId());
+                this.dynamicBodies.remove(body.getBodyId());
                 break;
 
             case DYNAMIC:
             case PROJECTILE:
-                this.domainEventProcessor.notifyDynamicIsDead(body.getEntityId());
-                this.spatialGrid.remove(body.getEntityId());
-                this.dynamicBodies.remove(body.getEntityId());
+                this.domainEventProcessor.notifyDynamicIsDead(body.getBodyId());
+                this.spatialGrid.remove(body.getBodyId());
+                this.dynamicBodies.remove(body.getBodyId());
                 break;
 
             case DECORATOR:
-                this.decorators.remove(body.getEntityId());
-                this.domainEventProcessor.notifyStaticIsDead(body.getEntityId());
+                this.decorators.remove(body.getBodyId());
+                this.domainEventProcessor.notifyStaticIsDead(body.getBodyId());
                 break;
 
             case GRAVITY:
-                this.gravityBodies.remove(body.getEntityId());
+                this.gravityBodies.remove(body.getBodyId());
                 break;
             default:
                 // Nada
@@ -540,28 +540,28 @@ public class Model implements BodyEventProcessor {
             return; // To avoid duplicate or unnecesary event processing ======>
         }
 
-        BodyState previousState = body.getState();
+        BodyState previousState = body.getBodyState();
         body.setState(BodyState.HANDS_OFF);
 
         try {
             // 1 => Detect events -------------------
-            List<DomainEvent> domainEvents = body.getClearScratchEvents();
+            List<DomainEvent> domainEvents = body.getScratchClearEvents();
             this.detectEvents(body, newPhyValues, oldPhyValues, domainEvents);
 
             // 2 => Decide actions ------------------
-            List<ActionDTO> actions = body.getClearScratchActions();
+            List<ActionDTO> actions = body.getScratchClearActions();
             this.decideActions(body, domainEvents, actions);
 
             // 3 => Execute actions -----------------
             this.doActions(actions, newPhyValues, oldPhyValues);
 
         } catch (Exception e) { // Fallback anti-zombi
-            if (body.getState() == BodyState.HANDS_OFF) {
+            if (body.getBodyState() == BodyState.HANDS_OFF) {
                 body.setState(previousState);
             }
 
         } finally { // Getout: off HANDS_OFF ... if leaving
-            if (body.getState() == BodyState.HANDS_OFF) {
+            if (body.getBodyState() == BodyState.HANDS_OFF) {
                 body.setState(BodyState.ALIVE);
             }
         }
@@ -583,13 +583,13 @@ public class Model implements BodyEventProcessor {
         if (!this.isCollidable(checkBody))
             return; // =========== Non-collidable body ============>
 
-        final String checkBodyId = checkBody.getEntityId();
-        ArrayList<String> candidates = checkBody.getClearScratchCandidateIds();
+        final String checkBodyId = checkBody.getBodyId();
+        ArrayList<String> candidates = checkBody.getScratchClearCandidateIds();
         this.spatialGrid.queryCollisionCandidates(checkBodyId, candidates);
         if (candidates.isEmpty())
             return; // =========== No candidates -> no collisions ============>
 
-        HashSet<String> seen = checkBody.getClearScratchSeenCandidateIds();
+        HashSet<String> seen = checkBody.getScratchClearSeenCandidateIds();
         for (String bodyId : candidates) {
             if (bodyId == null || bodyId.isEmpty())
                 continue;
@@ -620,17 +620,17 @@ public class Model implements BodyEventProcessor {
             boolean haveInmunity = false;
 
             // Primary body have inmunity
-            if (otherBody.getType() == BodyType.PROJECTILE) {
+            if (otherBody.getBodyType() == BodyType.PROJECTILE) {
                 ProjectileBody projectile = (ProjectileBody) otherBody;
-                if (projectile.getShooterId().equals(checkBody.getEntityId())) {
+                if (projectile.getShooterId().equals(checkBody.getBodyId())) {
                     haveInmunity = projectile.isImmune();
                 }
             }
 
             // Secondary body have inmunity
-            if (checkBody.getType() == BodyType.PROJECTILE) {
+            if (checkBody.getBodyType() == BodyType.PROJECTILE) {
                 ProjectileBody projectile = (ProjectileBody) checkBody;
-                if (projectile.getShooterId().equals(otherBody.getEntityId())) {
+                if (projectile.getShooterId().equals(otherBody.getBodyId())) {
                     haveInmunity = projectile.isImmune();
                 }
             }
@@ -645,7 +645,7 @@ public class Model implements BodyEventProcessor {
     private void checkEmissionEvents2(AbstractBody checkBody, PhysicsValuesDTO newPhyValues,
             PhysicsValuesDTO oldPhyValues, List<DomainEvent> domainEvents) {
 
-        BodyType bodyType = checkBody.getType();
+        BodyType bodyType = checkBody.getBodyType();
         BodyRefDTO primaryBodyRef = checkBody.getBodyRef();
 
         if (bodyType == BodyType.PLAYER || bodyType == BodyType.DYNAMIC) {
@@ -690,7 +690,7 @@ public class Model implements BodyEventProcessor {
     private void checkFireEvents(AbstractBody checkBody,
             PhysicsValuesDTO newPhyValues, List<DomainEvent> domainEvents) {
 
-        BodyType bodyType = checkBody.getType();
+        BodyType bodyType = checkBody.getBodyType();
         BodyRefDTO primaryBodyRef = checkBody.getBodyRef();
 
         if (bodyType == BodyType.PLAYER) {
@@ -747,7 +747,7 @@ public class Model implements BodyEventProcessor {
 
         if (!executorIsPhysicBody)
             // Always add MOVE action except if body rebounded
-            actions.add(new ActionDTO(body.getEntityId(), body.getType(),
+            actions.add(new ActionDTO(body.getBodyId(), body.getBodyType(),
                     ActionType.MOVE, ActionExecutor.BODY, ActionPriority.LOW, null));
 
     }
@@ -893,7 +893,7 @@ public class Model implements BodyEventProcessor {
         ArrayList<BodyDTO> bodyInfos = new ArrayList<>(bodies.size());
 
         bodies.forEach((entityId, body) -> {
-            BodyDTO bodyInfo = new BodyDTO(entityId, body.getType(), body.getPhysicsValues());
+            BodyDTO bodyInfo = new BodyDTO(entityId, body.getBodyType(), body.getPhysicsValues());
             if (bodyInfo != null) {
                 bodyInfos.add(bodyInfo);
             }
@@ -941,14 +941,14 @@ public class Model implements BodyEventProcessor {
 
     private boolean isCollidable(AbstractBody body) {
         return body != null
-                && body.getState() != BodyState.DEAD
+                && body.getBodyState() != BodyState.DEAD
                 && (body.getSpatialGrid() != null);
     }
 
     private boolean isProcessable(AbstractBody entity) {
         return entity != null
                 && this.state == ModelState.ALIVE
-                && entity.getState() == BodyState.ALIVE;
+                && entity.getBodyState() == BodyState.ALIVE;
     }
 
     private void spawnBody(AbstractBody body, BodyToEmitDTO bodyConfig, PhysicsValuesDTO newPhyValues) {
@@ -997,7 +997,7 @@ public class Model implements BodyEventProcessor {
         String entityId = this.addBody(bodyConfig.type,
                 size, posX, posY, speedX, speedY, accX, accY,
                 angleDeg, 0, 0,
-                0, maxLifeTime, body.getEntityId());
+                0, maxLifeTime, body.getBodyId());
 
         if (entityId == null || entityId.isEmpty()) {
             return; // ======= Max entity quantity reached =======>
