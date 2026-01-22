@@ -1,6 +1,6 @@
 package model.bodies.implementations;
 
-import model.bodies.core.AbstractPhysicsBody;
+import model.bodies.core.AbstractBody;
 import model.bodies.ports.BodyEventProcessor;
 import model.bodies.ports.BodyState;
 import model.bodies.ports.BodyType;
@@ -41,7 +41,7 @@ import model.spatial.core.SpatialGrid;
  * This separation keeps the codebase clean and prevents unnecessary overhead
  * for entities that never move.
  */
-public class StaticBody extends AbstractPhysicsBody implements Runnable {
+public class StaticBody extends AbstractBody implements Runnable {
 
     //
     // CONSTRUCTORS

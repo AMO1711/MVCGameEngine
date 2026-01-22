@@ -3,22 +3,24 @@ package model.bodies.core;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 
 import actions.ActionDTO;
 import events.domain.ports.BodyRefDTO;
+import events.domain.ports.BodyToEmitDTO;
 import events.domain.ports.eventtype.DomainEvent;
 import model.bodies.ports.BodyEventProcessor;
 import model.bodies.ports.BodyState;
 import model.bodies.ports.BodyType;
+import model.emitter.implementations.BasicEmitter;
+import model.emitter.ports.Emitter;
+import model.emitter.ports.EmitterConfigDto;
 import model.physics.ports.PhysicsEngine;
 import model.physics.ports.PhysicsValuesDTO;
 import model.spatial.core.SpatialGrid;
 
-/**
- *
- * @author juanm
- */
 public abstract class AbstractBody {
 
     private static volatile int aliveQuantity = 0;
@@ -27,11 +29,17 @@ public abstract class AbstractBody {
 
     private final BodyEventProcessor bodyEventProcessor;
     private volatile BodyState state;
-    private final BodyType bodyType;
+    private final BodyType type;
     private final String entityId;
     private final PhysicsEngine phyEngine;
     private final long bornTime = System.nanoTime();
     private final double maxLifeInSeconds; // Infinite life by default
+    private Thread thread;
+
+    private BasicEmitter emitter; // **************** TO DEPRECATE ****************
+
+    // New emitter map based
+    private final Map<String, Emitter> emitters = new ConcurrentHashMap<>();
 
     // Spatial grid and buffers for collision detection and avoiding garbage
     // creation during the
@@ -51,12 +59,12 @@ public abstract class AbstractBody {
      */
 
     public AbstractBody(BodyEventProcessor bodyEventProcessor, SpatialGrid spatialGrid,
-            PhysicsEngine phyEngine, BodyType bodyType,
+            PhysicsEngine phyEngine, BodyType type,
             double maxLifeInSeconds) {
 
         this.bodyEventProcessor = bodyEventProcessor;
         this.phyEngine = phyEngine;
-        this.bodyType = bodyType;
+        this.type = type;
         this.maxLifeInSeconds = maxLifeInSeconds;
 
         if (spatialGrid != null) {
@@ -72,7 +80,7 @@ public abstract class AbstractBody {
 
         this.entityId = UUID.randomUUID().toString();
         this.state = BodyState.STARTING;
-        this.bodyRef = new BodyRefDTO(this.entityId, this.bodyType);
+        this.bodyRef = new BodyRefDTO(this.entityId, this.type);
     }
 
     public synchronized void activate() {
@@ -97,12 +105,38 @@ public abstract class AbstractBody {
         }
     }
 
+    // Action
+    public void doMovement(PhysicsValuesDTO phyValues) {
+        PhysicsEngine engine = this.getPhysicsEngine();
+        engine.setPhysicsValues(phyValues);
+    }
+
     public BodyRefDTO getBodyRef() {
         return this.bodyRef;
     }
 
     public long getBornTime() {
         return this.bornTime;
+    }
+
+    public List<ActionDTO> getClearScratchActions() {
+        this.scratchActions.clear();
+        return this.scratchActions;
+    }
+
+    public ArrayList<String> getClearScratchCandidateIds() {
+        this.scratchCandidateIds.clear();
+        return scratchCandidateIds;
+    }
+
+    public HashSet<String> getClearScratchSeenCandidateIds() {
+        this.scratchSeenCandidateIds.clear();
+        return this.scratchSeenCandidateIds;
+    }
+
+    public ArrayList<DomainEvent> getClearScratchEvents() {
+        this.scratchEvents.clear();
+        return this.scratchEvents;
     }
 
     public String getEntityId() {
@@ -133,26 +167,6 @@ public abstract class AbstractBody {
         return this.phyEngine.getPhysicsValues();
     }
 
-    public List<ActionDTO> getClearScratchActions() {
-        this.scratchActions.clear();
-        return this.scratchActions;
-    }
-
-    public ArrayList<String> getClearScratchCandidateIds() {
-        this.scratchCandidateIds.clear();
-        return scratchCandidateIds;
-    }
-
-    public HashSet<String> getClearScratchSeenCandidateIds() {
-        this.scratchSeenCandidateIds.clear();
-        return this.scratchSeenCandidateIds;
-    }
-
-    public ArrayList<DomainEvent> getClearScratchEvents() {
-        this.scratchEvents.clear();
-        return this.scratchEvents;
-    }
-
     public int[] getScratchIdxs() {
         return this.scratchIdxs;
     }
@@ -165,8 +179,12 @@ public abstract class AbstractBody {
         return this.state;
     }
 
-    public BodyType getBodyType() {
-        return this.bodyType;
+    public BodyType getType() {
+        return this.type;
+    }
+
+    public boolean isThrusting() {
+        return this.getPhysicsEngine().isThrusting();
     }
 
     public boolean isLifeOver() {
@@ -182,8 +200,39 @@ public abstract class AbstractBody {
         this.bodyEventProcessor.processBodyEvents(body, newPhyValues, oldPhyValues);
     }
 
+    public void reboundInEast(PhysicsValuesDTO newVals, PhysicsValuesDTO oldVals,
+            double worldWidth, double worldHeight) {
+
+        PhysicsEngine engine = this.getPhysicsEngine();
+        engine.reboundInEast(newVals, oldVals, worldWidth, worldHeight);
+    }
+
+    public void reboundInWest(PhysicsValuesDTO newVals, PhysicsValuesDTO oldVals,
+            double worldWidth, double worldHeight) {
+
+        PhysicsEngine engine = this.getPhysicsEngine();
+        engine.reboundInWest(newVals, oldVals, worldWidth, worldHeight);
+    }
+
+    public void reboundInNorth(PhysicsValuesDTO newVals, PhysicsValuesDTO oldVals,
+            double worldWidth, double worldHeight) {
+
+        PhysicsEngine engine = this.getPhysicsEngine();
+        engine.reboundInNorth(newVals, oldVals, worldWidth, worldHeight);
+    }
+
+    public void reboundInSouth(PhysicsValuesDTO newVals, PhysicsValuesDTO oldVals,
+            double worldWidth, double worldHeight) {
+        PhysicsEngine engine = this.getPhysicsEngine();
+        engine.reboundInSouth(newVals, oldVals, worldWidth, worldHeight);
+    }
+
     public void setState(BodyState state) {
         this.state = state;
+    }
+
+    public void setThread(Thread thread) {
+        this.thread = thread;
     }
 
     public void spatialGridUpsert() {
@@ -241,4 +290,93 @@ public abstract class AbstractBody {
 
         return AbstractBody.deadQuantity;
     }
+
+    // HOST EMITTER INTERFACE
+
+    // To deprecate
+
+    public BodyToEmitDTO getBodyToEmitConfig() {
+        if (this.emitter == null) {
+            return null;
+        }
+        return this.emitter.getBodyToEmitConfig();
+    }
+
+    public EmitterConfigDto getEmitterConfig() {
+        if (this.emitter == null) {
+            return null;
+        }
+        return this.emitter.getConfig();
+    }
+
+    public boolean mustEmitNow(double dtSeconds) {
+        if (this.emitter == null) {
+            return false;
+        }
+
+        // double dtNanos = newPhyValues.timeStamp - this.getPhysicsValues().timeStamp;
+        // double dtSeconds = dtNanos / 1_000_000_000;
+
+        return this.emitter.mustEmitNow(dtSeconds);
+    }
+
+    public void registerBodyEmissionRequest() {
+        if (this.emitter == null) {
+            return; // No emitter attached ===========>
+        }
+
+        this.emitter.registerRequest();
+    }
+
+    public void setEmitter(BasicEmitter emitter) {
+        if (emitter == null) {
+            throw new IllegalStateException("Emitter is null. Cannot add to player body.");
+        }
+        this.emitter = emitter;
+    }
+
+    // New emitter map based methods
+
+    public void addEmitter(Emitter emitter) {
+        if (emitter == null) {
+            throw new IllegalArgumentException("Emitter cannot be null");
+        }
+        this.emitters.put(emitter.getId(), emitter);
+    }
+
+    public void removeEmitter(String emitterId) {
+        this.emitters.remove(emitterId);
+    }
+
+    public Emitter getEmitter(String emitterId) {
+        return this.emitters.get(emitterId);
+    }
+
+    public boolean hasEmitters() {
+        return !this.emitters.isEmpty();
+    }
+
+    public int getEmitterCount() {
+        return this.emitters.size();
+    }
+
+    public void requestEmit(String emitterId) {
+        Emitter emitter = emitters.get(emitterId);
+        if (emitter != null) {
+            emitter.registerRequest();
+        }
+    }
+
+    public List<Emitter> checkActiveEmitters(double dtSeconds) {
+        List<Emitter> active = new ArrayList<>();
+
+        for (Emitter emitter : emitters.values()) {
+            if (emitter.mustEmitNow(dtSeconds)) {
+                active.add(emitter);
+            }
+        }
+
+        return active;
+    }
+
 }

@@ -2,6 +2,7 @@ package model.implementations;
 
 import static java.lang.System.nanoTime;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -34,7 +35,6 @@ import model.bodies.ports.BodyEventProcessor;
 import model.bodies.ports.BodyFactory;
 import model.bodies.ports.BodyState;
 import model.bodies.ports.BodyType;
-import model.bodies.ports.PhysicsBody;
 import model.bodies.ports.PlayerDTO;
 import model.emitter.implementations.BasicEmitter;
 import model.emitter.ports.EmitterConfigDto;
@@ -148,9 +148,7 @@ public class Model implements BodyEventProcessor {
     // Scratch buffer for zero-allocation snapshot generation
     private final ArrayList<BodyDTO> scratchDynamicsBuffer = new ArrayList<>(MAX_ENTITIES);
 
-    //
-    // CONSTRUCTORS
-    //
+    //// CONSTRUCTORS
 
     public Model(double worldWidth, double worldHeight, int maxDynamicBodies) {
         if (worldWidth <= 0 || worldHeight <= 0) {
@@ -164,12 +162,10 @@ public class Model implements BodyEventProcessor {
         this.worldWidth = worldWidth;
         this.worldHeight = worldHeight;
         this.maxBodies = maxDynamicBodies;
-        this.spatialGrid = new SpatialGrid(24, (int) worldWidth, (int) worldHeight, 24);
+        this.spatialGrid = new SpatialGrid(48, (int) worldWidth, (int) worldHeight, 24);
     }
 
-    //
-    // PUBLIC
-    //
+    //// PUBLIC
 
     public void activate() {
         if (this.domainEventProcessor == null) {
@@ -336,7 +332,7 @@ public class Model implements BodyEventProcessor {
         this.scratchDynamicsBuffer.clear();
 
         this.dynamicBodies.forEach((entityId, body) -> {
-            BodyDTO bodyInfo = new BodyDTO(entityId, body.getBodyType(), body.getPhysicsValues());
+            BodyDTO bodyInfo = new BodyDTO(entityId, body.getType(), body.getPhysicsValues());
             if (bodyInfo != null) {
                 this.scratchDynamicsBuffer.add(bodyInfo);
             }
@@ -387,7 +383,7 @@ public class Model implements BodyEventProcessor {
     public void killBody(AbstractBody body) {
         body.die();
 
-        switch (body.getBodyType()) {
+        switch (body.getType()) {
             case PLAYER:
                 this.domainEventProcessor.notifyPlayerIsDead(body.getEntityId());
                 this.spatialGrid.remove(body.getEntityId());
@@ -516,9 +512,7 @@ public class Model implements BodyEventProcessor {
         this.maxBodies = maxDynamicBody;
     }
 
-    //
-    // PRIVATE
-    //
+    //// PRIVATE
 
     private void checkCollisions(AbstractBody checkBody, PhysicsValuesDTO newPhyValues,
             List<DomainEvent> domainEvents) {
@@ -569,7 +563,7 @@ public class Model implements BodyEventProcessor {
             boolean haveInmunity = false;
 
             // Primary body have inmunity
-            if (otherBody.getBodyType() == BodyType.PROJECTILE) {
+            if (otherBody.getType() == BodyType.PROJECTILE) {
                 ProjectileBody projectile = (ProjectileBody) otherBody;
                 if (projectile.getShooterId().equals(checkBody.getEntityId())) {
                     haveInmunity = projectile.isImmune();
@@ -577,7 +571,7 @@ public class Model implements BodyEventProcessor {
             }
 
             // Secondary body have inmunity
-            if (checkBody.getBodyType() == BodyType.PROJECTILE) {
+            if (checkBody.getType() == BodyType.PROJECTILE) {
                 ProjectileBody projectile = (ProjectileBody) checkBody;
                 if (projectile.getShooterId().equals(otherBody.getEntityId())) {
                     haveInmunity = projectile.isImmune();
@@ -591,10 +585,10 @@ public class Model implements BodyEventProcessor {
         }
     }
 
-    private void checkEmissionEvents(AbstractBody checkBody, PhysicsValuesDTO newPhyValues,
+    private void checkEmissionEvents2(AbstractBody checkBody, PhysicsValuesDTO newPhyValues,
             PhysicsValuesDTO oldPhyValues, List<DomainEvent> domainEvents) {
 
-        BodyType bodyType = checkBody.getBodyType();
+        BodyType bodyType = checkBody.getType();
         BodyRefDTO primaryBodyRef = checkBody.getBodyRef();
 
         if (bodyType == BodyType.PLAYER || bodyType == BodyType.DYNAMIC) {
@@ -613,10 +607,33 @@ public class Model implements BodyEventProcessor {
         }
     }
 
+    private void checkEmissionEvents(AbstractBody checkBody, PhysicsValuesDTO newPhyValues,
+            PhysicsValuesDTO oldPhyValues, List<DomainEvent> domainEvents) {
+
+        // BodyType bodyType = checkBody.getType();
+        // BodyRefDTO primaryBodyRef = checkBody.getBodyRef();
+
+        // if (checkBody.hasEmitters()) {
+        // double dtSeconds = calculateDeltaTime(newPhyValues, body.getPhysicsValues());
+
+        // for (Emitter emitter : body.getEmitters()) {
+        // if (emitter.mustEmitNow(dtSeconds)) {
+        // EmitPayloadDTO payload = new EmitPayloadDTO(
+        // emitter.getBodyToEmitConfig());
+
+        // events.add(new EmitEvent(
+        // DomainEventType.EMIT_REQUESTED,
+        // bodyRef,
+        // payload));
+        // }
+        // }
+        // }
+    }
+
     private void checkFireEvents(AbstractBody checkBody,
             PhysicsValuesDTO newPhyValues, List<DomainEvent> domainEvents) {
 
-        BodyType bodyType = checkBody.getBodyType();
+        BodyType bodyType = checkBody.getType();
         BodyRefDTO primaryBodyRef = checkBody.getBodyRef();
 
         if (bodyType == BodyType.PLAYER) {
@@ -665,13 +682,15 @@ public class Model implements BodyEventProcessor {
             this.domainEventProcessor.decideActions(domainEvents, actions);
 
         boolean executorIsPhysicBody = actions.stream()
-                .anyMatch(a -> a.executor == ActionExecutor.PHYSICS_BODY);
+                .anyMatch(a -> a.type == ActionType.REBOUND_IN_EAST
+                        || a.type == ActionType.REBOUND_IN_WEST
+                        || a.type == ActionType.REBOUND_IN_NORTH
+                        || a.type == ActionType.REBOUND_IN_SOUTH);
 
         if (!executorIsPhysicBody)
-            // MOVE is the default action to commit physics values when no other
-            // PHYSICS_BODY action (rebound, teleport, etc.) is already doing it
-            actions.add(new ActionDTO(body.getEntityId(), body.getBodyType(),
-                    ActionType.MOVE, ActionExecutor.PHYSICS_BODY, ActionPriority.NORMAL, null));
+            // Always add MOVE action except if body rebounded
+            actions.add(new ActionDTO(body.getEntityId(), body.getType(),
+                    ActionType.MOVE, ActionExecutor.BODY, ActionPriority.LOW, null));
 
     }
 
@@ -685,7 +704,7 @@ public class Model implements BodyEventProcessor {
         this.checkCollisions(checkBody, newPhyValues, domainEvents);
 
         // 3 => Emission on (dynamics and players) ----------
-        this.checkEmissionEvents(checkBody, newPhyValues, oldPhyValues, domainEvents);
+        this.checkEmissionEvents2(checkBody, newPhyValues, oldPhyValues, domainEvents);
 
         // 4 => Fire (only players) -----------------------
         this.checkFireEvents(checkBody, newPhyValues, domainEvents);
@@ -701,7 +720,7 @@ public class Model implements BodyEventProcessor {
             return;
         }
 
-        // actions.sort(Comparator.comparing(a -> a.priority));
+        actions.sort(Comparator.comparing(a -> a.priority));
 
         for (ActionDTO action : actions) {
             if (action == null || action.type == null) {
@@ -718,10 +737,6 @@ public class Model implements BodyEventProcessor {
                     this.doBodyAction(action.type, targetBody, newPhyValues, oldPhyValues);
                     break;
 
-                case PHYSICS_BODY:
-                    this.doPhysicsBodyAction(action.type, (PhysicsBody) targetBody, newPhyValues, oldPhyValues);
-                    break;
-
                 case MODEL:
                     this.doModelAction(action, targetBody, newPhyValues, oldPhyValues);
                     break;
@@ -733,20 +748,6 @@ public class Model implements BodyEventProcessor {
     }
 
     private void doBodyAction(ActionType action, AbstractBody body,
-            PhysicsValuesDTO newPhyValues, PhysicsValuesDTO oldPhyValues) {
-
-        if (body == null) {
-            return;
-        }
-
-        switch (action) {
-            case NONE:
-            default:
-                // Nothing to do...
-        }
-    }
-
-    private void doPhysicsBodyAction(ActionType action, PhysicsBody body,
             PhysicsValuesDTO newPhyValues, PhysicsValuesDTO oldPhyValues) {
 
         if (body == null) {
@@ -832,7 +833,7 @@ public class Model implements BodyEventProcessor {
         ArrayList<BodyDTO> bodyInfos = new ArrayList<>(bodies.size());
 
         bodies.forEach((entityId, body) -> {
-            BodyDTO bodyInfo = new BodyDTO(entityId, body.getBodyType(), body.getPhysicsValues());
+            BodyDTO bodyInfo = new BodyDTO(entityId, body.getType(), body.getPhysicsValues());
             if (bodyInfo != null) {
                 bodyInfos.add(bodyInfo);
             }

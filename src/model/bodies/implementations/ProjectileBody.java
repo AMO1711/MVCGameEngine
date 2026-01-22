@@ -1,6 +1,6 @@
 package model.bodies.implementations;
 
-import model.bodies.core.AbstractPhysicsBody;
+import model.bodies.core.AbstractBody;
 import model.bodies.ports.BodyEventProcessor;
 import model.bodies.ports.BodyState;
 import model.bodies.ports.BodyType;
@@ -25,7 +25,7 @@ import model.spatial.core.SpatialGrid;
  * - The shooterId enables immunity and collision rules specific to projectiles
  * - Future enhancements: damage values, penetration, homing behavior, etc.
  */
-public class ProjectileBody extends AbstractPhysicsBody implements Runnable {
+public class ProjectileBody extends AbstractBody implements Runnable {
 
     private static final double SHOOTER_IMMUNITY_TIME = 1; // seconds
     private final String shooterId; // ID of the entity that shot this projectile

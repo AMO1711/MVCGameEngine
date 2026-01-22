@@ -390,25 +390,42 @@ public class Controller implements WorldEvolver, WorldInitializer, DomainEventPr
     //
     private void applyGameRules(DomainEvent event, List<ActionDTO> actions) {
         switch (event) {
-            case LimitEvent e ->
+            case LimitEvent e -> {
+                ActionType actionType;
+
+                switch (e.type) {
+                    case REACHED_EAST_LIMIT:
+                        actionType = ActionType.REBOUND_IN_EAST;
+                        break;
+                    case REACHED_WEST_LIMIT:
+                        actionType = ActionType.REBOUND_IN_WEST;
+                        break;
+                    case REACHED_NORTH_LIMIT:
+                        actionType = ActionType.REBOUND_IN_NORTH;
+                        break;
+                    case REACHED_SOUTH_LIMIT:
+                        actionType = ActionType.REBOUND_IN_SOUTH;
+                        break;
+                    default:
+                        actionType = ActionType.NONE;
+                        break;
+                }
+
                 actions.add(new ActionDTO(
-                        e.primaryBodyRef.id(),
-                        e.primaryBodyRef.type(),
-                        ActionType.DIE,
-                        ActionExecutor.MODEL,
-                        ActionPriority.HIGH,
+                        e.primaryBodyRef.id(), e.primaryBodyRef.type(),
+                        actionType, ActionExecutor.BODY, ActionPriority.HIGH,
                         event));
+
+            }
 
             case LifeOver e ->
                 actions.add(new ActionDTO(
-                        e.primaryBodyRef.id(),
-                        e.primaryBodyRef.type(),
-                        ActionType.DIE,
-                        ActionExecutor.MODEL,
-                        ActionPriority.HIGH,
+                        e.primaryBodyRef.id(), e.primaryBodyRef.type(),
+                        ActionType.DIE, ActionExecutor.MODEL, ActionPriority.HIGH,
                         event));
 
             case EmitEvent e -> {
+
                 if (e.type == DomainEventType.EMIT_REQUESTED) {
                     actions.add(new ActionDTO(
                             e.primaryBodyRef.id(),
@@ -425,10 +442,14 @@ public class Controller implements WorldEvolver, WorldInitializer, DomainEventPr
                             ActionExecutor.MODEL,
                             ActionPriority.LOW, event));
                 }
+
             }
 
-            case CollisionEvent e ->
-                resolveCollision(e, actions);
+            case CollisionEvent e -> {
+
+                // resolveCollision(e, actions);
+
+            }
         }
     }
 
