@@ -207,15 +207,15 @@ public abstract class AbstractBody {
 
     // region Fields
     private final BodyEventProcessor bodyEventProcessor;
-    private volatile BodyState state;
-    private final BodyType type;
     private final String bodyId;
-    private final PhysicsEngine phyEngine;
-    private final long bornTime = System.nanoTime();
-    private final double maxLifeInSeconds; // Infinite life by default
-    private Thread thread;
     private final BodyRefDTO bodyRef;
+    private final long bornTime = System.nanoTime();
     private final Map<String, Emitter> emitters = new ConcurrentHashMap<>();
+    private final double maxLifeInSeconds; // Infinite life by default
+    private final PhysicsEngine phyEngine;
+    private volatile BodyState state;
+    private Thread thread;
+    private final BodyType type;
     // endregion
 
     // region Scratch buffers
