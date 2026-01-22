@@ -18,6 +18,179 @@ import model.physics.ports.PhysicsEngine;
 import model.physics.ports.PhysicsValuesDTO;
 import model.spatial.core.SpatialGrid;
 
+/**
+ * AbstractBody
+ * ------------
+ *
+ * Base class for all simulation entities in the game engine. Provides core
+ * functionality for physics simulation, lifecycle management, spatial
+ * partitioning, event processing, and emitter systems.
+ *
+ * This is the foundation of the entity system: all entities (players, dynamic
+ * bodies, projectiles, decorators, gravity bodies) extend this class and
+ * inherit its threading model, state machine, and physics integration.
+ *
+ * Core Responsibilities
+ * ---------------------
+ * - Lifecycle management: STARTING → ALIVE → DEAD state transitions
+ * - Physics integration: owns and delegates to PhysicsEngine instance
+ * - Spatial indexing: manages registration in SpatialGrid for collision detection
+ * - Event processing: delegates to BodyEventProcessor (typically the Model)
+ * - Emitter management: supports multiple particle/trail emitters per body
+ * - Entity statistics: tracks global alive/created/dead counts
+ * - Scratch buffer allocation: provides pre-allocated buffers to avoid GC pressure
+ *
+ * Architecture Pattern
+ * --------------------
+ * AbstractBody follows a "composition over inheritance" approach:
+ * - PhysicsEngine handles all physics calculations (position, velocity, acceleration)
+ * - BodyEventProcessor handles event detection and action decisions
+ * - SpatialGrid handles collision broad-phase queries
+ * - Emitter instances handle particle/trail generation
+ *
+ * The body itself acts as a coordinator, delegating specialized work to
+ * injected components while managing its own state and lifecycle.
+ *
+ * Entity Lifecycle
+ * ----------------
+ * 1) Construction:
+ *    - State = STARTING
+ *    - Unique bodyId (UUID) generated
+ *    - PhysicsEngine, BodyEventProcessor, SpatialGrid injected
+ *    - Scratch buffers pre-allocated
+ *    - bornTime recorded for lifetime tracking
+ *    - createdQuantity++ (static counter)
+ *
+ * 2) Activation (activate()):
+ *    - Validates state == STARTING
+ *    - State → ALIVE
+ *    - aliveQuantity++ (static counter)
+ *    - After activation, body participates in physics updates and collision detection
+ *
+ * 3) Death (die()):
+ *    - State → DEAD
+ *    - deadQuantity++, aliveQuantity-- (static counters)
+ *    - Idempotent: multiple die() calls are safe
+ *    - Dead bodies are removed from SpatialGrid by the Model
+ *
+ * State Machine
+ * -------------
+ * Volatile BodyState field ensures thread-safe state transitions:
+ *
+ * STARTING: Initial state after construction
+ *   ↓ activate()
+ * ALIVE: Active physics simulation, event processing enabled
+ *   ↓ processBodyEvents() temporarily transitions to...
+ * HANDS_OFF: Critical section - event processing in progress (set by Model)
+ *   ↓ returns to ALIVE after event processing completes
+ * DEAD: Entity is inactive, pending removal
+ *
+ * The HANDS_OFF state prevents concurrent event processing on the same body,
+ * ensuring deterministic behavior in the multithreaded physics simulation.
+ *
+ * Physics Integration
+ * -------------------
+ * AbstractBody owns a PhysicsEngine instance that handles all physics calculations:
+ * - getPhysicsValues(): returns immutable PhysicsValuesDTO snapshot
+ * - doMovement(phyValues): commits new physics state to engine
+ * - reboundIn[East|West|North|South](): delegates boundary rebound to engine
+ * - isThrusting(): queries engine for thrust state
+ *
+ * The body never performs physics calculations directly - it delegates to
+ * PhysicsEngine. This allows swapping physics implementations without touching
+ * entity code.
+ *
+ * Spatial Grid Integration
+ * -------------------------
+ * Bodies with spatial grid support (dynamic bodies) maintain their position
+ * in the grid for efficient collision detection:
+ * - spatialGridUpsert(): updates grid cells occupied by this body
+ * - Uses body's bounding circle (posX, posY, size/2) to determine cells
+ * - scratchIdxs buffer stores cell indices to avoid allocation
+ * - Decorator bodies have spatialGrid == null (no collision detection)
+ *
+ * Event Processing Pipeline
+ * --------------------------
+ * processBodyEvents(body, newPhyValues, oldPhyValues):
+ * - Delegates to BodyEventProcessor (typically the Model)
+ * - Model detects events (collisions, limits, emissions, life over)
+ * - Model decides actions based on events
+ * - Model executes actions (movement, spawning, death)
+ * - Uses scratch buffers to avoid allocation during event processing
+ *
+ * Emitter System
+ * --------------
+ * Bodies can be equipped with multiple emitters (particles, trails, etc.):
+ * - emitterEquip(emitter): adds emitter, returns emitterId
+ * - emitterRemove(emitterId): removes emitter
+ * - emitterRequest(emitterId): triggers emission request
+ * - checkActiveEmitters(dtSeconds): returns emitters ready to emit
+ * - Emitters are stored in ConcurrentHashMap for thread-safe access
+ *
+ * Typical use cases:
+ * - Player ship: thrust trail emitter, explosion emitter
+ * - Projectile: trail emitter
+ * - Asteroid: debris emitter on destruction
+ *
+ * Lifetime Management
+ * -------------------
+ * Bodies support configurable lifetimes:
+ * - maxLifeInSeconds > 0: body dies after this duration
+ * - maxLifeInSeconds == -1: infinite lifetime (players, static bodies)
+ * - getLifeInSeconds(): current age in seconds
+ * - getLifePercentage(): normalized age (0.0 = born, 1.0 = expired)
+ * - isLifeOver(): true when current age >= maxLifeInSeconds
+ *
+ * Lifetime is checked during event processing and triggers LifeOver event.
+ *
+ * Scratch Buffers (Zero-Allocation Design)
+ * -----------------------------------------
+ * To minimize garbage collection pressure during physics updates, AbstractBody
+ * pre-allocates scratch buffers that are reused across frames:
+ *
+ * - scratchIdxs: int[] for SpatialGrid cell indices
+ * - scratchCandidateIds: ArrayList<String> for collision candidates
+ * - scratchSeenCandidateIds: HashSet<String> for collision deduplication
+ * - scratchEvents: ArrayList<DomainEvent> for event accumulation
+ * - scratchActions: List<ActionDTO> for action accumulation
+ *
+ * All getScratch***() methods clear their buffer before returning, ensuring
+ * fresh state for each physics update. This pattern enables 60+ Hz physics
+ * updates with minimal GC pauses.
+ *
+ * Threading Model
+ * ---------------
+ * Each dynamic body typically runs on its own thread:
+ * - setThread(thread): stores reference to owning thread
+ * - Thread continuously calculates new physics state and calls processBodyEvents()
+ * - State machine (ALIVE ↔ HANDS_OFF) prevents concurrent event processing
+ * - Static bodies (decorators, gravity) have no thread (static geometry)
+ *
+ * Thread safety:
+ * - Volatile state field ensures visibility across threads
+ * - Static counters (aliveQuantity, createdQuantity, deadQuantity) are volatile
+ * - PhysicsEngine handles its own synchronization
+ * - Emitters map is ConcurrentHashMap
+ *
+ * Global Entity Statistics
+ * -------------------------
+ * Static volatile counters track all entities across the simulation:
+ * - aliveQuantity: currently active entities
+ * - createdQuantity: total entities created (monotonic)
+ * - deadQuantity: total entities destroyed (monotonic)
+ *
+ * These are updated atomically during activate() and die() and exposed via
+ * static getters for monitoring and debugging.
+ *
+ * Design Goals
+ * ------------
+ * - Minimize per-frame allocations via scratch buffers
+ * - Delegate specialized work to injected components (composition)
+ * - Support heterogeneous entity types via inheritance (players, projectiles, etc.)
+ * - Enable deterministic multithreaded physics via state machine
+ * - Provide clean integration points (PhysicsEngine, BodyEventProcessor, SpatialGrid)
+ * - Maintain thread-safe global statistics for debugging/monitoring
+ */
 public abstract class AbstractBody {
 
     private static volatile int aliveQuantity = 0;
@@ -104,6 +277,18 @@ public abstract class AbstractBody {
     }
 
     // region Emitter management (emitter***())
+    public List<Emitter> emitterActiveList(double dtSeconds) {
+        List<Emitter> active = new ArrayList<>();
+
+        for (Emitter emitter : emitters.values()) {
+            if (emitter.mustEmitNow(dtSeconds)) {
+                active.add(emitter);
+            }
+        }
+
+        return active;
+    }
+
     public String emitterEquip(Emitter emitter) {
         if (emitter == null) {
             throw new IllegalArgumentException("Emitter cannot be null");
@@ -124,17 +309,6 @@ public abstract class AbstractBody {
         }
     }
 
-    public List<Emitter> checkActiveEmitters(double dtSeconds) {
-        List<Emitter> active = new ArrayList<>();
-
-        for (Emitter emitter : emitters.values()) {
-            if (emitter.mustEmitNow(dtSeconds)) {
-                active.add(emitter);
-            }
-        }
-
-        return active;
-    }
     // endregion
 
     // region Body getters (getBody***())
@@ -168,16 +342,16 @@ public abstract class AbstractBody {
         return (System.nanoTime() - this.bornTime) / 1_000_000_000.0D;
     }
 
+    public double getLifeMaxInSeconds() {
+        return this.maxLifeInSeconds;
+    }
+
     public double getLifePercentage() {
         if (this.maxLifeInSeconds <= 0) {
             return 1D;
         }
 
         return Math.min(1D, this.getLifeInSeconds() / this.maxLifeInSeconds);
-    }
-
-    public double getLifeMax() {
-        return this.maxLifeInSeconds;
     }
     // endregion
 
