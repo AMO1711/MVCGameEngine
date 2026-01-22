@@ -268,7 +268,7 @@ public class Model implements BodyEventProcessor {
     }
     // endregion
 
-    // region body equipment (bodyEquip***)
+    // region Body equipment (bodyEquip***)
     public void bodyEquipEmitter(String playerId, EmitterConfigDto emitterConfig) {
         PlayerBody pBody = (PlayerBody) this.dynamicBodies.get(playerId);
         if (pBody == null) {
@@ -371,46 +371,13 @@ public class Model implements BodyEventProcessor {
     }
     // endregion Getters
 
-    // region boolean getters (is***)
-    public boolean isAlive() {
+    // region Boolean getters (is***)
+    public boolean isModelAlive() {
         return this.state == ModelState.ALIVE;
     }
     // endregion
 
-    // region destroy (kill***)
-    public void killBody(AbstractBody body) {
-        body.die();
-
-        switch (body.getType()) {
-            case PLAYER:
-                this.domainEventProcessor.notifyPlayerIsDead(body.getEntityId());
-                this.spatialGrid.remove(body.getEntityId());
-                this.dynamicBodies.remove(body.getEntityId());
-                break;
-
-            case DYNAMIC:
-            case PROJECTILE:
-                this.domainEventProcessor.notifyDynamicIsDead(body.getEntityId());
-                this.spatialGrid.remove(body.getEntityId());
-                this.dynamicBodies.remove(body.getEntityId());
-                break;
-
-            case DECORATOR:
-                this.decorators.remove(body.getEntityId());
-                this.domainEventProcessor.notifyStaticIsDead(body.getEntityId());
-                break;
-
-            case GRAVITY:
-                this.gravityBodies.remove(body.getEntityId());
-                break;
-            default:
-                // Nada
-        }
-
-    }
-    // endregion
-
-    // region player equipment (playerEquip***)
+    // region Player equipment (playerEquip***)
     public void playerEquipWeapon(String playerId, WeaponDto weaponConfig) {
 
         PlayerBody pBody = (PlayerBody) this.dynamicBodies.get(playerId);
@@ -484,6 +451,39 @@ public class Model implements BodyEventProcessor {
     }
     // endregion Player Actions
 
+    // region Remove and destroy (remove***)
+    public void removeBody(AbstractBody body) {
+        body.die();
+
+        switch (body.getType()) {
+            case PLAYER:
+                this.domainEventProcessor.notifyPlayerIsDead(body.getEntityId());
+                this.spatialGrid.remove(body.getEntityId());
+                this.dynamicBodies.remove(body.getEntityId());
+                break;
+
+            case DYNAMIC:
+            case PROJECTILE:
+                this.domainEventProcessor.notifyDynamicIsDead(body.getEntityId());
+                this.spatialGrid.remove(body.getEntityId());
+                this.dynamicBodies.remove(body.getEntityId());
+                break;
+
+            case DECORATOR:
+                this.decorators.remove(body.getEntityId());
+                this.domainEventProcessor.notifyStaticIsDead(body.getEntityId());
+                break;
+
+            case GRAVITY:
+                this.gravityBodies.remove(body.getEntityId());
+                break;
+            default:
+                // Nada
+        }
+
+    }
+    // endregion
+
     // region Setters
     public void setDomainEventProcessor(DomainEventProcessor domainEventProcessor) {
         this.domainEventProcessor = domainEventProcessor;
@@ -532,7 +532,6 @@ public class Model implements BodyEventProcessor {
         }
     }
     // endregion
-
 
     // *** PRIVATE ***
 
@@ -737,7 +736,7 @@ public class Model implements BodyEventProcessor {
         this.checkLifeOverEvents(checkBody, domainEvents);
     }
 
-    // region execute actions (do***)
+    // region Execute actions (doAction***)
     private void doActions(
             List<ActionDTO> actions, PhysicsValuesDTO newPhyValues, PhysicsValuesDTO oldPhyValues) {
 
@@ -843,7 +842,7 @@ public class Model implements BodyEventProcessor {
                 break;
 
             case DIE:
-                this.killBody(body);
+                this.removeBody(body);
                 break;
 
             case EXPLODE_IN_FRAGMENTS:
