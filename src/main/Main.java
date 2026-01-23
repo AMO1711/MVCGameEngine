@@ -2,9 +2,10 @@ package main;
 
 import assets.implementations.ProjectAssets;
 import controller.implementations.Controller;
-import generators.implementations.LifeGenerator;
-import generators.implementations.ActionGenerator;
-import generators.implementations.SceneGenerator;
+import generators.implementations.DefaultActionsGenerator;
+import generators.implementations.DefaultIAGenerator;
+import generators.implementations.DefaultLevelGenerator;
+import generators.ports.ActionsGenerator;
 import generators.ports.LifeConfigDTO;
 import model.implementations.Model;
 import view.core.View;
@@ -42,11 +43,11 @@ public class Main {
                 worldHeight,
                 new View(),
                 new Model(worldWidth, worldHeight, maxDynamicBodies),
-                new ActionGenerator());
+                (ActionsGenerator) new DefaultActionsGenerator());
 
         controller.activate();
 
-        SceneGenerator worldGenerator = new SceneGenerator(
+        DefaultLevelGenerator worldGenerator = new DefaultLevelGenerator(
                 controller,
                 worldDef);
 
@@ -59,7 +60,7 @@ public class Main {
                 maxAsteroidSpeedModule,
                 maxAsteroidAccModule);
 
-        LifeGenerator lifeGenerator = new LifeGenerator(
+        DefaultIAGenerator lifeGenerator = new DefaultIAGenerator(
                 controller,
                 worldDef,
                 lifeConfig);

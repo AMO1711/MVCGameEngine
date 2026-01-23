@@ -1,0 +1,22 @@
+package generators.implementations;
+
+import controller.ports.WorldEvolver;
+import generators.implementations.ia.AsteroidSpawnIAGenerator;
+import generators.ports.LifeConfigDTO;
+import world.ports.WorldDefinition;
+
+public class DefaultIAGenerator extends AsteroidSpawnIAGenerator {
+
+    // No additional functionality
+    //
+    // Just a default naming wrapper :-)
+    //
+    // Intended for easier swapping IA generator implementations in Main.java
+
+    // *** CONSTRUCTOR *** //
+
+    public DefaultIAGenerator(WorldEvolver controller,
+            WorldDefinition worldDefinition, LifeConfigDTO lifeConfig) {
+        super(controller, worldDefinition, lifeConfig);
+    }
+}

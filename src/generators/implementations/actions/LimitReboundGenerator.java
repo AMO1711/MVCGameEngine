@@ -1,4 +1,4 @@
-package generators.implementations;
+package generators.implementations.actions;
 
 import java.util.List;
 
@@ -12,7 +12,7 @@ import events.domain.ports.eventtype.DomainEvent;
 import events.domain.ports.eventtype.EmitEvent;
 import events.domain.ports.eventtype.LifeOver;
 import events.domain.ports.eventtype.LimitEvent;
-import generators.ports.GameRulesEngine;
+import generators.ports.ActionsGenerator;
 import model.bodies.ports.BodyType;
 
 /**
@@ -34,7 +34,7 @@ import model.bodies.ports.BodyType;
  * - Keep rule logic isolated from Controller
  * - Enable swapping rules without touching core engine wiring
  */
-public class ActionGenerator implements GameRulesEngine {
+public class LimitReboundGenerator implements ActionsGenerator {
 
     // *** INTERFACE IMPLEMENTATIONS ***
 

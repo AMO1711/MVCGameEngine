@@ -25,7 +25,7 @@ import events.domain.ports.eventtype.DomainEvent;
 import events.domain.ports.eventtype.EmitEvent;
 import events.domain.ports.eventtype.LifeOver;
 import events.domain.ports.eventtype.LimitEvent;
-import generators.ports.GameRulesEngine;
+import generators.ports.ActionsGenerator;
 import model.bodies.ports.BodyDTO;
 import model.bodies.ports.BodyType;
 import model.emitter.ports.EmitterConfigDto;
@@ -179,7 +179,7 @@ import world.ports.WorldDefWeaponDTO;
 public class Controller implements WorldEvolver, WorldInitializer, DomainEventProcessor {
 
     private volatile EngineState engineState;
-    private final GameRulesEngine gameRulesEngine;
+    private final ActionsGenerator gameRulesEngine;
     private Model model;
     private View view;
     private Dimension worldDimension;
@@ -187,7 +187,7 @@ public class Controller implements WorldEvolver, WorldInitializer, DomainEventPr
     // *** CONSTRUCTORS ***
 
     public Controller(int worldWidth, int worldHigh,
-            View view, Model model, GameRulesEngine gameRulesEngine) {
+            View view, Model model, ActionsGenerator gameRulesEngine) {
 
         this.engineState = EngineState.STARTING;
         this.gameRulesEngine = gameRulesEngine;
