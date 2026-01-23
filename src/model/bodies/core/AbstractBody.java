@@ -1,6 +1,7 @@
 package model.bodies.core;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -297,11 +298,19 @@ public abstract class AbstractBody {
         return active;
     }
 
-    public Emitter getEmitter(String emitterId) {
+    public Emitter emitterGet(String emitterId) {
+        if (emitterId == null) {
+            throw new IllegalArgumentException("EmitterId cannot be null");
+        }
+
         return this.emitters.get(emitterId);
     }
 
-    public boolean emittersHas() {
+    public Collection<Emitter> emittersList() {
+        return this.emitters.values();
+    }
+
+    public boolean emittersListEmpty() {
         return !this.emitters.isEmpty();
     }
 
@@ -315,10 +324,17 @@ public abstract class AbstractBody {
     }
 
     public void emitterRemove(String emitterId) {
+        if (emitterId == null) {
+            throw new IllegalArgumentException("EmitterId cannot be null");
+        }
+
         this.emitters.remove(emitterId);
     }
 
     public void emitterRequest(String emitterId) {
+        if (emitterId == null) {
+            throw new IllegalArgumentException("EmitterId cannot be null");
+        }
         Emitter emitter = emitters.get(emitterId);
         if (emitter != null) {
             emitter.registerRequest();
@@ -519,5 +535,4 @@ public abstract class AbstractBody {
         return AbstractBody.deadQuantity;
     }
     // endregion
-
 }

@@ -7,7 +7,7 @@ import events.domain.ports.eventtype.DomainEvent;
 
 public interface DomainEventProcessor {
 
-    public void decideActions(List<DomainEvent> domainEvents, List<ActionDTO> actions);
+    public void provideActions(List<DomainEvent> domainEvents, List<ActionDTO> actions);
 
     public void notifyNewDynamic(String entityId, String assetId);
 

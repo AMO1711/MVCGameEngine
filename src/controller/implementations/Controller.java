@@ -31,6 +31,7 @@ import model.emitter.ports.EmitterConfigDto;
 import model.implementations.Model;
 import model.weapons.ports.WeaponDto;
 import model.ports.DomainEventProcessor;
+import rules.ports.GameRulesEngine;
 import view.core.View;
 import view.renderables.ports.DynamicRenderDTO;
 import view.renderables.ports.PlayerRenderDTO;
@@ -62,7 +63,7 @@ import world.ports.WorldDefWeaponDTO;
  *
  * 1) Bootstrapping / activation sequence
  * - Validates that all required dependencies are present (worldDimension,
- *   model, view)
+ * model, view)
  * - Configures world dimensions in both Model and View
  * - Activates View (starts Renderer loop)
  * - Activates Model (enables entity creation and physics)
@@ -72,9 +73,9 @@ import world.ports.WorldDefWeaponDTO;
  * - addPlayer(): creates player entity, adds visual to View
  * - addDynamicBody(): creates dynamic entity, adds visual to View
  * - addDecorator() / addStaticBody(): creates static entity, pushes snapshot
- *   to View
+ * to View
  * - addWeaponToPlayer() / addEmitterToPlayer(): equips player with weapons
- *   or particle emitters
+ * or particle emitters
  *
  * Important: Static bodies and decorators are "push-updated" into the View.
  * After adding a static/decorator entity, the controller fetches a fresh
@@ -84,35 +85,26 @@ import world.ports.WorldDefWeaponDTO;
  *
  * 3) Runtime command dispatch
  * - Exposes high-level player commands that the View calls in response to
- *   user input:
- *     * playerThrustOn / playerThrustOff / playerReverseThrust
- *     * playerRotateLeftOn / playerRotateRightOn / playerRotateOff
- *     * playerFire
- *     * playerSelectNextWeapon
+ * user input:
+ * * playerThrustOn / playerThrustOff / playerReverseThrust
+ * * playerRotateLeftOn / playerRotateRightOn / playerRotateOff
+ * * playerFire
+ * * playerSelectNextWeapon
  * - All of these are simple delegations to the Model, keeping the View free
- *   of simulation logic
+ * of simulation logic
  *
  * 4) Snapshot access for rendering
  * - getDynamicRenderablesData(): transforms Model's BodyDTO list into
- *   DynamicRenderDTO list via mapper. Called once per frame by Renderer.
+ * DynamicRenderDTO list via mapper. Called once per frame by Renderer.
  * - getPlayerRenderData(playerId): transforms PlayerDTO into PlayerRenderDTO
- *   for HUD/UI rendering
+ * for HUD/UI rendering
  * - getSpatialGridStatistics(): provides collision detection grid metrics
- *   for debugging/monitoring
+ * for debugging/monitoring
  * - Entity statistics: getEntityAliveQuantity(), getEntityCreatedQuantity(),
- *   getEntityDeadQuantity()
+ * getEntityDeadQuantity()
  *
  * 5) Game rules / decision layer (DomainEventProcessor interface)
- * - decideActions(domainEvents, actions): processes all domain events from
- *   the Model and populates the actions list
- * - applyGameRules(event, actions): maps specific events to specific actions:
- *     * LimitEvent (boundary reached) → REBOUND_IN_[EAST|WEST|NORTH|SOUTH]
- *       (HIGH priority, executed by BODY)
- *     * LifeOver → DIE (HIGH priority, executed by MODEL)
- *     * EmitEvent (EMIT_REQUESTED) → SPAWN_BODY (LOW priority, MODEL)
- *     * EmitEvent (FIRE_REQUESTED) → SPAWN_PROJECTILE (LOW priority, MODEL)
- *     * CollisionEvent → Currently resolved by resolveCollision() (commented
- *       out in production)
+ * - provideActions delegates to the injected GameRulesEngine
  *
  * Data transformation (Mappers)
  * -----------------------------
@@ -124,7 +116,7 @@ import world.ports.WorldDefWeaponDTO;
  * - WeaponMapper: WorldDefWeaponDTO → WeaponDto
  * - EmitterMapper: WorldDefEmitterDTO → EmitterConfigDto
  * - SpatialGridStatisticsMapper: SpatialGridStatisticsDTO →
- *   SpatialGridStatisticsRenderDTO
+ * SpatialGridStatisticsRenderDTO
  *
  * This layer ensures complete decoupling: Model knows nothing about rendering,
  * View knows nothing about physics simulation.
@@ -133,9 +125,9 @@ import world.ports.WorldDefWeaponDTO;
  * ----------------------------------------------------------------
  * The Controller acts as observer/notifier for entity lifecycle events:
  * - notifyNewDynamic(entityId, assetId): tells View to create visual for
- *   dynamic entity
+ * dynamic entity
  * - notifyNewStatic(entityId, assetId): tells View to create visual for
- *   static entity, then pushes static snapshot update
+ * static entity, then pushes static snapshot update
  * - notifyDynamicIsDead(entityId): tells View to remove dynamic visual
  * - notifyPlayerIsDead(entityId): tells View to remove player visual
  * - notifyStaticIsDead(entityId): triggers static snapshot update
@@ -155,31 +147,31 @@ import world.ports.WorldDefWeaponDTO;
  * Dependency injection rules
  * --------------------------
  * - setModel(model): stores the model and injects the controller as
- *   DomainEventProcessor (model.setDomainEventProcessor(this)). This enables
- *   the Model to delegate game rules decisions to the Controller.
+ * DomainEventProcessor (model.setDomainEventProcessor(this)). This enables
+ * the Model to delegate game rules decisions to the Controller.
  * - setView(view): stores the view and injects the controller into the view
- *   (view.setController(this)). This enables the View to send player commands
- *   and pull rendering snapshots.
+ * (view.setController(this)). This enables the View to send player commands
+ * and pull rendering snapshots.
  * - Bidirectional injection creates a clean separation: Model owns simulation,
- *   Controller owns rules, View owns rendering.
+ * Controller owns rules, View owns rendering.
  *
  * Threading notes
  * ---------------
  * - The Controller itself mostly acts as a stateless facade
  * - Key concurrency point: Renderer thread calls getDynamicRenderablesData()
- *   every frame (~60Hz)
+ * every frame (~60Hz)
  * - Static snapshots are pushed occasionally from Model thread when
- *   static/decorator entities are created/destroyed
+ * static/decorator entities are created/destroyed
  * - All data transformations (mappers) create new DTO instances, preventing
- *   shared mutable state between threads
+ * shared mutable state between threads
  * - Volatile engineState ensures visibility across threads
  * - Keeping Controller methods small and side-effect-light reduces contention
- *   and makes cross-thread interactions predictable
+ * and makes cross-thread interactions predictable
  *
  * Design goals
  * ------------
  * - Enforce strict layer separation via DTOs and mappers
- * - Provide a single point of control for game rules (applyGameRules)
+ * - Provide a single point of control for game rules (GamesRulesEngine)
  * - Enable independent testing of Model (physics) and View (rendering)
  * - Support hot-swapping of game rules without touching Model or View code
  * - Minimize coupling: Model/View never reference each other directly
@@ -187,6 +179,7 @@ import world.ports.WorldDefWeaponDTO;
 public class Controller implements WorldEvolver, WorldInitializer, DomainEventProcessor {
 
     private volatile EngineState engineState;
+    private final GameRulesEngine gameRulesEngine;
     private Model model;
     private View view;
     private Dimension worldDimension;
@@ -194,9 +187,10 @@ public class Controller implements WorldEvolver, WorldInitializer, DomainEventPr
     // *** CONSTRUCTORS ***
 
     public Controller(int worldWidth, int worldHigh,
-            View view, Model model) {
+            View view, Model model, GameRulesEngine gameRulesEngine) {
 
         this.engineState = EngineState.STARTING;
+        this.gameRulesEngine = gameRulesEngine;
         this.setWorldDimension(worldWidth, worldHigh);
         this.setModel(model);
         this.setView(view);
@@ -336,12 +330,8 @@ public class Controller implements WorldEvolver, WorldInitializer, DomainEventPr
 
     // region DomainEventProcessor
     @Override
-    public void decideActions(List<DomainEvent> domainEvents, List<ActionDTO> actions) {
-        if (domainEvents != null) {
-            for (DomainEvent event : domainEvents) {
-                this.applyGameRules(event, actions);
-            }
-        }
+    public void provideActions(List<DomainEvent> domainEvents, List<ActionDTO> actions) {
+        this.gameRulesEngine.provideActions(domainEvents, actions);
     }
 
     @Override
@@ -388,9 +378,9 @@ public class Controller implements WorldEvolver, WorldInitializer, DomainEventPr
     }
 
     @Override // WorldEvolver
-    public void addEmitterToPlayer(String playerId, WorldDefEmitterDTO bodyEmitterDef) {
+    public void bodyEquipTrail(String playerId, WorldDefEmitterDTO bodyEmitterDef) {
         EmitterConfigDto bodyEmitter = EmitterMapper.fromWorldDef(bodyEmitterDef);
-        this.model.bodyEquipEmitter(playerId, bodyEmitter);
+        this.model.bodyEquipTrail(playerId, bodyEmitter);
     }
 
     @Override // WorldEvolver
@@ -450,92 +440,6 @@ public class Controller implements WorldEvolver, WorldInitializer, DomainEventPr
     // endregion WorldInitializer
 
     // *** PRIVATE (Internal, helpers, ...) ***
-
-    private void applyGameRules(DomainEvent event, List<ActionDTO> actions) {
-        switch (event) {
-            case LimitEvent e -> {
-                ActionType actionType;
-
-                switch (e.type) {
-                    case REACHED_EAST_LIMIT:
-                        actionType = ActionType.REBOUND_IN_EAST;
-                        break;
-                    case REACHED_WEST_LIMIT:
-                        actionType = ActionType.REBOUND_IN_WEST;
-                        break;
-                    case REACHED_NORTH_LIMIT:
-                        actionType = ActionType.REBOUND_IN_NORTH;
-                        break;
-                    case REACHED_SOUTH_LIMIT:
-                        actionType = ActionType.REBOUND_IN_SOUTH;
-                        break;
-                    default:
-                        actionType = ActionType.NONE;
-                        break;
-                }
-
-                actions.add(new ActionDTO(
-                        e.primaryBodyRef.id(), e.primaryBodyRef.type(),
-                        actionType, ActionExecutor.BODY, ActionPriority.HIGH,
-                        event));
-
-            }
-
-            case LifeOver e ->
-                actions.add(new ActionDTO(
-                        e.primaryBodyRef.id(), e.primaryBodyRef.type(),
-                        ActionType.DIE, ActionExecutor.MODEL, ActionPriority.HIGH,
-                        event));
-
-            case EmitEvent e -> {
-
-                if (e.type == DomainEventType.EMIT_REQUESTED) {
-                    actions.add(new ActionDTO(
-                            e.primaryBodyRef.id(),
-                            e.primaryBodyRef.type(),
-                            ActionType.SPAWN_BODY,
-                            ActionExecutor.MODEL,
-                            ActionPriority.LOW, event));
-
-                } else {
-                    actions.add(new ActionDTO(
-                            e.primaryBodyRef.id(),
-                            e.primaryBodyRef.type(),
-                            ActionType.SPAWN_PROJECTILE,
-                            ActionExecutor.MODEL,
-                            ActionPriority.LOW, event));
-                }
-
-            }
-
-            case CollisionEvent e -> {
-
-                // resolveCollision(e, actions);
-
-            }
-        }
-    }
-
-    private void resolveCollision(CollisionEvent event, List<ActionDTO> actions) {
-        BodyType primary = event.primaryBodyRef.type();
-        BodyType secondary = event.secondaryBodyRef.type();
-
-        // Ignore collisions with DECORATOR bodies
-        if (primary == BodyType.DECORATOR || secondary == BodyType.DECORATOR) {
-            return;
-        }
-
-        // Check shooter immunity for PLAYER vs PROJECTILE and viceversa
-        if (event.payload.haveImmunity) {
-            return; // Projectile passes through its shooter during immunity period
-        }
-
-        // Default: Both die
-        actions.add(new ActionDTO(event.primaryBodyRef.id(), event.primaryBodyRef.type(),
-                ActionType.DIE, ActionExecutor.MODEL, ActionPriority.HIGH, event));
-        actions.add(new ActionDTO(event.secondaryBodyRef.id(), event.secondaryBodyRef.type(),
-                ActionType.DIE, ActionExecutor.MODEL, ActionPriority.HIGH, event));
-    }
 
     private void updateStaticRenderablesView() {
         ArrayList<BodyDTO> bodiesData = this.model.getStaticsData();

@@ -37,6 +37,7 @@ import model.bodies.ports.BodyState;
 import model.bodies.ports.BodyType;
 import model.bodies.ports.PlayerDTO;
 import model.emitter.implementations.BasicEmitter;
+import model.emitter.ports.Emitter;
 import model.emitter.ports.EmitterConfigDto;
 import model.ports.DomainEventProcessor;
 import model.ports.ModelState;
@@ -126,7 +127,7 @@ import model.weapons.ports.WeaponFactory;
  * - Fire events: weapon discharge from players
  * - Life over events: when maxLifeTime is reached
  *
- * 2) Action Decision (decideActions):
+ * 2) Action Decision (provideActions):
  * - Domain events are forwarded to DomainEventProcessor
  * - DomainEventProcessor returns ActionDTO list
  * - Movement action is added by default (unless body rebounded)
@@ -211,7 +212,7 @@ public class Model implements BodyEventProcessor {
         this.state = ModelState.ALIVE;
     }
 
-    // region Body management (add***)
+    // region Body creation (add***)
     public String addBody(BodyType bodyType,
             double size,
             double posX, double posY, double speedX, double speedY,
@@ -304,24 +305,47 @@ public class Model implements BodyEventProcessor {
     // endregion
 
     // region Body equipment (bodyEquip***)
-    public void bodyEquipEmitter(String playerId, EmitterConfigDto emitterConfig) {
-        PlayerBody pBody = (PlayerBody) this.dynamicBodies.get(playerId);
-        if (pBody == null) {
-            return; // ========= Player not found =========>
+    public String bodyEquipEmitter(String bodyId, EmitterConfigDto emitterConfig) {
+        if (bodyId == null || bodyId.isEmpty()) {
+            throw new IllegalArgumentException("BodyId cannot be null or empty");
+        }
+        if (emitterConfig == null) {
+            throw new IllegalArgumentException("EmitterConfig cannot be null");
+        }
+
+        AbstractBody body = this.dynamicBodies.get(bodyId);
+        if (body == null) {
+            return ""; // ========= Body not found =========>
         }
 
         BasicEmitter emitter = new BasicEmitter(emitterConfig);
-        pBody.setEmitter(emitter);
+        String emitterId = body.emitterEquip(emitter);
+
+        return emitterId;
     }
 
-    public void bodyEquipTrail(String playerId, EmitterConfigDto trailConfig) {
-        PlayerBody pBody = (PlayerBody) this.dynamicBodies.get(playerId);
-        if (pBody == null) {
-            return; // ========= Player not found =========>
+    public String bodyEquipTrail(String bodyId, EmitterConfigDto trailConfig) {
+        if (bodyId == null || bodyId.isEmpty()) {
+            throw new IllegalArgumentException("BodyId cannot be null or empty");
+        }
+        if (trailConfig == null) {
+            throw new IllegalArgumentException("EmitterConfig cannot be null");
         }
 
+        AbstractBody body = this.dynamicBodies.get(bodyId);
+        if (body == null) {
+            return ""; // ========= Body not found =========>
+        }
+
+        if (!(body instanceof DynamicBody)) {
+            throw new IllegalArgumentException("bodyEquipTrail() -> body is not DynamicBody");
+        }
+        DynamicBody dBody = (DynamicBody) body;
+
         BasicEmitter trailEmitter = new BasicEmitter(trailConfig);
-        pBody.setEmitter(trailEmitter);
+        String emitterId = dBody.trailEquip(trailEmitter);
+
+        return emitterId;
     }
     // endregion
 
@@ -550,7 +574,7 @@ public class Model implements BodyEventProcessor {
 
             // 2 => Decide actions ------------------
             List<ActionDTO> actions = body.getScratchClearActions();
-            this.decideActions(body, domainEvents, actions);
+            this.provideActions(body, domainEvents, actions);
 
             // 3 => Execute actions -----------------
             this.doActions(actions, newPhyValues, oldPhyValues);
@@ -645,46 +669,47 @@ public class Model implements BodyEventProcessor {
     private void checkEmissionEvents2(AbstractBody checkBody, PhysicsValuesDTO newPhyValues,
             PhysicsValuesDTO oldPhyValues, List<DomainEvent> domainEvents) {
 
-        BodyType bodyType = checkBody.getBodyType();
-        BodyRefDTO primaryBodyRef = checkBody.getBodyRef();
+        // BodyType bodyType = checkBody.getBodyType();
+        // BodyRefDTO primaryBodyRef = checkBody.getBodyRef();
 
-        if (bodyType == BodyType.PLAYER || bodyType == BodyType.DYNAMIC) {
-            DynamicBody pBody = (DynamicBody) checkBody;
+        // if (bodyType == BodyType.PLAYER || bodyType == BodyType.DYNAMIC) {
+        // DynamicBody pBody = (DynamicBody) checkBody;
 
-            double dtSeconds = (newPhyValues.timeStamp - oldPhyValues.timeStamp) / 1_000_000_000.0;
-            if (pBody.mustEmitNow(dtSeconds)) {
-                EmitPayloadDTO payload = new EmitPayloadDTO(
-                        primaryBodyRef, pBody.getBodyToEmitConfig());
+        // double dtSeconds = (newPhyValues.timeStamp - oldPhyValues.timeStamp) /
+        // 1_000_000_000.0;
+        // if (pBody.mustEmitNow(dtSeconds)) {
+        // EmitPayloadDTO payload = new EmitPayloadDTO(
+        // primaryBodyRef, pBody.getBodyToEmitConfig());
 
-                EmitEvent emitEvent = new EmitEvent(
-                        DomainEventType.EMIT_REQUESTED, primaryBodyRef, payload);
+        // EmitEvent emitEvent = new EmitEvent(
+        // DomainEventType.EMIT_REQUESTED, primaryBodyRef, payload);
 
-                domainEvents.add(emitEvent);
-            }
-        }
+        // domainEvents.add(emitEvent);
+        // }
+        // }
     }
 
     private void checkEmissionEvents(AbstractBody checkBody, PhysicsValuesDTO newPhyValues,
             PhysicsValuesDTO oldPhyValues, List<DomainEvent> domainEvents) {
 
-        // BodyType bodyType = checkBody.getType();
-        // BodyRefDTO primaryBodyRef = checkBody.getBodyRef();
+        BodyRefDTO primaryBodyRef = checkBody.getBodyRef();
 
-        // if (checkBody.hasEmitters()) {
-        // double dtSeconds = calculateDeltaTime(newPhyValues, body.getPhysicsValues());
+        if (!(checkBody.emittersListEmpty())) {
+            return; // ======= No emitters =======>
+        }
+        double dtSeconds = (newPhyValues.timeStamp - checkBody.getPhysicsValues().timeStamp) / 1_000_000_000.0;
 
-        // for (Emitter emitter : body.getEmitters()) {
-        // if (emitter.mustEmitNow(dtSeconds)) {
-        // EmitPayloadDTO payload = new EmitPayloadDTO(
-        // emitter.getBodyToEmitConfig());
+        for (Emitter emitter : checkBody.emittersList()) {
+            if (emitter.mustEmitNow(dtSeconds)) {
+                EmitPayloadDTO payload = new EmitPayloadDTO(primaryBodyRef,
+                        emitter.getBodyToEmitConfig());
 
-        // events.add(new EmitEvent(
-        // DomainEventType.EMIT_REQUESTED,
-        // bodyRef,
-        // payload));
-        // }
-        // }
-        // }
+                domainEvents.add(new EmitEvent(
+                        DomainEventType.EMIT_REQUESTED,
+                        primaryBodyRef,
+                        payload));
+            }
+        }
     }
 
     private void checkFireEvents(AbstractBody checkBody,
@@ -735,9 +760,9 @@ public class Model implements BodyEventProcessor {
     }
     // endregion
 
-    private void decideActions(AbstractBody body, List<DomainEvent> domainEvents, List<ActionDTO> actions) {
+    private void provideActions(AbstractBody body, List<DomainEvent> domainEvents, List<ActionDTO> actions) {
         if (!domainEvents.isEmpty())
-            this.domainEventProcessor.decideActions(domainEvents, actions);
+            this.domainEventProcessor.provideActions(domainEvents, actions);
 
         boolean executorIsPhysicBody = actions.stream()
                 .anyMatch(a -> a.type == ActionType.REBOUND_IN_EAST
@@ -762,7 +787,7 @@ public class Model implements BodyEventProcessor {
         this.checkCollisions(checkBody, newPhyValues, domainEvents);
 
         // 3 => Emission on (dynamics and players) ----------
-        this.checkEmissionEvents2(checkBody, newPhyValues, oldPhyValues, domainEvents);
+        this.checkEmissionEvents(checkBody, newPhyValues, oldPhyValues, domainEvents);
 
         // 4 => Fire (only players) -----------------------
         this.checkFireEvents(checkBody, newPhyValues, domainEvents);

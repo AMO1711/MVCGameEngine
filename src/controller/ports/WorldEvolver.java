@@ -17,7 +17,7 @@ public interface WorldEvolver {
 
     public void addWeaponToPlayer(String playerId, WorldDefWeaponDTO weaponDef, int shootingOffset);
 
-    public void addEmitterToPlayer(
+    public void bodyEquipTrail(
             String playerId, WorldDefEmitterDTO bodyEmitterDef);
 
     public Dimension getWorldDimension();

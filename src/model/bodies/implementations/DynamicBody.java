@@ -87,9 +87,16 @@ public class DynamicBody extends AbstractBody implements Runnable {
     // endregion
 
     // region Trail management (trail***)
-    public void trailEquip(Emitter trailEmitter) {
-        this.trailId = this.registerBodyEmitter(trailEmitter);
+    public String trailEquip(Emitter trailEmitter) {
+        this.trailId = this.emitterEquip(trailEmitter);
+
+        return this.trailId;
     }
+
+    public String trailGetId() {
+        return this.trailId;
+    }
+
     // endregion
 
     // region Getters (get***)
@@ -106,7 +113,7 @@ public class DynamicBody extends AbstractBody implements Runnable {
     }
     // endregion
 
-    // region settersb (set***)
+    // region setters (set***)
     public void setAngularAcceleration(double angularAcc) {
         this.getPhysicsEngine().setAngularAcceleration(angularAcc);
     }
@@ -161,7 +168,8 @@ public class DynamicBody extends AbstractBody implements Runnable {
                         this.getBodyId(), minX, maxX, minY, maxY, this.getScratchIdxs());
 
                 if (this.isThrusting()) {
-                    this.registerBodyEmissionRequest();
+                    if (this.trailId != null)
+                        this.emitterRequest(this.trailId);
                 }
 
                 this.processBodyEvents(this, newPhyValues, this.getPhysicsEngine().getPhysicsValues());
