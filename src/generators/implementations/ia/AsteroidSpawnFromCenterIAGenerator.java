@@ -10,7 +10,7 @@ import generators.ports.LifeConfigDTO;
 import world.ports.WorldDefItemDTO;
 import world.ports.WorldDefinition;
 
-public class AsteroidSpawnIAGenerator implements Runnable {
+public class AsteroidSpawnFromCenterIAGenerator implements Runnable {
 
     private final Random rnd = new Random();
     private final ArrayList<WorldDefItemDTO> items;
@@ -19,10 +19,9 @@ public class AsteroidSpawnIAGenerator implements Runnable {
     private final WorldDefinition worldDefinition;
     private final LifeConfigDTO lifeConfig;
 
-    /**
-     * CONSTRUCTORS
-     */
-    public AsteroidSpawnIAGenerator(WorldEvolver controller,
+    // *** CONSTRUCTORS ***
+
+    public AsteroidSpawnFromCenterIAGenerator(WorldEvolver controller,
             WorldDefinition worldDefinition, LifeConfigDTO lifeConfig) {
 
         this.worldDefinition = worldDefinition;
@@ -31,9 +30,7 @@ public class AsteroidSpawnIAGenerator implements Runnable {
         this.lifeConfig = lifeConfig;
     }
 
-    //
-    // PUBLIC
-    //
+    // *** PUBLIC ***
 
     public void activate() {
         this.thread = new Thread(this);
@@ -44,9 +41,7 @@ public class AsteroidSpawnIAGenerator implements Runnable {
         System.out.println("Life generator activated! · RandomWorld");
     }
 
-    //
-    // PRIVATE
-    //
+    // *** PRIVATE ***
 
     private void addRandomDynamicBody() {
         DoubleVector speed = this.randomSpeed();
@@ -59,11 +54,18 @@ public class AsteroidSpawnIAGenerator implements Runnable {
             acc = new DoubleVector(this.lifeConfig.accX, this.lifeConfig.accY);
         }
 
-        DoubleVector pos = this.randomPosition();
+        DoubleVector pos = this.centerPosition();
+
         this.worldEvolver.addDynamicBody(
                 this.randomAsset(), this.randomSize(),
                 pos.x, pos.y, speed.x, speed.y, acc.x, acc.y,
                 0d, this.randomAngularSpeed(460d), 0d, 0d);
+    }
+
+    private DoubleVector centerPosition() {
+        return new DoubleVector(
+                this.worldDefinition.worldWidth / 2,
+                this.worldDefinition.worldHeight / 2);
     }
 
     private DoubleVector randomAcceleration() {
@@ -76,20 +78,9 @@ public class AsteroidSpawnIAGenerator implements Runnable {
         return newAcceleration;
     }
 
-    // *+
     private String randomAsset() {
         int index = this.rnd.nextInt(this.items.size());
         return this.items.get(index).assetId;
-    }
-
-    private DoubleVector randomPosition() {
-        double x, y;
-
-        // Random position within world limits
-        x = this.rnd.nextFloat() * this.worldEvolver.getWorldDimension().width;
-        y = this.rnd.nextFloat() * this.worldEvolver.getWorldDimension().height;
-
-        return new DoubleVector(x, y);
     }
 
     private int randomSize() {
@@ -132,10 +123,11 @@ public class AsteroidSpawnIAGenerator implements Runnable {
     private void createPlayers() {
         ArrayList<WorldDefItemDTO> dBodies = this.worldDefinition.spaceshipsDef;
         String playerId = null;
+        DoubleVector pos = this.centerPosition();
 
         for (WorldDefItemDTO body : dBodies) {
             playerId = this.worldEvolver.addPlayer(
-                    body.assetId, body.size, 500, 200, 0, 0, 0, 0, 0,
+                    body.assetId, body.size, 400, 400, 0, 0, 0, 0, 0,
                     this.randomAngularSpeed(270), 0, 0);
 
             this.worldEvolver.addWeaponToPlayer(

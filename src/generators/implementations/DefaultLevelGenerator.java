@@ -1,14 +1,18 @@
 package generators.implementations;
 
 import controller.ports.WorldInitializer;
-import generators.implementations.level.SimpleRandomLevelGenerator;
 import world.ports.WorldDefinition;
 
-public class DefaultLevelGenerator extends SimpleRandomLevelGenerator {
+public class DefaultLevelGenerator extends generators.implementations.level.BigSunInCenterLevelGenerator {
 
     // No additional functionality
-    // just a default naming wrapper :-)
-    // Intended for easier swapping in Main.java
+    //
+    // Just a default naming wrapper :-)
+    //
+    // Intended for easier swapping LEVEL generator implementations.
+    //
+    // NO MODIFICATIONS REQUIRED IN Main.java
+
 
     // *** CONSTRUCTOR *** //
 
