@@ -758,39 +758,6 @@ public class Model implements BodyEventProcessor {
     }
     // endregion
 
-    private void provideActions(AbstractBody body, List<DomainEvent> domainEvents, List<ActionDTO> actions) {
-        if (!domainEvents.isEmpty())
-            this.domainEventProcessor.provideActions(domainEvents, actions);
-
-        boolean actionWithMovementImplicit = actions.stream()
-                .anyMatch(a -> a.action != null && a.action.name().contains("MOVE"));
-
-        if (!actionWithMovementImplicit)
-            // Always add MOVE action except if body rebounded
-            actions.add(new ActionDTO(
-                    body.getBodyId(), body.getBodyType(), Action.MOVE, null));
-
-    }
-
-    private void detectEvents(AbstractBody checkBody,
-            PhysicsValuesDTO newPhyValues, PhysicsValuesDTO oldPhyValues, List<DomainEvent> domainEvents) {
-
-        // 1 => Limits (all bodies) -----------------------
-        this.checkLimitEvents(checkBody, newPhyValues, domainEvents);
-
-        // 2 => Collisions (all bodies) -------------------
-        this.checkCollisions(checkBody, newPhyValues, domainEvents);
-
-        // 3 => Emission on (dynamics and players) ----------
-        this.checkEmissionEvents(checkBody, newPhyValues, oldPhyValues, domainEvents);
-
-        // 4 => Fire (only players) -----------------------
-        this.checkFireEvents(checkBody, newPhyValues, domainEvents);
-
-        // 5 => Life over (all body types) -------------------
-        this.checkLifeOverEvents(checkBody, domainEvents);
-    }
-
     // region Execute actions (executeAction***)
     private void executeAction(ActionDTO action, AbstractBody body,
             PhysicsValuesDTO newPhyValues, PhysicsValuesDTO oldPhyValues) {
@@ -832,9 +799,32 @@ public class Model implements BodyEventProcessor {
                 spatialGridUpsert((AbstractBody) body);
                 break;
 
+            case MOVE_TO_CENTER:
+                PhysicsValuesDTO frozenInCenter = new PhysicsValuesDTO(
+                        newPhyValues.timeStamp,
+                        this.worldWidth / 2, this.worldHeight / 2, 
+                        newPhyValues.angle,
+                        newPhyValues.size,
+                        newPhyValues.speedX, newPhyValues.speedY,
+                        0D, 0D,
+                        newPhyValues.angularSpeed,
+                        newPhyValues.angularAcc,
+                        0D);
+                body.doMovement(frozenInCenter);
+                spatialGridUpsert((AbstractBody) body);
+
+                break;
+
             case NO_MOVE:
-                // Only refresh timestamp
-                PhysicsValuesDTO frozen = new PhysicsValuesDTO(oldPhyValues);
+                PhysicsValuesDTO frozen = new PhysicsValuesDTO(
+                        newPhyValues.timeStamp,
+                        oldPhyValues.posX, oldPhyValues.posY, oldPhyValues.angle,
+                        oldPhyValues.size,
+                        0D, 0D,
+                        0D, 0D,
+                        oldPhyValues.angularSpeed,
+                        oldPhyValues.angularAcc,
+                        0D);
                 body.doMovement(frozen);
                 spatialGridUpsert((AbstractBody) body);
 
@@ -886,6 +876,39 @@ public class Model implements BodyEventProcessor {
         }
     }
     // endregion
+
+    private void provideActions(AbstractBody body, List<DomainEvent> domainEvents, List<ActionDTO> actions) {
+        if (!domainEvents.isEmpty())
+            this.domainEventProcessor.provideActions(domainEvents, actions);
+
+        boolean actionWithMovementImplicit = actions.stream()
+                .anyMatch(a -> a.action != null && a.action.name().contains("MOVE"));
+
+        if (!actionWithMovementImplicit)
+            // Always add MOVE action except if body rebounded
+            actions.add(new ActionDTO(
+                    body.getBodyId(), body.getBodyType(), Action.MOVE, null));
+
+    }
+
+    private void detectEvents(AbstractBody checkBody,
+            PhysicsValuesDTO newPhyValues, PhysicsValuesDTO oldPhyValues, List<DomainEvent> domainEvents) {
+
+        // 1 => Limits (all bodies) -----------------------
+        this.checkLimitEvents(checkBody, newPhyValues, domainEvents);
+
+        // 2 => Collisions (all bodies) -------------------
+        this.checkCollisions(checkBody, newPhyValues, domainEvents);
+
+        // 3 => Emission on (dynamics and players) ----------
+        this.checkEmissionEvents(checkBody, newPhyValues, oldPhyValues, domainEvents);
+
+        // 4 => Fire (only players) -----------------------
+        this.checkFireEvents(checkBody, newPhyValues, domainEvents);
+
+        // 5 => Life over (all body types) -------------------
+        this.checkLifeOverEvents(checkBody, domainEvents);
+    }
 
     private ArrayList<BodyDTO> getBodiesData(Map<String, AbstractBody> bodies) {
         ArrayList<BodyDTO> bodyInfos = new ArrayList<>(bodies.size());

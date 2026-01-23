@@ -5,11 +5,10 @@ import controller.implementations.Controller;
 import generators.implementations.DefaultActionsGenerator;
 import generators.implementations.DefaultIAGenerator;
 import generators.implementations.DefaultLevelGenerator;
-import generators.ports.ActionsGenerator;
 import generators.ports.LifeConfigDTO;
 import model.implementations.Model;
 import view.core.View;
-import world.implementations.RandomWorldDefinitionProvider;
+import world.implementations.EarthInCenterWorldDefinitionProvider;
 import world.ports.WorldDefinition;
 import world.ports.WorldDefinitionProvider;
 
@@ -21,9 +20,9 @@ public class Main {
         int worldWidth = 2450;
         int worldHeight = 1450;
         int maxDynamicBodies = 2000;
-        int maxAsteroidCreationDelay = 3000;
-        int minAsteroidSize = 8;
-        int maxAsteroidSize = 16;
+        int maxAsteroidCreationDelay = 500;
+        int minAsteroidSize = 55;
+        int maxAsteroidSize = 10;
         int maxAsteroidMass = 1000;
         int minAsteroidMass = 10;
         int maxAsteroidSpeedModule = 175;
@@ -31,7 +30,7 @@ public class Main {
 
         ProjectAssets projectAssets = new ProjectAssets();
 
-        WorldDefinitionProvider world = new RandomWorldDefinitionProvider(
+        WorldDefinitionProvider world = new EarthInCenterWorldDefinitionProvider(
                 worldWidth,
                 worldHeight,
                 projectAssets);

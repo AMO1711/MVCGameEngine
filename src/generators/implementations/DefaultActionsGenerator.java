@@ -1,7 +1,7 @@
 package generators.implementations;
 
 public class DefaultActionsGenerator
-        extends generators.implementations.actions.DeadInLimitsPlayerImmunityActionGenerator {
+        extends generators.implementations.actions.InLimitsGoToCenterActionsGenerator {
 
     //
     // No additional functionality

@@ -11,8 +11,9 @@ import events.domain.ports.eventtype.EmitEvent;
 import events.domain.ports.eventtype.LifeOver;
 import events.domain.ports.eventtype.LimitEvent;
 import generators.ports.ActionsGenerator;
+import model.bodies.ports.BodyType;
 
-public class DeadInLimitsActionGenerator implements ActionsGenerator {
+public class InLimitsGoToCenterActionsGenerator implements ActionsGenerator {
 
     // *** INTERFACE IMPLEMENTATIONS ***
 
@@ -30,11 +31,13 @@ public class DeadInLimitsActionGenerator implements ActionsGenerator {
     private void applyGameRules(DomainEvent event, List<ActionDTO> actions) {
         switch (event) {
             case LimitEvent limitEvent -> {
-                Action action;
-                action = Action.DIE;
+
+                Action action = Action.MOVE_TO_CENTER;
+
                 actions.add(new ActionDTO(
                         limitEvent.primaryBodyRef.id(), limitEvent.primaryBodyRef.type(),
                         action, event));
+                break;
 
             }
 

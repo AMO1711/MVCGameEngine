@@ -1,11 +1,11 @@
 package generators.implementations;
 
 import controller.ports.WorldEvolver;
-import generators.implementations.ia.AsteroidSpawnIAGenerator;
 import generators.ports.LifeConfigDTO;
 import world.ports.WorldDefinition;
 
-public class DefaultIAGenerator extends AsteroidSpawnIAGenerator {
+public class DefaultIAGenerator
+        extends generators.implementations.ia.AsteroidSpawnFromCenterIAGenerator {
 
     // No additional functionality
     //
@@ -14,7 +14,6 @@ public class DefaultIAGenerator extends AsteroidSpawnIAGenerator {
     // Intended for easier swapping IA generator implementations.
     //
     // NO MODIFICATIONS REQUIRED IN in Main.java
-
 
     // *** CONSTRUCTOR *** //
 

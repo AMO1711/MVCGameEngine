@@ -1,10 +1,9 @@
 package generators.implementations;
 
 import controller.ports.WorldInitializer;
-import generators.implementations.level.SimpleRandomLevelGenerator;
 import world.ports.WorldDefinition;
 
-public class DefaultLevelGenerator extends SimpleRandomLevelGenerator {
+public class DefaultLevelGenerator extends generators.implementations.level.BigSunInCenterLevelGenerator {
 
     // No additional functionality
     //
