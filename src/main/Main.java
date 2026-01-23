@@ -43,7 +43,7 @@ public class Main {
                 worldHeight,
                 new View(),
                 new Model(worldWidth, worldHeight, maxDynamicBodies),
-                (ActionsGenerator) new DefaultActionsGenerator());
+                new DefaultActionsGenerator());
 
         controller.activate();
 

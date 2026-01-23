@@ -1,9 +1,9 @@
 package generators.implementations;
 
-import generators.implementations.actions.LimitReboundGenerator;
+import generators.implementations.actions.LimitReboundActionsGenerator;
 
 
-public class DefaultActionsGenerator extends LimitReboundGenerator {
+public class DefaultActionsGenerator extends LimitReboundActionsGenerator {
 
     // No additional functionality
     // just a default naming wrapper :-)
