@@ -34,7 +34,7 @@ import model.bodies.ports.BodyType;
  * - Keep rule logic isolated from Controller
  * - Enable swapping rules without touching core engine wiring
  */
-public class LimitReboundGenerator implements ActionsGenerator {
+public class LimitReboundActionsGenerator implements ActionsGenerator {
 
     // *** INTERFACE IMPLEMENTATIONS ***
 
