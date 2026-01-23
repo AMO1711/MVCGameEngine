@@ -10,7 +10,7 @@ public interface Emitter {
 
     public EmitterConfigDto getConfig();
 
-    public String getId();
+    public String getEmitterId();
 
     public boolean mustEmitNow(double dtSeconds);
 

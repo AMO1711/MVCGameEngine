@@ -1,6 +1,6 @@
 package model.bodies.implementations;
 
-import model.bodies.core.AbstractPhysicsBody;
+import model.bodies.core.AbstractBody;
 import model.bodies.ports.BodyEventProcessor;
 import model.bodies.ports.BodyState;
 import model.bodies.ports.BodyType;
@@ -25,7 +25,7 @@ import model.spatial.core.SpatialGrid;
  * - The shooterId enables immunity and collision rules specific to projectiles
  * - Future enhancements: damage values, penetration, homing behavior, etc.
  */
-public class ProjectileBody extends AbstractPhysicsBody implements Runnable {
+public class ProjectileBody extends AbstractBody implements Runnable {
 
     private static final double SHOOTER_IMMUNITY_TIME = 1; // seconds
     private final String shooterId; // ID of the entity that shot this projectile
@@ -58,14 +58,14 @@ public class ProjectileBody extends AbstractPhysicsBody implements Runnable {
         super.activate();
 
         this.thread = new Thread(this);
-        this.thread.setName("Projectile " + this.getEntityId());
+        this.thread.setName("Projectile " + this.getBodyId());
         this.thread.setPriority(Thread.NORM_PRIORITY - 1);
         this.thread.start();
         this.setState(BodyState.ALIVE);
     }
 
     public void addAngularAcceleration(double angularSpeed) {
-        this.getPhysicsEngine().addAngularAcceleration(angularSpeed);
+        this.getPhysicsEngine().angularAccelerationInc(angularSpeed);
     }
 
     public void resetAcceleration() {
@@ -103,9 +103,9 @@ public class ProjectileBody extends AbstractPhysicsBody implements Runnable {
     public void run() {
         PhysicsValuesDTO newPhyValues;
 
-        while (this.getState() != BodyState.DEAD) {
+        while (this.getBodyState() != BodyState.DEAD) {
 
-            if (this.getState() == BodyState.ALIVE) {
+            if (this.getBodyState() == BodyState.ALIVE) {
                 newPhyValues = this.getPhysicsEngine().calcNewPhysicsValues();
 
                 double r = newPhyValues.size * 0.5;
@@ -115,7 +115,7 @@ public class ProjectileBody extends AbstractPhysicsBody implements Runnable {
                 double maxY = newPhyValues.posY + r;
 
                 this.getSpatialGrid().upsert(
-                        this.getEntityId(), minX, maxX, minY, maxY, this.getScratchIdxs());
+                        this.getBodyId(), minX, maxX, minY, maxY, this.getScratchIdxs());
 
                 this.processBodyEvents(this, newPhyValues, this.getPhysicsEngine().getPhysicsValues());
             }

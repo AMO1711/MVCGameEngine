@@ -38,7 +38,7 @@ public class LifeGenerator implements Runnable {
     public void activate() {
         this.thread = new Thread(this);
         this.thread.setName("Life generator");
-        this.thread.setPriority(Thread.NORM_PRIORITY - 3);
+        this.thread.setPriority(Thread.MIN_PRIORITY);
         this.thread.start();
         this.createPlayers();
         System.out.println("Life generator activated! · RandomWorld");
@@ -150,7 +150,7 @@ public class LifeGenerator implements Runnable {
             this.worldEvolver.addWeaponToPlayer(
                     playerId, this.worldDefinition.mineLaunchersDef.get(0), 15);
 
-            this.worldEvolver.addEmitterToPlayer(playerId, this.worldDefinition.trailEmitterDef.get(0));
+            this.worldEvolver.bodyEquipTrail(playerId, this.worldDefinition.trailEmitterDef.get(0));
         }
 
         if (playerId == null) {

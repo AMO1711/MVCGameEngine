@@ -81,12 +81,14 @@ public final class ProjectAssets {
         this.catalog.register("galaxy_2", "galaxy-2.png", AssetType.GALAXY, AssetIntensity.HIGH);
         this.catalog.register("galaxy_3", "galaxy-3.png", AssetType.GALAXY, AssetIntensity.HIGH);
         this.catalog.register("rainbow_1", "rainbow-1.png", AssetType.RAINBOW, AssetIntensity.HIGH);
-        this.catalog.register("stars_1", "stars-1-mini.png", AssetType.STARS, AssetIntensity.HIGH);
-        this.catalog.register("stars_2", "stars-2-mini.png", AssetType.STARS, AssetIntensity.HIGH);
-        this.catalog.register("stars_3", "stars-3-mini.png", AssetType.STARS, AssetIntensity.HIGH);
-        this.catalog.register("stars_4", "stars-4-mini.png", AssetType.STARS, AssetIntensity.HIGH);
-        this.catalog.register("stars_5", "stars-5-mini.png", AssetType.STARS, AssetIntensity.HIGH);
-        this.catalog.register("stars_6", "stars-6-mini.png", AssetType.STARS, AssetIntensity.HIGH);
+
+        this.catalog.register("stars_1", "stars-1.png", AssetType.STARS, AssetIntensity.HIGH);
+        this.catalog.register("stars_2", "stars-2.png", AssetType.STARS, AssetIntensity.HIGH);
+        this.catalog.register("stars_3", "stars-3.png", AssetType.STARS, AssetIntensity.HIGH);
+        this.catalog.register("stars_4", "stars-4.png", AssetType.STARS, AssetIntensity.HIGH);
+        this.catalog.register("stars_5", "stars-5.png", AssetType.STARS, AssetIntensity.HIGH);
+        this.catalog.register("stars_6", "stars-6.png", AssetType.STARS, AssetIntensity.HIGH);
+        this.catalog.register("stars_7", "stars-7.png", AssetType.STARS, AssetIntensity.HIGH);
 
         this.catalog.register("rocket_1", "rocket-1.png", AssetType.ROCKET, AssetIntensity.HIGH);
         this.catalog.register("rocket_2", "rocket-2.png", AssetType.ROCKET, AssetIntensity.HIGH);

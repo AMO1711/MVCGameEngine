@@ -51,7 +51,7 @@ public class RandomWorldDefinitionProvider implements WorldDefinitionProvider {
 
         this.background = randomBackgroundDef();
 
-        this.decorators(this.decoratorsDef, 1, AssetType.STARS, 150, 75);
+        this.decorators(this.decoratorsDef, 6, AssetType.STARS, 600, 200);
 
         this.staticBodies(this.gravityBodiesDef, 1, AssetType.PLANET, 200, 100);
 
@@ -242,7 +242,7 @@ public class RandomWorldDefinitionProvider implements WorldDefinitionProvider {
                     WorldDefWeaponType.PRIMARY_WEAPON,
                     firingSpeed, 0, 0,
                     1, 0, fireRate, 100, 2,
-                    100, 6D));
+                    100, 1D));
         }
     }
 

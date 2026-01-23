@@ -8,13 +8,13 @@ public final class EmitPayloadDTO implements DomainEventPayload {
     public final BodyRefDTO emitterRef;
     public final BodyToEmitDTO bodyConfig;
 
-    public EmitPayloadDTO(BodyRefDTO emitterRef, BodyToEmitDTO bodyConfig) {
-        if (emitterRef == null)
+    public EmitPayloadDTO(BodyRefDTO bodyEmitterRef, BodyToEmitDTO bodyConfig) {
+        if (bodyEmitterRef == null)
             throw new IllegalArgumentException("EmitPayloadDTO.emitterRef is required");
         if (bodyConfig == null)
             throw new IllegalArgumentException("bodyConfig required");
 
-        this.emitterRef = emitterRef;
+        this.emitterRef = bodyEmitterRef;
         this.bodyConfig = bodyConfig;
     }
 }
