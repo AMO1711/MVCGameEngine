@@ -1,4 +1,4 @@
-package rules.ports;
+package generators.ports;
 
 import java.util.List;
 
@@ -22,7 +22,7 @@ import events.domain.ports.eventtype.DomainEvent;
  * - Allow hot-swapping of rule sets without touching the core engine
  * - Keep rule logic modular and testable in isolation
  */
-public interface GameRulesEngine {
+public interface ActionsGenerator {
 
     // *** CONSTRUCTORS ***
 

@@ -1,4 +1,4 @@
-package generators.implementations;
+package generators.implementations.level;
 
 import java.util.ArrayList;
 import java.util.Random;
@@ -7,13 +7,13 @@ import controller.ports.WorldInitializer;
 import world.ports.WorldDefPositionItemDTO;
 import world.ports.WorldDefinition;
 
-public class SceneGenerator {
+public class SimpleRandomLevelGenerator {
 
     private final Random rnd = new Random();
     private final WorldInitializer worldInitializer;
     WorldDefinition worldDefinition;
 
-    public SceneGenerator(WorldInitializer worldInitializer, WorldDefinition worldDef) {
+    public SimpleRandomLevelGenerator(WorldInitializer worldInitializer, WorldDefinition worldDef) {
         this.worldInitializer = worldInitializer;
         this.worldDefinition = worldDef;
 

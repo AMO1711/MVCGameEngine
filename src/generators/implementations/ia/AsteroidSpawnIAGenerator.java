@@ -1,4 +1,4 @@
-package generators.implementations;
+package generators.implementations.ia;
 
 import java.util.Random;
 import java.util.ArrayList;
@@ -6,11 +6,12 @@ import _helpers.DoubleVector;
 
 import controller.ports.EngineState;
 import controller.ports.WorldEvolver;
+import generators.ports.ActionsGenerator;
 import generators.ports.LifeConfigDTO;
 import world.ports.WorldDefItemDTO;
 import world.ports.WorldDefinition;
 
-public class LifeGenerator implements Runnable {
+public class AsteroidSpawnIAGenerator implements Runnable {
 
     private final Random rnd = new Random();
     private final ArrayList<WorldDefItemDTO> items;
@@ -22,7 +23,7 @@ public class LifeGenerator implements Runnable {
     /**
      * CONSTRUCTORS
      */
-    public LifeGenerator(WorldEvolver controller,
+    public AsteroidSpawnIAGenerator(WorldEvolver controller,
             WorldDefinition worldDefinition, LifeConfigDTO lifeConfig) {
 
         this.worldDefinition = worldDefinition;
