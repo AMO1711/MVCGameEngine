@@ -11,7 +11,10 @@ public class DefaultIAGenerator extends AsteroidSpawnIAGenerator {
     //
     // Just a default naming wrapper :-)
     //
-    // Intended for easier swapping IA generator implementations in Main.java
+    // Intended for easier swapping IA generator implementations.
+    //
+    // NO MODIFICATIONS REQUIRED IN in Main.java
+
 
     // *** CONSTRUCTOR *** //
 

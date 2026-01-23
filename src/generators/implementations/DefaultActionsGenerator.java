@@ -1,12 +1,16 @@
 package generators.implementations;
 
-import generators.implementations.actions.LimitReboundActionsGenerator;
+public class DefaultActionsGenerator
+        extends generators.implementations.actions.DeadInLimitsPlayerImmunityActionGenerator {
 
-
-public class DefaultActionsGenerator extends LimitReboundActionsGenerator {
-
+    //
     // No additional functionality
-    // just a default naming wrapper :-)
-    // Intended for easier swapping in Main.java
+    //
+    // Just a default naming wrapper :-)
+    //
+    // Intended for easier swapping ACTIONS generator implementations.
+    //
+    // *** NO MODIFICATIONS REQUIRED IN Main.java ***
+    //
 
 }

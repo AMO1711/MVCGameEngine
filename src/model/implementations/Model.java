@@ -763,10 +763,7 @@ public class Model implements BodyEventProcessor {
             this.domainEventProcessor.provideActions(domainEvents, actions);
 
         boolean actionWithMovementImplicit = actions.stream()
-                .anyMatch(a -> a.action == Action.REBOUND_IN_EAST
-                        || a.action == Action.REBOUND_IN_WEST
-                        || a.action == Action.REBOUND_IN_NORTH
-                        || a.action == Action.REBOUND_IN_SOUTH);
+                .anyMatch(a -> a.action != null && a.action.name().contains("MOVE"));
 
         if (!actionWithMovementImplicit)
             // Always add MOVE action except if body rebounded
@@ -811,25 +808,25 @@ public class Model implements BodyEventProcessor {
                 spatialGridUpsert((AbstractBody) body);
                 break;
 
-            case REBOUND_IN_EAST:
+            case MOVE_REBOUND_IN_EAST:
                 body.reboundInEast(newPhyValues, oldPhyValues,
                         this.worldWidth, this.worldHeight);
                 spatialGridUpsert((AbstractBody) body);
                 break;
 
-            case REBOUND_IN_WEST:
+            case MOVE_REBOUND_IN_WEST:
                 body.reboundInWest(newPhyValues, oldPhyValues,
                         this.worldWidth, this.worldHeight);
                 spatialGridUpsert((AbstractBody) body);
                 break;
 
-            case REBOUND_IN_NORTH:
+            case MOVE_REBOUND_IN_NORTH:
                 body.reboundInNorth(newPhyValues, oldPhyValues,
                         this.worldWidth, this.worldHeight);
                 spatialGridUpsert((AbstractBody) body);
                 break;
 
-            case REBOUND_IN_SOUTH:
+            case MOVE_REBOUND_IN_SOUTH:
                 body.reboundInSouth(newPhyValues, oldPhyValues,
                         this.worldWidth, this.worldHeight);
                 spatialGridUpsert((AbstractBody) body);

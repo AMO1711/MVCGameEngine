@@ -2,8 +2,8 @@ package generators.implementations.actions;
 
 import java.util.List;
 
-import actions.ActionDTO;
 import actions.Action;
+import actions.ActionDTO;
 import events.domain.ports.DomainEventType;
 import events.domain.ports.eventtype.CollisionEvent;
 import events.domain.ports.eventtype.DomainEvent;
@@ -11,10 +11,8 @@ import events.domain.ports.eventtype.EmitEvent;
 import events.domain.ports.eventtype.LifeOver;
 import events.domain.ports.eventtype.LimitEvent;
 import generators.ports.ActionsGenerator;
-import model.bodies.ports.BodyType;
 
-
-public class LimitReboundActionsGenerator implements ActionsGenerator {
+public class DeadInLimitsActionGenerator implements ActionsGenerator {
 
     // *** INTERFACE IMPLEMENTATIONS ***
 
@@ -35,20 +33,8 @@ public class LimitReboundActionsGenerator implements ActionsGenerator {
                 Action action;
 
                 switch (limitEvent.type) {
-                    case REACHED_EAST_LIMIT:
-                        action = Action.MOVE_REBOUND_IN_EAST;
-                        break;
-                    case REACHED_WEST_LIMIT:
-                        action = Action.MOVE_REBOUND_IN_WEST;
-                        break;
-                    case REACHED_NORTH_LIMIT:
-                        action = Action.MOVE_REBOUND_IN_NORTH;
-                        break;
-                    case REACHED_SOUTH_LIMIT:
-                        action = Action.MOVE_REBOUND_IN_SOUTH;
-                        break;
                     default:
-                        action = Action.NO_MOVE;
+                        action = Action.DIE;
                         break;
                 }
 
@@ -85,7 +71,6 @@ public class LimitReboundActionsGenerator implements ActionsGenerator {
             case CollisionEvent e -> {
 
                 // No action for collision events in this generator
-
             }
         }
     }

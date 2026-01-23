@@ -7,8 +7,13 @@ import world.ports.WorldDefinition;
 public class DefaultLevelGenerator extends SimpleRandomLevelGenerator {
 
     // No additional functionality
-    // just a default naming wrapper :-)
-    // Intended for easier swapping in Main.java
+    //
+    // Just a default naming wrapper :-)
+    //
+    // Intended for easier swapping LEVEL generator implementations.
+    //
+    // NO MODIFICATIONS REQUIRED IN Main.java
+
 
     // *** CONSTRUCTOR *** //
 
