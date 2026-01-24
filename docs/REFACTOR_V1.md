@@ -1,7 +1,8 @@
-# MVCGameEngine — REFACTOR_V1
+# MVCGameEngine — REFACTOR\_V1
+
 ## Informe unificado: situación base, problemas de fronteras y soluciones
 
-> **Estado:** REFACTOR_V1 · Documento de arquitectura consolidado listo para GitHub
+> **Estado:** REFACTOR\_V1 · Documento de arquitectura consolidado listo para GitHub
 
 ---
 
@@ -21,7 +22,7 @@
 
 ## ABSTRACT
 
-MVCGameEngine es un motor educativo y modular que permite crear arcades muy distintos sin tocar el core MVC. El core proporciona infraestructura (tiempo, física, eventos, ejecución), mientras que una serie de módulos base configurables (World*, LevelGenerator, IAGenerator, ActionsGenerator) permiten definir la experiencia de juego.
+MVCGameEngine es un motor educativo y modular que permite crear arcades muy distintos sin tocar el core MVC. El core proporciona infraestructura (tiempo, física, eventos, ejecución), mientras que una serie de módulos base configurables (World\*, LevelGenerator, IAGenerator, ActionsGenerator) permiten definir la experiencia de juego.
 
 El engine funciona correctamente, pero presenta problemas estructurales que dificultan:
 
@@ -56,7 +57,7 @@ Este informe:
 
 ### 2.2 Módulos base existentes y su rol actual
 
-#### World* (WorldDefinition + Providers + Assets)
+#### World\* (WorldDefinition + Providers + Assets)
 
 Define:
 
@@ -124,7 +125,7 @@ Implementa correctamente:
 
 - tick por body,
 - commit de física,
-- NO_MOVE con timestamp correcto.
+- NO\_MOVE con timestamp correcto.
 
 Pero con semántica difícil de entender desde fuera.
 
@@ -144,7 +145,7 @@ Esto es un síntoma, no el problema raíz.
 
 ### 3.1 Doble fuente de verdad
 
-- Tamaños y masas definidos en World* y recalculados en IA.
+- Tamaños y masas definidos en World\* y recalculados en IA.
 - Resultado: cambiar un valor no siempre tiene efecto.
 
 ### 3.2 Variabilidad visual limitada
@@ -158,7 +159,7 @@ Esto es un síntoma, no el problema raíz.
 - Spawn o ticks sin eventos pueden congelar bodies.
 - El comportamiento es correcto, pero opaco.
 
-### 3.4 NO_MOVE malinterpretado
+### 3.4 NO\_MOVE malinterpretado
 
 - Conceptualmente podría confundirse con “pausar el tiempo”.
 - En realidad congela posición pero actualiza timestamp (correcto).
@@ -180,7 +181,7 @@ IA y ActionsGenerator no deberían:
 
 ## 4. PROPUESTAS DE SOLUCIÓN (CONSOLIDADAS)
 
-### 4.1 World*: definición clara + variación explícita
+### 4.1 World\*: definición clara + variación explícita
 
 #### 4.1.1 Separar ItemDTO y PrototypeItemDTO
 
@@ -206,7 +207,7 @@ IA y ActionsGenerator no deberían:
 
 #### 4.1.2 Rangos como contrato, no como valor final
 
-- World*:
+- World\*:
   - no fija tamaños finales,
   - fija dominios válidos.
 - IA:
@@ -280,22 +281,21 @@ En cada tick:
 3. Se detectan eventos
 4. Rules generan acciones
 5. El core resuelve una **MovementDirective**:
-   - DEFAULT_COMMIT
-   - FREEZE (NO_MOVE)
+   - DEFAULT\_COMMIT
+   - FREEZE (NO\_MOVE)
    - OVERRIDE
 
 - Siempre se commitea
 - Siempre se actualiza el timestamp
 - El tiempo nunca se congela
 
-#### 4.5.2 NO_MOVE correcto y centralizado
+#### 4.5.2 NO\_MOVE correcto y centralizado
 
-- NO_MOVE:
+- NO\_MOVE:
   - congela posición/velocidad,
   - actualiza timestamp.
 
-IA y rules no se ocupan de esto.
-El core es el único responsable.
+IA y rules no se ocupan de esto. El core es el único responsable.
 
 #### 4.5.3 MOVE desaparece como acción pública
 
@@ -326,18 +326,18 @@ Esto mejora enormemente el onboarding.
 
 ## 5. GRID DE CROSS-REFERENCE
 
-| Problema | Solución |
-|--------|----------|
-| Tamaños pisados entre módulos | PrototypeItemDTO con rangos |
-| Juego repetitivo | Rangos + variación continua |
-| Masas arbitrarias | Densidad en assets + masa derivada |
-| Main sobrecargado | Diseño movido a World |
-| Bodies se congelan sin MOVE | Commit obligatorio |
-| Spawn congela emisores | Movimiento independiente de acciones |
-| Rebotes inconsistentes | MovementDirective |
-| NO_MOVE confuso | Semántica clara + core |
-| IA tocando infraestructura | Commit y timestamp solo en core |
-| Reglas difíciles de razonar | Acciones = consecuencias |
+| Problema                      | Solución                             |
+| ----------------------------- | ------------------------------------ |
+| Tamaños pisados entre módulos | PrototypeItemDTO con rangos          |
+| Juego repetitivo              | Rangos + variación continua          |
+| Masas arbitrarias             | Densidad en assets + masa derivada   |
+| Main sobrecargado             | Diseño movido a World                |
+| Bodies se congelan sin MOVE   | Commit obligatorio                   |
+| Spawn congela emisores        | Movimiento independiente de acciones |
+| Rebotes inconsistentes        | MovementDirective                    |
+| NO\_MOVE confuso              | Semántica clara + core               |
+| IA tocando infraestructura    | Commit y timestamp solo en core      |
+| Reglas difíciles de razonar   | Acciones = consecuencias             |
 
 ---
 
@@ -350,14 +350,11 @@ Las soluciones propuestas:
 - respetan el diseño original,
 - mantienen el core como infraestructura,
 - permiten una gran variación de arcades,
-- y convierten un comportamiento correcto pero opaco
-  en un sistema correcto y explicable.
+- y convierten un comportamiento correcto pero opaco en un sistema correcto y explicable.
 
 El resultado práctico es clave:
 
-> Cuando un desarrollador quiere cambiar algo,
-> sabe exactamente dónde hacerlo.
+> Cuando un desarrollador quiere cambiar algo, sabe exactamente dónde hacerlo.
 
-Eso es lo que transforma un motor funcional
-en un motor realmente usable.
+Eso es lo que transforma un motor funcional en un motor realmente usable.
 
