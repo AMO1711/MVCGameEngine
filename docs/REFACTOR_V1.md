@@ -32,7 +32,33 @@
 
 ## ABSTRACT
 
-### Nota sobre los ejemplos (Asteroids como referencia)
+### ¿Qué es MVCGameEngine?
+
+**MVCGameEngine** es un motor de juegos **educativo, modular y orientado a arcades**, cuyo objetivo principal es permitir crear juegos muy distintos **sin modificar el core**.
+
+Su idea central es separar de forma estricta:
+
+- **Infraestructura** (tiempo, física, eventos, ejecución),
+- de **decisiones de diseño** (qué aparece, cuándo, qué pasa cuando algo colisiona).
+
+El motor adopta una arquitectura **MVC sin game loop global**:
+
+- Cada entidad dinámica (*DynamicBody*) ejecuta su propio tick.
+- El core garantiza coherencia temporal, física y de eventos.
+- El gameplay emerge de la combinación de módulos intercambiables.
+
+MVCGameEngine no es:
+
+- un engine cerrado para un género concreto,
+- ni un framework de alto nivel con reglas predefinidas.
+
+Es, deliberadamente, un **motor de infraestructura** sobre el que se pueden construir arcades clásicos, experimentales o híbridos, siempre respetando contratos claros entre piezas.
+
+---
+
+
+
+### Acerca de los ejemplos incluidos en este documento (Asteroids como referencia)
 
 A lo largo de este documento se utiliza el arcade clásico **Asteroids** como ejemplo de referencia para ilustrar, de forma práctica y narrada, el rol y las fronteras de cada módulo del engine.
 
@@ -80,7 +106,13 @@ Por eso encaja de forma natural como caso de estudio para explicar la arquitectu
 
 ---
 
-MVCGameEngine es un motor educativo y modular que permite crear arcades muy distintos sin tocar el core MVC. El core proporciona infraestructura (tiempo, física, eventos, ejecución), mientras que una serie de módulos base configurables (World\*, LevelGenerator, IAGenerator, ActionsGenerator) permiten definir la experiencia de juego.
+### Alcance y objetivo de este informe
+
+MVCGameEngine es un motor educativo y modular que permite crear arcades muy distintos sin tocar el core MVC.
+
+El core proporciona **infraestructura** (tiempo, física, eventos, ejecución), mientras que una serie de módulos base configurables (World\*, LevelGenerator, IAGenerator, ActionsGenerator) permiten definir la experiencia de juego.
+
+Este documento no redefine el motor, sino que **analiza su estado real**, identifica problemas de frontera y propone una reorganización conceptual para hacerlo más comprensible y usable.
 
 El engine funciona correctamente, pero presenta problemas estructurales que dificultan:
 
