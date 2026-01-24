@@ -2,7 +2,7 @@
 
 > **Versión:** V 0.0  
 > **Estado:** Quick Guide cerrada (baseline)
-
+ 
 ## Guía práctica para programadores de arcades
 
 *(con ejemplos reales de World, Level, IA y Rules)*
