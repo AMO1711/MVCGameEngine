@@ -149,48 +149,27 @@ Este informe:
 
 #### World\* (WorldDefinition + Providers + Assets)
 
-Define:
+World\* define qué elementos existen en el juego, qué assets se utilizan para representarlos y cómo se ven dichos objetos en pantalla. Actúa como el punto de entrada conceptual para describir el *universo posible* del arcade, independientemente de cuándo o cuántas instancias concretas aparezcan durante la partida.
 
-- qué elementos existen,
-- qué assets se usan,
-- cómo se ven los objetos.
+Además, World\* incluye la definición de items, armas, emitters y fondos. Estos elementos constituyen el catálogo base del juego y sirven como referencia común para el resto de módulos.
 
-Incluye:
-
-- definición de items,
-- armas,
-- emitters,
-- fondos.
-
-Actualmente mezcla:
-
-- definición visual,
-- parámetros físicos,
-- y parte de la lógica de gameplay.
+En su estado actual, World\* mezcla responsabilidades que deberían estar separadas: combina definición visual, parámetros físicos y parte de la lógica de gameplay, lo que contribuye a confusión sobre dónde debe modificarse cada aspecto del comportamiento del juego.
 
 #### LevelGenerator
 
-- Crea la escena inicial.
-- Coloca elementos “estáticos”.
-- Hoy aplica el nivel en el constructor.
+El `LevelGenerator` es el responsable de construir la **escena inicial** del juego y de gestionar las **transiciones entre niveles**. Su función es puramente estructural: decide qué existe al comenzar una partida o al cambiar de nivel, pero no introduce dinámica ni reglas.
 
-Objetivo gamer explícito:
+En la práctica, el LevelGenerator coloca los elementos estáticos o deterministas del mundo, como la nave del jugador en una posición inicial conocida, el fondo visual o cualquier otro elemento que deba estar presente desde el inicio. Hoy en día, esta instalación se realiza directamente en su constructor, lo que refuerza su papel como creador de estado inicial.
 
-- gestionar escenas estáticas y cambios de nivel.
+Desde el punto de vista del diseño de juego, su objetivo es claro: gestionar escenas estáticas y progresión entre niveles, sin intervenir en el ritmo, la aparición de entidades dinámicas ni la lógica de las reglas.
 
 #### IAGenerator
 
-- Genera la parte dinámica del mundo.
-- Decide:
-  - qué aparece,
-  - cuándo aparece,
-  - con qué ritmo.
+El `IAGenerator` se encarga de generar la **dinámica viva del mundo**. Es el módulo que decide qué aparece durante la partida, cuándo aparece y con qué ritmo, actuando como regulador de la presión del juego sobre el jugador.
 
-Actualmente:
+Actualmente, además de instanciar entidades dinámicas, el IAGenerator asume responsabilidades que no le corresponden del todo: recalcula tamaños y masas, realiza el *bootstrap* del jugador y se ve afectado indirectamente por la semántica de acciones como `MOVE`. Esto provoca que cambios aparentemente locales tengan efectos difíciles de predecir.
 
-- pisa tamaños y masas,
-- hace bootstrap del player,
-- y se ve afectado indirectamente por la semántica de MOVE.
+Conceptualmente, el IAGenerator debería limitarse a decidir **cuántas instancias** y **en qué momentos** se incorporan al mundo, sin redefinir apariencia, física base ni preocuparse por la mecánica temporal del engine.
 
 #### ActionsGenerator
 
@@ -204,20 +183,11 @@ Actualmente sufre confusión porque:
 
 #### Core (Model + Controller)
 
-Infraestructura pura:
+El Core, compuesto por el `Model` y el `Controller`, es **infraestructura pura**. Su responsabilidad es garantizar que el mundo avance de forma coherente en el tiempo y en el espacio, independientemente del juego concreto que se esté ejecutando.
 
-- física,
-- tiempo,
-- eventos,
-- ejecución de acciones.
+El core calcula la física, gestiona el tiempo, detecta eventos y ejecuta acciones. Implementa correctamente el tick por body, el commit de la física y la semántica correcta de `NO_MOVE`, asegurando que el timestamp siempre se actualiza.
 
-Implementa correctamente:
-
-- tick por body,
-- commit de física,
-- NO\_MOVE con timestamp correcto.
-
-Pero con semántica difícil de entender desde fuera.
+Aunque su comportamiento es técnicamente correcto, su semántica resulta opaca desde el exterior: parte de la lógica de avance del mundo parece depender de acciones o reglas, cuando en realidad es un contrato interno del core. Esta falta de explicitud es una de las principales fuentes de confusión para quienes se acercan al engine por primera vez.
 
 ### 2.3 Estado del Main
 
@@ -232,6 +202,18 @@ Esto es un síntoma, no el problema raíz.
 ---
 
 ## 3. PROBLEMAS DE FRONTERAS IDENTIFICADOS
+
+Este apartado describe los **problemas reales observados en el engine actual**, no como fallos de implementación, sino como **síntomas de fronteras mal definidas entre módulos**.
+
+Es importante remarcar que el engine *funciona correctamente*: la física es coherente, el tiempo avanza como debe y las acciones se ejecutan de forma consistente. Sin embargo, desde el punto de vista del desarrollador, ciertas decisiones de diseño generan confusión a la hora de entender:
+
+- dónde debe modificarse un parámetro para que tenga efecto real,
+- qué módulo es responsable último de un comportamiento,
+- y por qué pequeños cambios producen efectos inesperados.
+
+Los problemas que se enumeran a continuación no son independientes entre sí. Todos derivan de un mismo origen: **la falta de contratos explícitos entre infraestructura, generación y reglas**. Cuando esas fronteras no están claramente fijadas, aparecen solapamientos, dobles fuentes de verdad y responsabilidades implícitas.
+
+Este análisis sirve como puente entre el estado actual descrito en el apartado anterior y las propuestas de solución del siguiente bloque. Cada problema identificado tendrá una correspondencia directa en las soluciones consolidadas que se presentan más adelante.
 
 ### 3.1 Doble fuente de verdad
 
@@ -270,6 +252,21 @@ IA y ActionsGenerator no deberían:
 ---
 
 ## 4. PROPUESTAS DE SOLUCIÓN (CONSOLIDADAS)
+
+Este apartado presenta un **conjunto coherente de soluciones arquitectónicas** a los problemas descritos en el bloque anterior. No se trata de parches aislados ni de nuevas funcionalidades añadidas al motor, sino de una **redefinición explícita de fronteras y contratos** entre módulos ya existentes.
+
+Las propuestas parten de una premisa fundamental: el core del engine **no debe cambiar de naturaleza**. Sigue siendo infraestructura pura. Las soluciones no introducen lógica de gameplay en el core, ni convierten generadores en sistemas inteligentes; simplemente **reubican decisiones** allí donde conceptualmente pertenecen.
+
+Cada subapartado aborda uno o varios problemas concretos identificados en el punto 3 y propone un ajuste que:
+
+- elimina dobles fuentes de verdad,
+- hace explícitas las responsabilidades,
+- reduce el número de parámetros dispersos,
+- y mejora la capacidad de razonar sobre el sistema.
+
+Las soluciones están pensadas para ser **incrementales y compatibles** con el engine actual. No requieren una reescritura completa, sino una evolución controlada hacia un diseño más legible, más explicable y más fácil de extender.
+
+Este bloque debe leerse, por tanto, no como una especificación cerrada, sino como un **marco de referencia estable** sobre el que construir futuras iteraciones (REFACTOR_V2) y decisiones formales (ADR).
 
 ### 4.1 World\*: definición clara + variación explícita
 
@@ -625,6 +622,94 @@ Este ejemplo muestra claramente:
 ---
 
 ## 6. CONCLUSIÓN
+
+MVCGameEngine no necesitaba “más features”, sino fronteras claras.
+
+Las soluciones propuestas:
+
+- respetan el diseño original,
+- mantienen el core como infraestructura,
+- permiten una gran variación de arcades,
+- y convierten un comportamiento correcto pero opaco en un sistema correcto y explicable.
+
+El resultado práctico es clave:
+
+> Cuando un desarrollador quiere cambiar algo, sabe exactamente dónde hacerlo.
+
+Eso es lo que transforma un motor funcional en un motor realmente usable.
+
+---
+
+## 7. EVOLUCIÓN DEL DOCUMENTO
+
+Este documento corresponde a **REFACTOR\_V1** y actúa como **baseline arquitectónico**.
+
+Las siguientes iteraciones **no deben modificar este documento**, sino **extenderlo** mediante:
+
+- versiones sucesivas (`REFACTOR_V2`, `REFACTOR_V3`, …), o
+- *Architecture Decision Records* (ADR).
+
+El objetivo es:
+
+- preservar el razonamiento original,
+- hacer explícitas las decisiones posteriores,
+- y evitar reescrituras destructivas.
+
+### 7.1 Política de versiones (REFACTOR\_V\*)
+
+Cada documento `REFACTOR_Vn` debe:
+
+- asumir **REFACTOR\_V(n-1)** como contrato,
+- listar explícitamente **qué cambia y por qué**,
+- no reexplicar conceptos ya fijados salvo que se revisen.
+
+Ejemplo:
+
+```text
+REFACTOR_V2
+- Cambios en MovementDirective
+- Nueva semántica de eventos energéticos
+- Impacto en ActionsGenerator
+```
+
+### 7.2 Architecture Decision Records (ADR)
+
+Las decisiones finas o polémicas deben capturarse como ADR independientes.
+
+Formato recomendado:
+
+```
+/docs/architecture/adr/
+  ADR-001-movement-directive.md
+  ADR-002-density-and-mass-model.md
+```
+
+Cada ADR debe contener:
+
+- Contexto
+- Decisión
+- Alternativas consideradas
+- Consecuencias
+
+### 7.3 Relación entre REFACTOR y ADR
+
+- **REFACTOR\_V**\* fija *el estado global coherente*.
+- **ADR** documenta *decisiones locales*.
+
+Un REFACTOR\_V2 puede:
+
+- referenciar ADRs existentes,
+- consolidarlos,
+- o invalidarlos explícitamente.
+
+---
+
+## 8. ESTADO DEL DOCUMENTO
+
+- Tipo: Arquitectura / Diseño
+- Audiencia: desarrolladores del engine
+- Estabilidad: **Alta (baseline)**
+- Evolución prevista: **Extensión por versiones y ADRs**
 
 MVCGameEngine no necesitaba “más features”, sino fronteras claras.
 
