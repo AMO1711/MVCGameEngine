@@ -630,17 +630,38 @@ Este ejemplo muestra claramente:
 ### Matriz problema → solución
 
 | Problema / Solución                    | World\* | Level | IA | Rules | Core | Main |
-| -------------------------------------- | ------- | ----- | -- | ----- | ---- | ---- |
-| Doble fuente de verdad (tamaño / masa) | ✓       |       |    |       |      |      |
-| Variabilidad visual limitada           | ✓       |       |    |       |      |      |
-| Masas arbitrarias                      | ✓       |       |    |       |      |      |
-| Movimiento acoplado a acciones         |         |       |    |       | ✓    |      |
-| Bodies se congelan sin acciones        |         |       |    |       | ✓    |      |
-| NO\_MOVE malinterpretado               |         |       |    |       | ✓    |      |
-| IA tocando infraestructura             |         |       | ✓  |       | ✓    |      |
-| Reglas mezcladas con dinámica          |         |       |    | ✓     |      |      |
+| -------------------------------------- | :-----: | :---: | :-: | :---: | :--: | :--: |
+| Doble fuente de verdad (tamaño / masa) |    ✓    |       |    |       |      |      |
+| Variabilidad visual limitada           |    ✓    |       |    |       |      |      |
+| Masas arbitrarias                      |    ✓    |       |    |       |      |      |
+| Movimiento acoplado a acciones         |         |       |    |       |  ✓   |      |
+| Bodies se congelan sin acciones        |         |       |    |       |  ✓   |      |
+| NO_MOVE malinterpretado               |         |       |    |       |  ✓   |      |
+| IA tocando infraestructura             |         |       | ✓  |       |  ✓   |      |
+| Reglas mezcladas con dinámica          |         |       |    |  ✓    |      |      |
 | Spawn y ritmo difíciles de ajustar     |         |       | ✓  |       |      |      |
-| Main sobrecargado de decisiones        | ✓       | ✓     | ✓  | ✓     |      | ✓    |
+| Main sobrecargado de decisiones        |    ✓    |   ✓   | ✓  |  ✓    |      |  ✓   |
+
+### Valoración de modificaciones (por familia de solución)
+
+> Objetivo: ayudarte a decidir **qué tocar primero**.
+> Escalas: **Potencial** (impacto si se implementa bien), **Coste** (esfuerzo + refactor), **Riesgo** (probabilidad de romper cosas / deuda), **Prioridad** (orden recomendado).
+
+| Familia de solución | Potencial | Coste | Riesgo | Prioridad | Por qué merece la pena |
+| ------------------- | :-------: | :---: | :----: | :-------: | ----------------------- |
+| **World\***         |   Alto    | Medio |  Bajo  |    1      | Elimina dobles verdades (masa/tamaño), desbloquea variedad real y reduce parámetros en Main/IA.
+| **Core**            |   Alto    | Medio | Medio  |    2      | Hace explícito el contrato temporal (commit siempre). Reduce “comportamientos mágicos” y bugs fantasma.
+| **Rules**           |   Medio   | Medio |  Bajo  |    3      | Aísla reglas puras; cambia gameplay sin tocar infraestructura. Mejora legibilidad y testabilidad.
+| **IA**              |   Medio   | Medio | Medio  |    4      | Permite ajustar presión/ritmo sin efectos colaterales. Depende de tener World\* limpio.
+| **Level**           |   Medio   | Bajo  |  Bajo  |    5      | Ordena escena inicial/progresión. Beneficio claro pero menos crítico que Core/World\*.
+| **Main**            |   Medio   | Bajo  |  Bajo  |    6      | Mejora onboarding y claridad, pero es más “resultado” de las otras limpiezas que causa raíz.
+
+#### Regla práctica de priorización
+
+- Si un cambio **reduce parámetros dispersos** y **elimina solapamientos**, suele ser el más productivo.
+- Por eso: **World\*** primero, **Core** después, y el resto se vuelve mucho más fácil.
+
+---
 
 ---
 
