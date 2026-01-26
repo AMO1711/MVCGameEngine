@@ -53,6 +53,52 @@ public class DefEmitterDTO {
             boolean randomizeInitialAngle,
             boolean randomizeSize) {
 
+        if (bodyType == null) {
+            throw new IllegalArgumentException("BodyType cannot be null");
+        }
+
+        // Ranges checking
+        if (bodyMass <= 0.0)
+            throw new IllegalArgumentException("bodyMass must be > 0");
+        if (bodySize <= 0.0)
+            throw new IllegalArgumentException("bodySize must be > 0");
+
+        if (bodyMaxLifetime < -1 && bodyMaxLifetime == 0)
+            throw new IllegalArgumentException("bodyMaxLifetime must be >= -1 and != 0");
+
+        if (bodyInitialSpeed < 0.0)
+            throw new IllegalArgumentException("bodyInitialSpeed must be >= 0");
+
+        if (bodyThrust < 0.0)
+            throw new IllegalArgumentException("bodyThrust must be >= 0");
+        if (bodyThrustDuration < 0.0)
+            throw new IllegalArgumentException("bodyThrustDuration must be >= 0");
+
+        if (emitterReloadTime < 0.0)
+            throw new IllegalArgumentException("emitterReloadTime must be >= 0");
+        if (maxBodiesEmitted < 0)
+            throw new IllegalArgumentException("maxBodiesEmitted must be >= 0");
+
+        if (burstSize < 0)
+            throw new IllegalArgumentException("burstSize must be >= 0");
+        if (emissionRate < 0.0)
+            throw new IllegalArgumentException("emissionRate must be >= 0");
+        if (burstEmissionRate < 0.0)
+            throw new IllegalArgumentException("burstEmissionRate must be >= 0");
+
+        // Burst-only params must make sense together
+        if (burstSize == 0 && burstEmissionRate > 0.0) {
+            throw new IllegalArgumentException("burstEmissionRate > 0 requires burstSize > 0");
+        }
+        if (burstSize > 0 && burstEmissionRate <= 0.0) {
+            throw new IllegalArgumentException("burstSize > 0 requires burstEmissionRate > 0");
+        }
+
+        // If thrust is 0, duration must be 0 (avoid confusing configs)
+        if (bodyThrust == 0.0 && bodyThrustDuration > 0.0) {
+            throw new IllegalArgumentException("bodyThrustDuration > 0 requires bodyThrust > 0");
+        }
+
         this.bodyAddEmitterSpeedOnHeading = bodyAddEmitterSpeedOnHeading;
         this.bodyAngularAcceleration = bodyAngularAcceleration;
         this.bodyAngularSpeed = bodyAngularSpeed;
@@ -63,7 +109,7 @@ public class DefEmitterDTO {
         this.bodySize = bodySize;
         this.bodyThrust = bodyThrust;
         this.bodyThrustDuration = bodyThrustDuration;
-        this.bodyType = bodyType;
+        this.bodyType = bodyType; // Body type to emit
         this.burstEmissionRate = burstEmissionRate;
         this.burstSize = burstSize;
         this.emissionRate = emissionRate;

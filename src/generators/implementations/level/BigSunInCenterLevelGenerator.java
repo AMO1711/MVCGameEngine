@@ -1,49 +1,40 @@
 package generators.implementations.level;
 
 import java.util.ArrayList;
-import java.util.Random;
 
 import controller.ports.WorldInitializer;
+import generators.core.AbstractLevelGenerator;
+import world.ports.DefItem;
 import world.ports.DefItemDTO;
 import world.ports.WorldDefinition;
 
-public class BigSunInCenterLevelGenerator {
+public class BigSunInCenterLevelGenerator extends AbstractLevelGenerator {
 
-    private final Random rnd = new Random();
-    private final WorldInitializer worldInitializer;
-    WorldDefinition worldDefinition;
+    // *** CONSTRUCTORS ***
 
     public BigSunInCenterLevelGenerator(WorldInitializer worldInitializer, WorldDefinition worldDef) {
-        this.worldInitializer = worldInitializer;
-        this.worldDefinition = worldDef;
-
-        this.createWorld();
+        super(worldInitializer, worldDef);
     }
 
-    private void createWorld() {
-        this.worldInitializer.loadAssets(this.worldDefinition.gameAssets);
+    // *** PROTECTED (alphabetic order) ***
 
-        this.createSpaceDecorators();
-        this.createSBodies();
-    }
+    @Override
+    protected void createSpaceDecorators() {
+        ArrayList<DefItem> decorators = this.worldDefinition.spaceDecorators;
 
-    private void createSBodies() {
-        ArrayList<DefItemDTO> sBodies = this.worldDefinition.gravityBodies;
-
-        for (DefItemDTO body : sBodies) {
-            this.worldInitializer.addStaticBody(body.assetId, body.size, body.posX, body.posY, body.angle);
-        }
-    }
-
-    private void createSpaceDecorators() {
-        ArrayList<DefItemDTO> decorators = this.worldDefinition.spaceDecorators;
-
-        for (DefItemDTO deco : decorators) {
+        for (DefItem def : decorators) {
+            DefItemDTO deco = this.materialize(def);
             this.worldInitializer.addDecorator(deco.assetId, deco.size, deco.posX, deco.posY, deco.angle);
         }
     }
 
-    private double randomAngularSpeed(double maxAngularSpeed) {
-        return this.rnd.nextFloat() * maxAngularSpeed;
+    @Override
+    protected void createStaticBodies() {
+        ArrayList<DefItem> bodyDefs = this.worldDefinition.gravityBodies;
+
+        for (DefItem def : bodyDefs) {
+            DefItemDTO body = this.materialize(def);
+            this.worldInitializer.addStaticBody(body.assetId, body.size, body.posX, body.posY, body.angle);
+        }
     }
 }

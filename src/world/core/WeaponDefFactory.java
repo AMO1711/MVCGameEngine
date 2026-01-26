@@ -13,7 +13,6 @@ public final class WeaponDefFactory {
 
             // Projectile params
             double projectileSize,
-            double projectileAngle,
             double projectileSpeed,
             double projectileThrust,
             double projectileThrustDuration,
@@ -58,7 +57,6 @@ public final class WeaponDefFactory {
         return new DefWeaponDTO(
                 assetId,
                 projectileSize,
-                projectileAngle,
                 weaponType,
                 projectileSpeed,
                 projectileThrust,
@@ -78,7 +76,6 @@ public final class WeaponDefFactory {
                 DefWeaponType.BULLET_WEAPON,
 
                 8.0, // projectileSize
-                0.0, // projectileAngle offset
                 650.0, // projectileSpeed
                 0.0, // projectileThrust
                 0.0, // projectileThrustDuration
@@ -93,13 +90,12 @@ public final class WeaponDefFactory {
         );
     }
 
-    public static DefWeaponDTO createPresetedBurst(String assetId, double angleOffsetDeg) {
+    public static DefWeaponDTO createPresetedBurst(String assetId) {
         return create(
                 assetId,
                 DefWeaponType.BURST_WEAPON,
 
                 7.0,
-                angleOffsetDeg,
                 600.0,
                 0.0,
                 0.0,
@@ -119,7 +115,6 @@ public final class WeaponDefFactory {
                 DefWeaponType.MISSILE_LAUNCHER,
 
                 14.0,
-                0.0,
                 250.0,
                 180.0, // projectileThrust
                 1.8, // projectileThrustDuration
@@ -139,7 +134,6 @@ public final class WeaponDefFactory {
                 DefWeaponType.MINE_LAUNCHER,
 
                 18.0,
-                0.0,
                 120.0,
                 0.0,
                 0.0,

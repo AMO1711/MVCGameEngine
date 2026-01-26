@@ -1,11 +1,11 @@
 package generators.implementations;
 
 import controller.ports.WorldEvolver;
-import generators.ports.IAConfigDTO;
+import generators.ports.AIConfigDTO;
 import world.ports.WorldDefinition;
 
-public class DefaultIAGenerator
-        extends generators.implementations.ia.AsteroidSpawnIAGenerator {
+public class DefaultAIGenerator
+        extends generators.implementations.ai.AsteroidSpawnFromCenterAIGenerator {
 
     // No additional functionality
     //
@@ -17,8 +17,8 @@ public class DefaultIAGenerator
 
     // *** CONSTRUCTOR *** //
 
-    public DefaultIAGenerator(WorldEvolver controller,
-            WorldDefinition worldDefinition, IAConfigDTO lifeConfig) {
+    public DefaultAIGenerator(WorldEvolver controller,
+            WorldDefinition worldDefinition, AIConfigDTO lifeConfig) {
         super(controller, worldDefinition, lifeConfig);
     }
 }

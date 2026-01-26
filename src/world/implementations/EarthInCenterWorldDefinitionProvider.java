@@ -2,6 +2,7 @@ package world.implementations;
 
 import assets.implementations.ProjectAssets;
 import assets.ports.AssetType;
+import model.bodies.ports.BodyType;
 import world.core.AbstractWorldDefinitionProvider;
 
 public final class EarthInCenterWorldDefinitionProvider extends AbstractWorldDefinitionProvider {
@@ -25,14 +26,14 @@ public final class EarthInCenterWorldDefinitionProvider extends AbstractWorldDef
         addSpaceshipPrototypeAnywhereRandomAsset(
                 1, AssetType.SPACESHIP, 1, 60, 120);
 
-        addTrailEmitterCosmetic("stars_6", 100.0, 100.0);
+        addTrailEmitterCosmetic("stars_6", 100.0, BodyType.DECORATOR, 100.0);
 
         addWeaponPresetBulletRandomAsset(AssetType.BULLET);
-        
-        addWeaponPresetBurstRandomAsset(AssetType.BULLET, 0.0);
-        
+
+        addWeaponPresetBurstRandomAsset(AssetType.BULLET);
+
         addWeaponPresetMineLauncherRandomAsset(AssetType.MINE);
-        
+
         addWeaponPresetMissileLauncherRandomAsset(AssetType.MISSILE);
     }
 }

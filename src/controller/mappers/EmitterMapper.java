@@ -5,33 +5,49 @@ import world.ports.DefEmitterDTO;
 
 public class EmitterMapper {
 
-    public static EmitterConfigDto fromWorldDef(
-            DefEmitterDTO emitterDef) {
+    public static EmitterConfigDto fromWorldDef(DefEmitterDTO emitterDef) {
 
         if (emitterDef == null) {
             return null;
         }
+
         return new EmitterConfigDto(
                 emitterDef.bodyType,
                 emitterDef.bodyAssetId,
                 emitterDef.bodySize,
-                emitterDef.emitterOffsetHorizontal,
+
+                // offsets (forward/side)
                 emitterDef.emitterOffsetVertical,
+                emitterDef.emitterOffsetHorizontal,
+
+                // kinematics
                 emitterDef.bodyInitialSpeed,
-                emitterDef.bodyAcceleration,
+
+                // acceleration (deprecated in new world def) -> neutral
+                0.0,
+
+                // duration for propulsion
                 emitterDef.bodyThrustDuration,
+
                 emitterDef.bodyAngularSpeed,
                 emitterDef.bodyAngularAcceleration,
+
+                // thrust
                 emitterDef.bodyThrust,
+
                 emitterDef.randomizeInitialAngle,
                 emitterDef.randomizeSize,
-                emitterDef.addEmitterSpeedToBody,
+
+                emitterDef.bodyAddEmitterSpeedOnHeading,
+
                 emitterDef.emissionRate,
                 emitterDef.maxBodiesEmitted,
                 emitterDef.burstEmissionRate,
                 emitterDef.burstSize,
                 emitterDef.emitterReloadTime,
+
                 emitterDef.bodyMass,
-                emitterDef.bodyMaxLifetime);
+                emitterDef.bodyMaxLifetime
+        );
     }
 }

@@ -281,12 +281,10 @@ public abstract class AbstractWorldDefinitionProvider implements WorldDefinition
         requirePositiveInt(num, "num must be a positive integer.");
 
         for (int i = 0; i < num; i++) {
-            double angle = rnd.nextDouble(ANY_HEADING_MIN_DEG, ANY_HEADING_MAX_DEG);
-            double posX = rnd.nextDouble(WORLD_MIN, this.worldWidth);
-            double posY = rnd.nextDouble(WORLD_MIN, this.worldHeight);
-            double size = rnd.nextDouble(minSize, maxSize);
-
-            this.addSpaceshipRandomAsset(1, assetType, angle, density, size, posX, posY);
+            this.addSpaceshipRandomAsset(
+                    1, assetType, randomAngle(), density,
+                    randomSize(minSize, maxSize),
+                    randomDouble(WORLD_MIN, this.worldWidth), randomDouble(WORLD_MIN, this.worldHeight));
         }
     }
 
@@ -323,35 +321,26 @@ public abstract class AbstractWorldDefinitionProvider implements WorldDefinition
     }
 
     protected final void addTrailEmitterCosmetic(
-            String assetId,
-            double spriteSize,
+            String assetId, double spriteSize, BodyType bodyType,
             double emissionRate,
-            double offsetHorizontal,
-            double offsetVertical,
-            boolean randomizeInitialAngle,
-            boolean randomizeSize) {
+            double offsetHorizontal, double offsetVertical,
+            boolean randomizeInitialAngle, boolean randomizeSize) {
 
         DefEmitterDTO emitter = cosmeticTrailEmitter(
-                assetId,
-                spriteSize,
+                assetId, spriteSize, bodyType,
                 emissionRate,
-                offsetHorizontal,
-                offsetVertical,
-                randomizeInitialAngle,
-                randomizeSize);
+                offsetHorizontal, offsetVertical,
+                randomizeInitialAngle, randomizeSize);
 
         this.addTrailEmitter(emitter); // also registers assetId (as per your latest AbstractWorldDefinitionProvider)
     }
 
     protected final void addTrailEmitterCosmetic(
-            String assetId,
-            double spriteSize,
-            double emissionRate) {
+            String assetId, double spriteSize,
+            BodyType bodyType, double emissionRate) {
 
         this.addTrailEmitterCosmetic(
-                assetId,
-                spriteSize,
-                emissionRate,
+                assetId, spriteSize, bodyType, emissionRate,
                 /* offsetHorizontal */ 0.0,
                 /* offsetVertical */ 0.0,
                 /* randomizeInitialAngle */ true,
@@ -370,9 +359,9 @@ public abstract class AbstractWorldDefinitionProvider implements WorldDefinition
         this.addWeapon(WeaponDefFactory.createPresetedBulletBasic(assetId));
     }
 
-    protected final void addWeaponPresetBurstRandomAsset(AssetType assetType, double angleOffsetDeg) {
+    protected final void addWeaponPresetBurstRandomAsset(AssetType assetType) {
         String assetId = this.assetsRegister.pickRandomAssetId(assetType);
-        this.addWeapon(WeaponDefFactory.createPresetedBurst(assetId, angleOffsetDeg));
+        this.addWeapon(WeaponDefFactory.createPresetedBurst(assetId));
     }
 
     protected final void addWeaponPresetMineLauncherRandomAsset(AssetType assetType) {
@@ -474,6 +463,7 @@ public abstract class AbstractWorldDefinitionProvider implements WorldDefinition
     protected final DefEmitterDTO cosmeticTrailEmitter(
             String assetId,
             double spriteSize,
+            BodyType bodyType,
             double emissionRate,
             double offsetHorizontal,
             double offsetVertical,
@@ -487,11 +477,10 @@ public abstract class AbstractWorldDefinitionProvider implements WorldDefinition
         final double ZERO_THRUST = 0.0;
         final double ZERO_THRUST_DURATION = 0.0;
         final double DEFAULT_COSMETIC_MASS = 10.0;
-        final double ZERO_MAX_LIFETIME = 0.0;
+        final double LIFETIME = 1.5;
         final double ZERO_INITIAL_SPEED = 0.0;
 
         final boolean ADD_EMITTER_SPEED_ON_HEADING = true; // typical: particles inherit emitter direction
-        final BodyType NO_BODY_TYPE = null;
 
         final double ZERO_BURST_RATE = 0.0;
         final int ZERO_BURST_SIZE = 0;
@@ -506,10 +495,10 @@ public abstract class AbstractWorldDefinitionProvider implements WorldDefinition
                 ZERO_THRUST,
                 ZERO_THRUST_DURATION,
                 DEFAULT_COSMETIC_MASS,
-                ZERO_MAX_LIFETIME,
+                LIFETIME,
                 spriteSize,
                 ZERO_INITIAL_SPEED,
-                NO_BODY_TYPE,
+                bodyType,
 
                 ZERO_BURST_RATE,
                 ZERO_BURST_SIZE,
@@ -574,6 +563,17 @@ public abstract class AbstractWorldDefinitionProvider implements WorldDefinition
 
     protected static double randomAngle() {
         return rnd.nextDouble(ANY_HEADING_MIN_DEG, ANY_HEADING_MAX_DEG);
+    }
+
+    protected static double randomDouble(double min, double max) {
+        if (min > max) {
+            throw new IllegalArgumentException("Invalid range: [" + min + "," + max + "]");
+        }
+        if (min == max) {
+            return min;
+        }
+
+        return rnd.nextDouble(min, max);
     }
 
     protected static double randomSize(double minSize, double maxSize) {

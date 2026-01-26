@@ -2,6 +2,7 @@ package world.implementations;
 
 import assets.implementations.ProjectAssets;
 import assets.ports.AssetType;
+import model.bodies.ports.BodyType;
 import world.core.AbstractWorldDefinitionProvider;
 
 public final class RandomWorldDefinitionProvider extends AbstractWorldDefinitionProvider {
@@ -37,12 +38,12 @@ public final class RandomWorldDefinitionProvider extends AbstractWorldDefinition
 		this.addSpaceshipAnywhereRandomAsset(
 				1, AssetType.SPACESHIP, density, 40, 40);
 
-		this.addTrailEmitterCosmetic("stars_6", 100, 20);
+		this.addTrailEmitterCosmetic("stars_6", 100, BodyType.DECORATOR, 20);
 
 		// region Weapons (addWeapon***)
 		this.addWeaponPresetBulletRandomAsset(AssetType.BULLET);
 
-		this.addWeaponPresetBurstRandomAsset(AssetType.BULLET, 0.0);
+		this.addWeaponPresetBurstRandomAsset(AssetType.BULLET);
 
 		this.addWeaponPresetMineLauncherRandomAsset(AssetType.MINE);
 

@@ -3,9 +3,9 @@ package main;
 import assets.implementations.ProjectAssets;
 import controller.implementations.Controller;
 import generators.implementations.DefaultActionsGenerator;
-import generators.implementations.DefaultIAGenerator;
+import generators.implementations.DefaultAIGenerator;
 import generators.implementations.DefaultLevelGenerator;
-import generators.ports.IAConfigDTO;
+import generators.ports.AIConfigDTO;
 import model.implementations.Model;
 import view.core.View;
 import world.implementations.EarthInCenterWorldDefinitionProvider;
@@ -43,7 +43,7 @@ public class Main {
 
 		// 1) World definition
 		ProjectAssets projectAssets = new ProjectAssets();
-		WorldDefinitionProvider world = new RandomWorldDefinitionProvider(
+		WorldDefinitionProvider world = new EarthInCenterWorldDefinitionProvider(
 				worldWidth, worldHeight, projectAssets);
 		WorldDefinition worldDef = world.provide();
 
@@ -52,13 +52,13 @@ public class Main {
 				controller, worldDef);
 
 		// 3) IA generator
-		IAConfigDTO iaConfig = new IAConfigDTO(
+		AIConfigDTO iaConfig = new AIConfigDTO(
 				maxAsteroidCreationDelay,
 				maxAsteroidSize, minAsteroidSize,
 				maxAsteroidMass, minAsteroidMass,
 				maxAsteroidSpeedModule, maxAsteroidAccModule);
 
-		DefaultIAGenerator lifeGenerator = new DefaultIAGenerator(
+		DefaultAIGenerator lifeGenerator = new DefaultAIGenerator(
 				controller, worldDef, iaConfig);
 
 		lifeGenerator.activate();
