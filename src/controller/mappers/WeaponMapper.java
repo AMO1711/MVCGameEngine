@@ -1,11 +1,11 @@
 package controller.mappers;
 
 import model.weapons.ports.WeaponDto;
-import world.ports.WorldDefWeaponDTO;
+import world.ports.DefWeaponDTO;
 
 public class WeaponMapper {
 
-    public static WeaponDto fromWorldDef(WorldDefWeaponDTO weaponDef, int shootingOffset) {
+    public static WeaponDto fromWorldDef(DefWeaponDTO weaponDef, int shootingOffset) {
         if (weaponDef == null) {
             return null;
         }
@@ -14,8 +14,8 @@ public class WeaponMapper {
                 weaponDef.assetId,
                 weaponDef.projectileSize,
                 weaponDef.projectileSpeed,
-                weaponDef.projectileAcc,
-                weaponDef.projectileAccDuration,
+                weaponDef.projectileThrust,
+                weaponDef.projectileThrustDuration,
                 weaponDef.burstSize,
                 weaponDef.burstFireRate,
                 weaponDef.fireRate,

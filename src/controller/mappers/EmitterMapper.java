@@ -1,12 +1,12 @@
 package controller.mappers;
 
 import model.emitter.ports.EmitterConfigDto;
-import world.ports.WorldDefEmitterDTO;
+import world.ports.DefEmitterDTO;
 
 public class EmitterMapper {
 
     public static EmitterConfigDto fromWorldDef(
-            WorldDefEmitterDTO emitterDef) {
+            DefEmitterDTO emitterDef) {
 
         if (emitterDef == null) {
             return null;

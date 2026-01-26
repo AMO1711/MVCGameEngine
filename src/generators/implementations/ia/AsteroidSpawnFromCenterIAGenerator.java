@@ -7,13 +7,13 @@ import _helpers.DoubleVector;
 import controller.ports.EngineState;
 import controller.ports.WorldEvolver;
 import generators.ports.IAConfigDTO;
-import world.ports.WorldDefItemDTO;
+import world.ports.DefItemPrototypeDTO;
 import world.ports.WorldDefinition;
 
 public class AsteroidSpawnFromCenterIAGenerator implements Runnable {
 
     private final Random rnd = new Random();
-    private final ArrayList<WorldDefItemDTO> items;
+    private final ArrayList<DefItemPrototypeDTO> items;
     private final WorldEvolver worldEvolver;
     private Thread thread;
     private final WorldDefinition worldDefinition;
@@ -121,26 +121,26 @@ public class AsteroidSpawnFromCenterIAGenerator implements Runnable {
     }
 
     private void createPlayers() {
-        ArrayList<WorldDefItemDTO> dBodies = this.worldDefinition.spaceshipsDef;
+        ArrayList<DefItemPrototypeDTO> dBodies = this.worldDefinition.spaceships;
         String playerId = null;
         DoubleVector pos = this.centerPosition();
 
-        for (WorldDefItemDTO body : dBodies) {
+        for (DefItemPrototypeDTO body : dBodies) {
             playerId = this.worldEvolver.addPlayer(
                     body.assetId, body.size, 400, 400, 0, 0, 0, 0, 0,
                     this.randomAngularSpeed(270), 0, 0);
 
             this.worldEvolver.addWeaponToPlayer(
-                    playerId, this.worldDefinition.primaryWeaponDef.get(0), 0);
+                    playerId, this.worldDefinition.bulletWeapons.get(0), 0);
 
             this.worldEvolver.addWeaponToPlayer(
-                    playerId, this.worldDefinition.secondaryWeaponDef.get(0), 0);
+                    playerId, this.worldDefinition.burstWeapons.get(0), 0);
 
             this.worldEvolver.addWeaponToPlayer(
-                    playerId, this.worldDefinition.missilLaunchersDef.get(0), -15);
+                    playerId, this.worldDefinition.missileLaunchers.get(0), -15);
 
             this.worldEvolver.addWeaponToPlayer(
-                    playerId, this.worldDefinition.mineLaunchersDef.get(0), 15);
+                    playerId, this.worldDefinition.mineLaunchers.get(0), 15);
 
             this.worldEvolver.bodyEquipTrail(playerId, this.worldDefinition.trailEmitterDef.get(0));
         }

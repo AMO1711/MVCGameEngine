@@ -2,7 +2,7 @@ package world.ports;
 
 import model.bodies.ports.BodyType;
 
-public class WorldDefEmitterDTO {
+public class DefEmitterDTO {
 
     // region Fields
     public final String bodyAssetId;
@@ -30,7 +30,7 @@ public class WorldDefEmitterDTO {
 
     // *** CONSTRUCTOR ***
 
-    public WorldDefEmitterDTO(
+    public DefEmitterDTO(
             String bodyAssetId,
             double bodyAngularAcceleration,
             double bodyAngularSpeed,

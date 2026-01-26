@@ -1,6 +1,5 @@
 package assets.core;
 
-
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -11,60 +10,44 @@ import assets.ports.AssetInfoDTO;
 import assets.ports.AssetIntensity;
 import assets.ports.AssetType;
 
-
 public class AssetCatalog {
 
+    // region Fields
     private final String path;
     private final Map<String, AssetInfoDTO> assetsById = new HashMap<>();
     private Random rnd = new Random();
+    // endregion
 
+    // *** CONSTRUCTORS ***
 
-    /**
-     * CONSTRUCTORS
-     */
     public AssetCatalog(String path) {
         this.path = path;
     }
 
+    // *** PUBLIC ***
 
-    /**
-     * PUBLIC
-     */
-    public void register(String assetId, String fileName,
-            AssetType type, AssetIntensity intensity) {
-
-        this.assetsById.put(
-                assetId,
-                new AssetInfoDTO(assetId, fileName, type, intensity));
+    public boolean exists(String assetId) {
+        return assetsById.containsKey(assetId);
     }
 
-
-    public void register(AssetInfoDTO assetInfo) {
-        this.assetsById.put(
-                assetInfo.assetId,
-                new AssetInfoDTO(
-                        assetInfo.assetId,
-                        assetInfo.fileName,
-                        assetInfo.type,
-                        assetInfo.intensity));
-    }
-
-
+    // region getters (get***)
     public AssetInfoDTO get(String assetId) {
         AssetInfoDTO aInfo = assetsById.get(assetId);
         return aInfo;
     }
 
-
     public ArrayList<String> getAssetIds() {
         return new ArrayList<String>(this.assetsById.keySet());
     }
 
-
     public String getPath() {
         return this.path;
     }
+    // endregion
 
+    public boolean isEmpty() {
+        return this.assetsById.isEmpty();
+    }
 
     public String randomId(AssetType type) {
         if (type == null) {
@@ -87,7 +70,6 @@ public class AssetCatalog {
         return filtered.get(rnd.nextInt(filtered.size()));
     }
 
-
     public String randomId(AssetType type, AssetIntensity intensity) {
         if (type == null) {
             throw new IllegalStateException("Asset type is null!");
@@ -108,8 +90,25 @@ public class AssetCatalog {
         return filtered.get(rnd.nextInt(filtered.size()));
     }
 
+    public void register(String assetId, String fileName,
+            AssetType type, AssetIntensity intensity) {
 
-    public boolean exists(String assetId) {
-        return assetsById.containsKey(assetId);
+        this.assetsById.put(
+                assetId,
+                new AssetInfoDTO(assetId, fileName, type, intensity));
+    }
+
+    public void register(AssetInfoDTO assetInfo) {
+        this.assetsById.put(
+                assetInfo.assetId,
+                new AssetInfoDTO(
+                        assetInfo.assetId,
+                        assetInfo.fileName,
+                        assetInfo.type,
+                        assetInfo.intensity));
+    }
+
+    public void reset() {
+        this.assetsById.clear();
     }
 }

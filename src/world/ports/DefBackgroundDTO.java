@@ -1,16 +1,20 @@
 package world.ports;
 
 
-public class WorldDefBackgroundDTO {
+public class DefBackgroundDTO  {
 
+    // region Fields
     public final String assetId;
     public final double scrollSpeedX;
     public final double scrollSpeedY;
+    // endregion
 
+    // *** CONSTRUCTOR ***
 
-    public WorldDefBackgroundDTO(String assetId, double scrollSpeedX, double scrollSpeedY) {
+    public DefBackgroundDTO(String assetId, double scrollSpeedX, double scrollSpeedY) {
 
         this.assetId = assetId;
+
         this.scrollSpeedX = scrollSpeedX;
         this.scrollSpeedY = scrollSpeedY;
     }

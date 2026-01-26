@@ -4,7 +4,7 @@ import java.util.ArrayList;
 import java.util.Random;
 
 import controller.ports.WorldInitializer;
-import world.ports.WorldDefPositionItemDTO;
+import world.ports.DefItemDTO;
 import world.ports.WorldDefinition;
 
 public class SimpleRandomLevelGenerator {
@@ -28,17 +28,17 @@ public class SimpleRandomLevelGenerator {
     }
 
     private void createSBodies() {
-        ArrayList<WorldDefPositionItemDTO> sBodies = this.worldDefinition.gravityBodies;
+        ArrayList<DefItemDTO> sBodies = this.worldDefinition.gravityBodies;
 
-        for (WorldDefPositionItemDTO body : sBodies) {
+        for (DefItemDTO body : sBodies) {
             this.worldInitializer.addStaticBody(body.assetId, body.size, body.posX, body.posY, body.angle);
         }
     }
 
     private void createSpaceDecorators() {
-        ArrayList<WorldDefPositionItemDTO> decorators = this.worldDefinition.spaceDecorators;
+        ArrayList<DefItemDTO> decorators = this.worldDefinition.spaceDecorators;
 
-        for (WorldDefPositionItemDTO deco : decorators) {
+        for (DefItemDTO deco : decorators) {
             this.worldInitializer.addDecorator(deco.assetId, deco.size, deco.posX, deco.posY, deco.angle);
         }
     }
