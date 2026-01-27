@@ -14,10 +14,10 @@ import model.bodies.ports.BodyType;
 import model.emitter.ports.Emitter;
 import model.physics.ports.PhysicsEngine;
 import model.physics.ports.PhysicsValuesDTO;
-import model.spatial.core.SpatialGrid;
 import utils.actions.ActionDTO;
 import utils.events.domain.ports.BodyRefDTO;
 import utils.events.domain.ports.eventtype.DomainEvent;
+import utils.spatial.core.SpatialGrid;
 
 /**
  * AbstractBody

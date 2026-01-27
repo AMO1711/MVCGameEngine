@@ -1,10 +1,10 @@
-package model.spatial.core;
+package utils.spatial.core;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 
-import model.spatial.ports.SpatialGridStatisticsDTO;
+import utils.spatial.ports.SpatialGridStatisticsDTO;
 
 /**
  * SpatialGrid (NEUTRAL + TOPOLOGÍA FIJA + PREALLOC)

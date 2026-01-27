@@ -7,7 +7,7 @@ import model.bodies.ports.BodyType;
 import model.emitter.ports.Emitter;
 import model.physics.ports.PhysicsEngine;
 import model.physics.ports.PhysicsValuesDTO;
-import model.spatial.core.SpatialGrid;
+import utils.spatial.core.SpatialGrid;
 
 /**
  * DynamicBody

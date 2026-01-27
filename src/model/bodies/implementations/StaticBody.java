@@ -5,7 +5,7 @@ import model.bodies.ports.BodyEventProcessor;
 import model.bodies.ports.BodyState;
 import model.bodies.ports.BodyType;
 import model.physics.implementations.NullPhysicsEngine;
-import model.spatial.core.SpatialGrid;
+import utils.spatial.core.SpatialGrid;
 
 /**
  * StaticBody

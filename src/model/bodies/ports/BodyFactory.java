@@ -9,8 +9,7 @@ import model.bodies.implementations.StaticBody;
 import model.physics.implementations.BasicPhysicsEngine;
 import model.physics.ports.PhysicsEngine;
 import model.physics.ports.PhysicsValuesDTO;
-import model.spatial.core.SpatialGrid;
-// endregion
+import utils.spatial.core.SpatialGrid;
 
 public class BodyFactory {
 

@@ -7,10 +7,10 @@ import model.bodies.ports.BodyType;
 import model.bodies.ports.PlayerDTO;
 import model.physics.ports.PhysicsEngine;
 import model.physics.ports.PhysicsValuesDTO;
-import model.spatial.core.SpatialGrid;
 import model.weapons.ports.Weapon;
 import model.weapons.ports.WeaponDto;
 import utils.events.domain.ports.BodyToEmitDTO;
+import utils.spatial.core.SpatialGrid;
 
 public class PlayerBody extends DynamicBody {
 

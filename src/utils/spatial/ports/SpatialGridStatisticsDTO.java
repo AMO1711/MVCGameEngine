@@ -1,4 +1,4 @@
-package model.spatial.ports;
+package utils.spatial.ports;
 
 public class SpatialGridStatisticsDTO {
     public final int nonEmptyCells;

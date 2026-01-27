@@ -1,6 +1,6 @@
 package controller.mappers;
 
-import model.spatial.ports.SpatialGridStatisticsDTO;
+import utils.spatial.ports.SpatialGridStatisticsDTO;
 import view.renderables.ports.SpatialGridStatisticsRenderDTO;
 
 public class SpatialGridStatisticsMapper {

@@ -1,4 +1,4 @@
-package game.implementations.actions;
+package game.actions;
 
 import java.util.List;
 
@@ -12,8 +12,7 @@ import utils.events.domain.ports.eventtype.EmitEvent;
 import utils.events.domain.ports.eventtype.LifeOver;
 import utils.events.domain.ports.eventtype.LimitEvent;
 
-
-public class ActionsLimitRebound implements ActionsGenerator {
+public class ActionsInLimitsGoToCenter implements ActionsGenerator {
 
     // *** INTERFACE IMPLEMENTATIONS ***
 
@@ -31,29 +30,13 @@ public class ActionsLimitRebound implements ActionsGenerator {
     private void applyGameRules(DomainEvent event, List<ActionDTO> actions) {
         switch (event) {
             case LimitEvent limitEvent -> {
-                Action action;
 
-                switch (limitEvent.type) {
-                    case REACHED_EAST_LIMIT:
-                        action = Action.MOVE_REBOUND_IN_EAST;
-                        break;
-                    case REACHED_WEST_LIMIT:
-                        action = Action.MOVE_REBOUND_IN_WEST;
-                        break;
-                    case REACHED_NORTH_LIMIT:
-                        action = Action.MOVE_REBOUND_IN_NORTH;
-                        break;
-                    case REACHED_SOUTH_LIMIT:
-                        action = Action.MOVE_REBOUND_IN_SOUTH;
-                        break;
-                    default:
-                        action = Action.NO_MOVE;
-                        break;
-                }
+                Action action = Action.MOVE_TO_CENTER;
 
                 actions.add(new ActionDTO(
                         limitEvent.primaryBodyRef.id(), limitEvent.primaryBodyRef.type(),
                         action, event));
+                break;
 
             }
 
@@ -84,7 +67,6 @@ public class ActionsLimitRebound implements ActionsGenerator {
             case CollisionEvent e -> {
 
                 // No action for collision events in this generator
-
             }
         }
     }

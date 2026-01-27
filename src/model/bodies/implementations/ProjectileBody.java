@@ -6,7 +6,7 @@ import model.bodies.ports.BodyState;
 import model.bodies.ports.BodyType;
 import model.physics.ports.PhysicsEngine;
 import model.physics.ports.PhysicsValuesDTO;
-import model.spatial.core.SpatialGrid;
+import utils.spatial.core.SpatialGrid;
 
 /**
  * ProjectileBody

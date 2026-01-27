@@ -24,8 +24,6 @@ import model.emitter.ports.Emitter;
 import model.emitter.ports.EmitterConfigDto;
 import model.ports.DomainEventProcessor;
 import model.ports.ModelState;
-import model.spatial.core.SpatialGrid;
-import model.spatial.ports.SpatialGridStatisticsDTO;
 import model.weapons.ports.Weapon;
 import model.weapons.ports.WeaponDto;
 import model.weapons.ports.WeaponFactory;
@@ -41,6 +39,8 @@ import utils.events.domain.ports.eventtype.LifeOver;
 import utils.events.domain.ports.eventtype.LimitEvent;
 import utils.events.domain.ports.payloads.CollisionPayload;
 import utils.events.domain.ports.payloads.EmitPayloadDTO;
+import utils.spatial.core.SpatialGrid;
+import utils.spatial.ports.SpatialGridStatisticsDTO;
 
 /**
  * Model

@@ -1,4 +1,4 @@
-package game.implementations.ai;
+package game.ai;
 
 import java.util.ArrayList;
 

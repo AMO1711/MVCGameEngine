@@ -1,9 +1,8 @@
-package game.implementations.actions;
+package game.actions;
 
 import java.util.List;
 
 import controller.ports.ActionsGenerator;
-import model.bodies.ports.BodyType;
 import utils.actions.Action;
 import utils.actions.ActionDTO;
 import utils.events.domain.ports.DomainEventType;
@@ -13,7 +12,7 @@ import utils.events.domain.ports.eventtype.EmitEvent;
 import utils.events.domain.ports.eventtype.LifeOver;
 import utils.events.domain.ports.eventtype.LimitEvent;
 
-public class ActionsDeadInLimitsPlayerImmunity implements ActionsGenerator {
+public class ActionsDeadInLimits implements ActionsGenerator {
 
     // *** INTERFACE IMPLEMENTATIONS ***
 
@@ -31,15 +30,11 @@ public class ActionsDeadInLimitsPlayerImmunity implements ActionsGenerator {
     private void applyGameRules(DomainEvent event, List<ActionDTO> actions) {
         switch (event) {
             case LimitEvent limitEvent -> {
-
-                Action action = Action.DIE;
-                if (limitEvent.primaryBodyRef.type() == BodyType.PLAYER)
-                    action = Action.NO_MOVE;
-
+                Action action;
+                action = Action.DIE;
                 actions.add(new ActionDTO(
                         limitEvent.primaryBodyRef.id(), limitEvent.primaryBodyRef.type(),
                         action, event));
-                break;
 
             }
 

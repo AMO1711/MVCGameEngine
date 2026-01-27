@@ -1,4 +1,4 @@
-package model.spatial.core;
+package utils.spatial.core;
 
 public class Cells {
     final int[] idxs;
