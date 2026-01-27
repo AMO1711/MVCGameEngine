@@ -17,7 +17,7 @@ import controller.ports.EngineState;
 import controller.ports.WorldEvolver;
 import controller.ports.WorldInitializer;
 import events.domain.ports.eventtype.DomainEvent;
-import generators.ports.ActionsGenerator;
+import game.ports.ActionsGenerator;
 import model.bodies.ports.BodyDTO;
 import model.emitter.ports.EmitterConfigDto;
 import model.implementations.Model;
@@ -28,8 +28,8 @@ import view.renderables.ports.DynamicRenderDTO;
 import view.renderables.ports.PlayerRenderDTO;
 import view.renderables.ports.RenderDTO;
 import view.renderables.ports.SpatialGridStatisticsRenderDTO;
-import world.ports.WorldDefEmitterDTO;
-import world.ports.WorldDefWeaponDTO;
+import world.ports.DefEmitterDTO;
+import world.ports.DefWeaponDTO;
 
 /**
  * Controller
@@ -208,7 +208,7 @@ public class Controller implements WorldEvolver, WorldInitializer, DomainEventPr
         this.engineState = EngineState.ALIVE;
     }
 
-    // region Engine
+    // region Engine (engine**)
     public void enginePause() {
         this.engineState = EngineState.PAUSED;
     }
@@ -369,7 +369,7 @@ public class Controller implements WorldEvolver, WorldInitializer, DomainEventPr
     }
 
     @Override // WorldEvolver
-    public void bodyEquipTrail(String playerId, WorldDefEmitterDTO bodyEmitterDef) {
+    public void bodyEquipTrail(String playerId, DefEmitterDTO bodyEmitterDef) {
         EmitterConfigDto bodyEmitter = EmitterMapper.fromWorldDef(bodyEmitterDef);
         this.model.bodyEquipTrail(playerId, bodyEmitter);
     }
@@ -391,7 +391,7 @@ public class Controller implements WorldEvolver, WorldInitializer, DomainEventPr
     }
 
     @Override // WorldEvolver
-    public void addWeaponToPlayer(String playerId, WorldDefWeaponDTO weaponDef, int shootingOffset) {
+    public void addWeaponToPlayer(String playerId, DefWeaponDTO weaponDef, int shootingOffset) {
 
         WeaponDto weapon = WeaponMapper.fromWorldDef(weaponDef, shootingOffset);
 
