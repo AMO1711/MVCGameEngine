@@ -1,6 +1,7 @@
 package game.ai;
 
 import java.util.ArrayList;
+import java.util.Random;
 
 import controller.ports.WorldEvolver;
 import game.core.AbstractIAGenerator;
@@ -13,6 +14,7 @@ public class AIBasicSpawner extends AbstractIAGenerator {
 
     // region Fields
     private final ArrayList<DefItem> asteroidDefs;
+    private final Random rnd = new Random();
     // endregion
 
     // *** CONSTRUCTORS ***
@@ -52,7 +54,7 @@ public class AIBasicSpawner extends AbstractIAGenerator {
     private void addDynamic(DefItem defItem) {
         // If defItem is a prototype, we need to convert it to a DTO
         // to resolve range-based properties ...
-        DefItemDTO bodyDef = this.toDTO(defItem);
+        DefItemDTO bodyDef = this.defItemToDTO(defItem);
 
         // At this place you can modify position, 
         // speed, thrust, etc. as needed
@@ -69,7 +71,7 @@ public class AIBasicSpawner extends AbstractIAGenerator {
         String playerId = null;
 
         for (DefItem def : shipDefs) {
-            DefItemDTO body = this.toDTO(def);
+            DefItemDTO body = this.defItemToDTO(def);
 
             playerId = this.worldEvolver.addPlayer(
                     body.assetId, body.size,

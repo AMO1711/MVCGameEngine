@@ -11,9 +11,10 @@ import world.ports.WorldDefinition;
 public abstract class AbstractLevelGenerator {
 
     // region Fields
-    protected final Random rnd = new Random();
-    protected final WorldInitializer worldInitializer;
-    protected final WorldDefinition worldDefinition;
+    private final Random rnd = new Random();
+    private final DefItemMaterializer defItemMaterializer = new DefItemMaterializer();
+    private final WorldInitializer worldInitializer;
+    private final WorldDefinition worldDefinition;
     // endregion
 
     // *** CONSTRUCTORS ***
@@ -33,6 +34,16 @@ public abstract class AbstractLevelGenerator {
     }
 
     // *** PROTECTED ***
+    protected void addDecoratorIntoTheGame(DefItemDTO deco) {
+        this.worldInitializer.addDecorator(deco.assetId, deco.size, deco.posX, deco.posY, deco.angle);
+    }
+
+    protected void addStaticTheGame(DefItemDTO bodyDef) {
+        this.worldInitializer.addStaticBody(
+                bodyDef.assetId, bodyDef.size,
+                bodyDef.posX, bodyDef.posY,
+                bodyDef.angle);
+    }
 
     /**
      * Standard world creation pipeline.
@@ -59,30 +70,16 @@ public abstract class AbstractLevelGenerator {
         // no-op by default
     }
 
-    // *** PROTECTED ***
+    protected final DefItemDTO defItemToDTO(DefItem defitem) {
+        return this.defItemMaterializer.defItemToDTO(defitem);
+    }
 
-    protected final DefItemDTO materialize(DefItem defitem) {
-        if (defitem == null) {
-            throw new IllegalArgumentException("DefItem cannot be null.");
-        }
+    protected WorldDefinition getWorldDefinition() {
+        return this.worldDefinition;
+    }
 
-        if (defitem instanceof DefItemDTO concreteItem) {
-            return concreteItem;
-        }
-
-        if (defitem instanceof DefItemPrototypeDTO prototypeItem) {
-            double size = this.randomDoubleBetween(prototypeItem.minSize, prototypeItem.maxSize);
-            double angle = this.randomDoubleBetween(prototypeItem.minAngle, prototypeItem.maxAngle);
-            double x = this.randomDoubleBetween(prototypeItem.posMinX, prototypeItem.posMaxX);
-            double y = this.randomDoubleBetween(prototypeItem.posMinY, prototypeItem.posMaxY);
-
-            return new DefItemDTO(
-                    prototypeItem.assetId, size, angle, x, y, prototypeItem.density);
-        }
-
-        // sealed -> debería ser inalcanzable salvo que cambie permits
-        throw new IllegalStateException(
-            "Unsupported DefItem implementation: " + defitem.getClass().getName());
+    protected WorldInitializer getWorldInitializer() {
+        return this.worldInitializer;
     }
 
     protected final double randomDoubleBetween(double minInclusive, double maxInclusive) {

@@ -13,7 +13,8 @@ import world.ports.WorldDefinition;
 public abstract class AbstractIAGenerator implements Runnable {
 
     // region Fields
-    protected final Random rnd = new Random();
+    private final Random rnd = new Random();
+    private final DefItemMaterializer defItemMaterializer;
     protected final WorldEvolver worldEvolver;
     protected final WorldDefinition worldDefinition;
     protected final int maxCreationDelay;
@@ -34,6 +35,7 @@ public abstract class AbstractIAGenerator implements Runnable {
             throw new IllegalArgumentException("WorldDefinition cannot be null.");
         }
 
+        this.defItemMaterializer = new DefItemMaterializer();
         this.worldEvolver = worldEvolver;
         this.worldDefinition = worldDefinition;
         this.maxCreationDelay = maxCreationDelay;
@@ -84,19 +86,8 @@ public abstract class AbstractIAGenerator implements Runnable {
         return new DoubleVector(x, y);
     }
 
-    // Converts a DefItem (prototype or DTO) into a concrete DefItemDTO
-    protected final DefItemDTO toDTO(DefItem defItem) {
-        switch (defItem) {
-            case DefItemDTO dto -> {
-                return dto; // ========== already a DTO ==========>>
-            }
-            case DefItemPrototypeDTO proto -> {
-                return this.prototypeToDTO(proto); // ====== convert prototype ======>
-            }
-            default -> throw new IllegalStateException(
-                    "Unsupported DefItem implementation: " + defItem.getClass().getName());
-        }
-
+    protected final DefItemDTO defItemToDTO(DefItem defItem) {
+        return this.defItemMaterializer.defItemToDTO(defItem);
     }
 
     // region Random helpers (random***)
@@ -129,33 +120,6 @@ public abstract class AbstractIAGenerator implements Runnable {
     // }
     // endregion
 
-    // *** PRIVATE ***
-
-    private DefItemDTO prototypeToDTO(DefItemPrototypeDTO proto) {
-        double size = this.randomDoubleBetween(proto.minSize, proto.maxSize);
-        double angle = this.randomDoubleBetween(proto.minAngle, proto.maxAngle);
-        double x = this.randomDoubleBetween(proto.posMinX, proto.posMaxX);
-        double y = this.randomDoubleBetween(proto.posMinY, proto.posMaxY);
-        double angularSpeed = this.randomDoubleBetween(proto.angularSpeedMin, proto.angularSpeedMax);
-        double thrust = this.randomDoubleBetween(proto.thrustMin, proto.thrustMax);
-
-        // Velocity components based on angle
-
-        double angleRad = Math.toRadians(angle);
-        double speed = this.randomDoubleBetween(proto.speedMin, proto.speedMax);
-        double speedX = 0.0d;
-        double speedY = 0.0d;
-        if (speed != 0.0d) {
-            speedX = Math.cos(angleRad) * speed;
-            speedY = Math.sin(angleRad) * speed;
-        }
-
-        DefItemDTO dto = new DefItemDTO(
-                proto.assetId, size, angle, x, y, proto.density,
-                speedX, speedY, angularSpeed, thrust);
-
-        return dto;
-    }
 
     // *** INTERFACE IMPLEMENTATION ***
 
@@ -177,16 +141,6 @@ public abstract class AbstractIAGenerator implements Runnable {
     }
     // endregion
 
-    // private DoubleVector radialSpeedFromCenter() {
-    //     double angle = this.rnd.nextDouble() * Math.PI * 2.0;
 
-    //     double module = this.AIConfig.fixedSpeed
-    //             ? Math.sqrt(this.AIConfig.speedX * this.AIConfig.speedX
-    //                     + this.AIConfig.speedY * this.AIConfig.speedY)
-    //             : this.AIConfig.maxSpeedModule * this.rnd.nextDouble();
-
-    //     return new DoubleVector(
-    //             Math.cos(angle), Math.sin(angle), module);
-    // }
 
 }

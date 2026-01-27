@@ -20,21 +20,21 @@ public class LevelBasic extends AbstractLevelGenerator {
 
     @Override
     protected void createSpaceDecorators() {
-        ArrayList<DefItem> decorators = this.worldDefinition.spaceDecorators;
+        ArrayList<DefItem> decorators = this.getWorldDefinition().spaceDecorators;
 
         for (DefItem def : decorators) {
-            DefItemDTO deco = this.materialize(def);
-            this.worldInitializer.addDecorator(deco.assetId, deco.size, deco.posX, deco.posY, deco.angle);
+            DefItemDTO deco = this.defItemToDTO(def);
+            this.addDecoratorIntoTheGame(deco);
         }
     }
 
     @Override
     protected void createStaticBodies() {
-        ArrayList<DefItem> bodyDefs = this.worldDefinition.gravityBodies;
+        ArrayList<DefItem> bodyDefs = this.getWorldDefinition().gravityBodies;
 
         for (DefItem def : bodyDefs) {
-            DefItemDTO body = this.materialize(def);
-            this.worldInitializer.addStaticBody(body.assetId, body.size, body.posX, body.posY, body.angle);
+            DefItemDTO body = this.defItemToDTO(def);
+            this.addStaticTheGame(body);
         }
     }
 }
