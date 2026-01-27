@@ -1,4 +1,4 @@
-package main;
+package game;
 
 import assets.implementations.ProjectAssets;
 import controller.implementations.Controller;
