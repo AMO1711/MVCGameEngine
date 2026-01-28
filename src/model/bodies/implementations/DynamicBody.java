@@ -1,9 +1,10 @@
 package model.bodies.implementations;
 
-import model.bodies.core.AbstractPhysicsBody;
+import model.bodies.core.AbstractBody;
 import model.bodies.ports.BodyEventProcessor;
 import model.bodies.ports.BodyState;
 import model.bodies.ports.BodyType;
+import model.emitter.ports.Emitter;
 import model.physics.ports.PhysicsEngine;
 import model.physics.ports.PhysicsValuesDTO;
 import model.spatial.core.SpatialGrid;
@@ -42,15 +43,15 @@ import model.spatial.core.SpatialGrid;
  * while keeping the simulation thread-safe through immutable snapshots and a
  * clearly separated rendering pipeline.
  */
-public class DynamicBody extends AbstractPhysicsBody implements Runnable {
+public class DynamicBody extends AbstractBody implements Runnable {
 
     private double maxThrustForce; //
     private double maxAngularAcc; // degrees*s^-2
     private double angularSpeed; // degrees*s^-1
 
-    //
-    // CONSTRUCTORS
-    //
+    private String trailId;
+
+    // *** CONSTRUCTORS ***
 
     public DynamicBody(BodyEventProcessor bodyEventProcessor, SpatialGrid spatialGrid,
             PhysicsEngine phyEngine, BodyType bodyType, double maxLifeInSeconds) {
@@ -61,63 +62,44 @@ public class DynamicBody extends AbstractPhysicsBody implements Runnable {
                 maxLifeInSeconds);
     }
 
-    //
-    // PUBLICS
-    //
+    // *** PUBLICS ***
 
-    @Override
+    @Override // AbstractBody
     public synchronized void activate() {
         super.activate();
 
         Thread thread = new Thread(this);
-        thread.setName("Body " + this.getEntityId());
+        thread.setName("Body " + this.getBodyId());
         thread.setPriority(Thread.NORM_PRIORITY - 1);
         thread.start();
         this.setThread(thread);
         this.setState(BodyState.ALIVE);
     }
 
-    public void addAngularAcceleration(double angularSpeed) {
-        this.getPhysicsEngine().addAngularAcceleration(angularSpeed);
+    // region Acceleration control (acceleration***)
+    public void accelerationAngularInc(double angularAcceleration) {
+        this.getPhysicsEngine().angularAccelerationInc(angularAcceleration);
     }
 
-    public void resetAcceleration() {
+    public void accelerationReset() {
         this.getPhysicsEngine().resetAcceleration();
     }
+    // endregion
 
-    @Override
-    public void run() {
-        PhysicsValuesDTO newPhyValues;
+    // region Trail management (trail***)
+    public String trailEquip(Emitter trailEmitter) {
+        this.trailId = this.emitterEquip(trailEmitter);
 
-        while (this.getState() != BodyState.DEAD) {
-
-            if (this.getState() == BodyState.ALIVE) {
-                newPhyValues = this.getPhysicsEngine().calcNewPhysicsValues();
-
-                double r = newPhyValues.size * 0.5;
-                double minX = newPhyValues.posX - r;
-                double maxX = newPhyValues.posX + r;
-                double minY = newPhyValues.posY - r;
-                double maxY = newPhyValues.posY + r;
-
-                this.getSpatialGrid().upsert(
-                        this.getEntityId(), minX, maxX, minY, maxY, this.getScratchIdxs());
-
-                if (this.isThrusting()) {
-                    this.registerBodyEmissionRequest();
-                }
-
-                this.processBodyEvents(this, newPhyValues, this.getPhysicsEngine().getPhysicsValues());
-            }
-
-            try {
-                Thread.sleep(30);
-            } catch (InterruptedException ex) {
-                System.err.println("ERROR Sleeping in vObject thread! (VObject) · " + ex.getMessage());
-            }
-        }
+        return this.trailId;
     }
 
+    public String trailGetId() {
+        return this.trailId;
+    }
+
+    // endregion
+
+    // region Getters (get***)
     public double getAngularSpeed() {
         return this.angularSpeed;
     }
@@ -129,7 +111,9 @@ public class DynamicBody extends AbstractPhysicsBody implements Runnable {
     public double getMaxAngularAcceleration() {
         return this.maxAngularAcc;
     }
+    // endregion
 
+    // region setters (set***)
     public void setAngularAcceleration(double angularAcc) {
         this.getPhysicsEngine().setAngularAcceleration(angularAcc);
     }
@@ -146,17 +130,58 @@ public class DynamicBody extends AbstractPhysicsBody implements Runnable {
         this.setAngularSpeed(this.angularSpeed);
         this.maxAngularAcc = maxAngularAcc;
     }
+    // endregion
 
-    public void setThrust(double thrust) {
-        this.getPhysicsEngine().setThrust(thrust);
+    // region Thrust control (thrust***)
+    public void thrustMaxOn() {
+        this.thurstNow(this.maxThrustForce);
     }
 
-    public void thrustOn() {
-        this.setThrust(this.maxThrustForce);
+    public void thurstNow(double thrust) {
+        this.getPhysicsEngine().setThrust(thrust);
     }
 
     public void thrustOff() {
         this.getPhysicsEngine().stopPushing();
     }
+    // endregion
+
+    // *** INTERFACE IMPLEMENTATIONS ***
+
+    // regions Runnable
+    @Override
+    public void run() {
+        PhysicsValuesDTO newPhyValues;
+
+        while (this.getBodyState() != BodyState.DEAD) {
+
+            if (this.getBodyState() == BodyState.ALIVE) {
+                newPhyValues = this.getPhysicsEngine().calcNewPhysicsValues();
+
+                double r = newPhyValues.size * 0.5;
+                double minX = newPhyValues.posX - r;
+                double maxX = newPhyValues.posX + r;
+                double minY = newPhyValues.posY - r;
+                double maxY = newPhyValues.posY + r;
+
+                this.getSpatialGrid().upsert(
+                        this.getBodyId(), minX, maxX, minY, maxY, this.getScratchIdxs());
+
+                if (this.isThrusting()) {
+                    if (this.trailId != null)
+                        this.emitterRequest(this.trailId);
+                }
+
+                this.processBodyEvents(this, newPhyValues, this.getPhysicsEngine().getPhysicsValues());
+            }
+
+            try {
+                Thread.sleep(30);
+            } catch (InterruptedException ex) {
+                System.err.println("ERROR Sleeping in vObject thread! (VObject) · " + ex.getMessage());
+            }
+        }
+    }
+    // endregion
 
 }

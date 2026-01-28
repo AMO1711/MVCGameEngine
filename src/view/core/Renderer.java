@@ -14,8 +14,6 @@ import java.util.ArrayList;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-import images.Images;
-import images.ImageCache;
 import view.huds.implementations.PlayerHUD;
 import view.huds.implementations.SpatialGridHUD;
 import view.huds.implementations.SystemHUD;
@@ -26,6 +24,8 @@ import view.renderables.ports.PlayerRenderDTO;
 import view.renderables.ports.RenderDTO;
 import view.renderables.ports.SpatialGridStatisticsRenderDTO;
 import controller.ports.EngineState;
+import utils.images.ImageCache;
+import utils.images.Images;
 
 /**
  * Renderer
@@ -125,7 +125,7 @@ public class Renderer extends Canvas implements Runnable {
 
     private Dimension viewDimension;
     private View view;
-    private int delayInMillis = 10;
+    private int delayInMillis = 2;
     private long currentFrame = 0;
     private Thread thread;
 

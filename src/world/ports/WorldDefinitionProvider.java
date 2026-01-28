@@ -2,5 +2,5 @@ package world.ports;
 
 public interface WorldDefinitionProvider {
 
-    WorldDefinition provide();
+    public WorldDefinition provide();
 }

@@ -11,11 +11,11 @@ import java.util.ArrayList;
 import javax.swing.JFrame;
 import javax.swing.SwingUtilities;
 
-import assets.core.AssetCatalog;
-import assets.ports.AssetType;
-import images.Images;
 import controller.implementations.Controller;
 import controller.ports.EngineState;
+import utils.assets.core.AssetCatalog;
+import utils.assets.ports.AssetType;
+import utils.images.Images;
 import view.renderables.ports.DynamicRenderDTO;
 import view.renderables.ports.PlayerRenderDTO;
 import view.renderables.ports.RenderDTO;
@@ -311,7 +311,7 @@ public class View extends JFrame implements KeyListener {
                 break;
 
             case KeyEvent.VK_1:
-                this.controller.selectNextWeapon(this.localPlayerId);
+                this.controller.playerSelectNextWeapon(this.localPlayerId);
                 break;
         }
     }

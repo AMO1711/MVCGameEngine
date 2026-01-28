@@ -2,7 +2,6 @@ package model.bodies.implementations;
 
 import java.util.List;
 
-import events.domain.ports.BodyToEmitDTO;
 import model.bodies.ports.BodyEventProcessor;
 import model.bodies.ports.BodyType;
 import model.bodies.ports.PlayerDTO;
@@ -11,6 +10,7 @@ import model.physics.ports.PhysicsValuesDTO;
 import model.spatial.core.SpatialGrid;
 import model.weapons.ports.Weapon;
 import model.weapons.ports.WeaponDto;
+import utils.events.domain.ports.BodyToEmitDTO;
 
 public class PlayerBody extends DynamicBody {
 
@@ -103,7 +103,7 @@ public class PlayerBody extends DynamicBody {
 
     public PlayerDTO getData() {
         PlayerDTO playerData = new PlayerDTO(
-                this.getEntityId(),
+                this.getBodyId(),
                 "",
                 this.damage,
                 this.energye,
@@ -159,7 +159,7 @@ public class PlayerBody extends DynamicBody {
     }
 
     public void reverseThrust() {
-        this.setThrust(-this.getMaxThrustForce());
+        this.thurstNow(-this.getMaxThrustForce());
     }
 
     public void rotateLeftOn() {
@@ -169,7 +169,7 @@ public class PlayerBody extends DynamicBody {
             this.setAngularSpeed(-this.getAngularSpeed());
         }
 
-        this.addAngularAcceleration(-this.getMaxAngularAcceleration());
+        this.accelerationAngularInc(-this.getMaxAngularAcceleration());
     }
 
     public void rotateRightOn() {
@@ -178,7 +178,7 @@ public class PlayerBody extends DynamicBody {
             this.setAngularSpeed(this.getAngularSpeed());
         }
 
-        this.addAngularAcceleration(this.getMaxAngularAcceleration());
+        this.accelerationAngularInc(this.getMaxAngularAcceleration());
     }
 
     public void rotateOff() {

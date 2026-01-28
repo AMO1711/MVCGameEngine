@@ -2,52 +2,60 @@ package world.ports;
 
 import java.util.ArrayList;
 
-import assets.core.AssetCatalog;
+import utils.assets.core.AssetCatalog;
 
 public class WorldDefinition {
 
-    public final int worldWidth;
-    public final int worldHeight;
-    public final AssetCatalog gameAssets;
+	// region Fields
+	public final double worldWidth;
+	public final double worldHeight;
+	public final AssetCatalog gameAssets;
 
-    public final WorldDefBackgroundDTO background;
-    public final ArrayList<WorldDefPositionItemDTO> spaceDecorators;
-    public final ArrayList<WorldDefPositionItemDTO> gravityBodies;
-    public final ArrayList<WorldDefItemDTO> asteroids;
-    public final ArrayList<WorldDefItemDTO> spaceshipsDef;
-    public final ArrayList<WorldDefEmitterDTO> trailEmitterDef;
-    public final ArrayList<WorldDefWeaponDTO> primaryWeaponDef;
-    public final ArrayList<WorldDefWeaponDTO> secondaryWeaponDef;
-    public final ArrayList<WorldDefWeaponDTO> mineLaunchersDef;
-    public final ArrayList<WorldDefWeaponDTO> missilLaunchersDef;
+	public final DefBackgroundDTO background;
 
-    public WorldDefinition(
-            int worldWidth,
-            int worldHeight,
-            AssetCatalog gameAssets,
-            WorldDefBackgroundDTO background,
-            ArrayList<WorldDefPositionItemDTO> spaceDecorators,
-            ArrayList<WorldDefPositionItemDTO> gravityBodies,
-            ArrayList<WorldDefItemDTO> asteroids,
-            ArrayList<WorldDefItemDTO> spaceships,
-            ArrayList<WorldDefEmitterDTO> trailEmitter,
-            ArrayList<WorldDefWeaponDTO> primaryWeapon,
-            ArrayList<WorldDefWeaponDTO> secondaryWeapon,
-            ArrayList<WorldDefWeaponDTO> mineLaunchers,
-            ArrayList<WorldDefWeaponDTO> missilLaunchers) {
+	// Entity polymorphic lists are grouped by type to simplify core consumption
+	public final ArrayList<DefItem> spaceDecorators; 
+	public final ArrayList<DefItem> gravityBodies; 
+	public final ArrayList<DefItem> asteroids; 
+	public final ArrayList<DefItem> spaceships; 
+	public final ArrayList<DefEmitterDTO> trailEmitters;
 
-        this.worldWidth = worldWidth;
-        this.worldHeight = worldHeight;
-        this.gameAssets = gameAssets;
-        this.background = background;
-        this.spaceDecorators = spaceDecorators;
-        this.gravityBodies = gravityBodies;
-        this.asteroids = asteroids;
-        this.primaryWeaponDef = primaryWeapon;
-        this.secondaryWeaponDef = secondaryWeapon;
-        this.mineLaunchersDef = mineLaunchers;
-        this.missilLaunchersDef = missilLaunchers;
-        this.spaceshipsDef = spaceships;
-        this.trailEmitterDef = trailEmitter;
-    }
+	// Weapon lists are grouped by type to simplify core consumption
+	public final ArrayList<DefWeaponDTO> bulletWeapons;
+	public final ArrayList<DefWeaponDTO> burstWeapons;
+	public final ArrayList<DefWeaponDTO> mineLaunchers;
+	public final ArrayList<DefWeaponDTO> missileLaunchers;
+	// endregion
+
+	// *** CONSTRUCTOR ***
+
+	public WorldDefinition(
+			double worldWidth,
+			double worldHeight,
+			AssetCatalog gameAssets,
+			DefBackgroundDTO background,
+			ArrayList<DefItem> spaceDecorators,
+			ArrayList<DefItem> gravityBodies,
+			ArrayList<DefItem> asteroids,
+			ArrayList<DefItem> spaceships,
+			ArrayList<DefEmitterDTO> trailEmitters,
+			ArrayList<DefWeaponDTO> bulletWeapons,
+			ArrayList<DefWeaponDTO> burstWeapons,
+			ArrayList<DefWeaponDTO> mineLaunchers,
+			ArrayList<DefWeaponDTO> missileLaunchers) {
+
+		this.worldWidth = worldWidth;
+		this.worldHeight = worldHeight;
+		this.gameAssets = gameAssets;
+		this.background = background;
+		this.spaceDecorators = spaceDecorators;
+		this.gravityBodies = gravityBodies;
+		this.asteroids = asteroids;
+		this.bulletWeapons = bulletWeapons;
+		this.burstWeapons = burstWeapons;
+		this.mineLaunchers = mineLaunchers;
+		this.missileLaunchers = missileLaunchers;
+		this.spaceships = spaceships;
+		this.trailEmitters = trailEmitters;
+	}
 }
