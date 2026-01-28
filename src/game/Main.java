@@ -1,14 +1,13 @@
 package game;
 
 import controller.implementations.Controller;
-import game.implementations.actions.*;
-import game.implementations.ai.*;
-import game.implementations.level.*;
+import game.implementations.actions.ActionsReboundCollisionPlayerImmunity;
+import game.implementations.ai.AIBasicSpawner;
+import game.implementations.level.LevelBasic;
 import game.implementations.world.RandomWorldDefinitionProvider;
 import model.implementations.Model;
 import utils.assets.implementations.ProjectAssets;
 import view.core.View;
-import world.implementations.*;
 import world.ports.WorldDefinition;
 import world.ports.WorldDefinitionProvider;
 
@@ -18,8 +17,8 @@ public class Main {
 
 		System.setProperty("sun.java2d.uiScale", "1.0");
 
-		int worldWidth = 2450;
-		int worldHeight = 1450;
+		int worldWidth = 1920;
+		int worldHeight = 1020;
 		int maxDynamicBodies = 2000;
 		int maxAsteroidCreationDelay = 500;
 
