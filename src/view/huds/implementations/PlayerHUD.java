@@ -1,9 +1,6 @@
 package view.huds.implementations;
 
 import java.awt.Color;
-import java.awt.Graphics2D;
-import java.awt.RenderingHints;
-import java.awt.image.BufferedImage;
 
 import view.huds.core.DataHUD;
 
@@ -14,7 +11,7 @@ public class PlayerHUD extends DataHUD {
                 Color.GRAY, // Highlight color
                 new Color(255, 255, 255, 150), // Label color
                 new Color(255, 255, 255, 255), // Data color
-                50, 12, 35);
+                50, 12, 20);
 
         this.addItems();
     }
