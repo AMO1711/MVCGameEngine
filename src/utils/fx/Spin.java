@@ -1,7 +1,7 @@
 package utils.fx;
 
 
-import view.renderables.implementations.DynamicRenderable;
+import view.renderables.impl.DynamicRenderable;
 
 
 

@@ -5,7 +5,7 @@ import java.util.Random;
 
 import model.bodies.ports.BodyType;
 import utils.assets.core.AssetCatalog;
-import utils.assets.implementations.ProjectAssets;
+import utils.assets.impl.ProjectAssets;
 import utils.assets.ports.AssetType;
 import world.ports.DefBackgroundDTO;
 import world.ports.DefEmitterDTO;

@@ -1,12 +1,12 @@
 package game;
 
-import controller.implementations.Controller;
-import game.actions.*;
-import game.ai.*;
-import game.level.*;
+import controller.impl.Controller;
+import game.actionsgen.*;
+import game.aigen.*;
+import game.levelgen.*;
 import game.worlddef.RandomWorldDefinitionProvider;
-import model.implementations.Model;
-import utils.assets.implementations.ProjectAssets;
+import model.impl.Model;
+import utils.assets.impl.ProjectAssets;
 import view.core.View;
 import world.ports.WorldDefinition;
 import world.ports.WorldDefinitionProvider;

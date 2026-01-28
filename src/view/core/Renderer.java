@@ -14,11 +14,11 @@ import java.util.ArrayList;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-import view.huds.implementations.PlayerHUD;
-import view.huds.implementations.SpatialGridHUD;
-import view.huds.implementations.SystemHUD;
-import view.renderables.implementations.DynamicRenderable;
-import view.renderables.implementations.Renderable;
+import view.hud.impl.PlayerHUD;
+import view.hud.impl.SpatialGridHUD;
+import view.hud.impl.SystemHUD;
+import view.renderables.impl.DynamicRenderable;
+import view.renderables.impl.Renderable;
 import view.renderables.ports.DynamicRenderDTO;
 import view.renderables.ports.PlayerRenderDTO;
 import view.renderables.ports.RenderDTO;

@@ -1,7 +1,7 @@
 package world.core;
 
 import utils.assets.core.AssetCatalog;
-import utils.assets.implementations.ProjectAssets;
+import utils.assets.impl.ProjectAssets;
 import utils.assets.ports.AssetInfoDTO;
 import utils.assets.ports.AssetType;
 

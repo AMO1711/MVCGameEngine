@@ -1,7 +1,7 @@
 package game.worlddef;
 
 import model.bodies.ports.BodyType;
-import utils.assets.implementations.ProjectAssets;
+import utils.assets.impl.ProjectAssets;
 import utils.assets.ports.AssetType;
 import world.core.AbstractWorldDefinitionProvider;
 

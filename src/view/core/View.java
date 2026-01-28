@@ -11,7 +11,7 @@ import java.util.ArrayList;
 import javax.swing.JFrame;
 import javax.swing.SwingUtilities;
 
-import controller.implementations.Controller;
+import controller.impl.Controller;
 import controller.ports.EngineState;
 import utils.assets.core.AssetCatalog;
 import utils.assets.ports.AssetType;
