@@ -67,6 +67,7 @@ public final class ProjectAssets {
         this.catalog.register("asteroid_4", "asteroid-4-mini.png", AssetType.ASTEROID, AssetIntensity.HIGH);
         this.catalog.register("asteroid_5", "asteroid-5-mini.png", AssetType.ASTEROID, AssetIntensity.HIGH);
         this.catalog.register("asteroid_6", "asteroid-6-mini.png", AssetType.ASTEROID, AssetIntensity.HIGH);
+
         this.catalog.register("meteor_1", "meteor-1.png", AssetType.METEOR, AssetIntensity.HIGH);
         this.catalog.register("meteor_2", "meteor-2.png", AssetType.METEOR, AssetIntensity.HIGH);
         this.catalog.register("meteor_3", "meteor-3.png", AssetType.METEOR, AssetIntensity.HIGH);
@@ -97,13 +98,17 @@ public final class ProjectAssets {
         this.catalog.register("rocket_5", "rocket-5.png", AssetType.ROCKET, AssetIntensity.HIGH);
         this.catalog.register("rocket_6", "rocket-6.png", AssetType.ROCKET, AssetIntensity.HIGH);
         this.catalog.register("rocket_7", "rocket-7.png", AssetType.ROCKET, AssetIntensity.HIGH);
-        this.catalog.register("spaceship_1", "spaceship-1.png", AssetType.SPACESHIP, AssetIntensity.HIGH);
-        this.catalog.register("spaceship_2", "spaceship-2.png", AssetType.SPACESHIP, AssetIntensity.HIGH);
-        this.catalog.register("spaceship_3", "spaceship-3.png", AssetType.SPACESHIP, AssetIntensity.HIGH);
-        this.catalog.register("spaceship_4", "spaceship-4.png", AssetType.SPACESHIP, AssetIntensity.HIGH);
-        this.catalog.register("spaceship_5", "spaceship-5.png", AssetType.SPACESHIP, AssetIntensity.HIGH);
-        this.catalog.register("spaceship_6", "spaceship-6.png", AssetType.SPACESHIP, AssetIntensity.HIGH);
-        this.catalog.register("spaceship_7", "spaceship-7.png", AssetType.SPACESHIP, AssetIntensity.HIGH);
+
+        // this.catalog.register("spaceship_1", "spaceship-1.png", AssetType.SPACESHIP, AssetIntensity.HIGH);
+        // this.catalog.register("spaceship_2", "spaceship-2.png", AssetType.SPACESHIP, AssetIntensity.HIGH);
+        // this.catalog.register("spaceship_3", "spaceship-3.png", AssetType.SPACESHIP, AssetIntensity.HIGH);
+        // this.catalog.register("spaceship_4", "spaceship-4.png", AssetType.SPACESHIP, AssetIntensity.HIGH);
+        // this.catalog.register("spaceship_5", "spaceship-5.png", AssetType.SPACESHIP, AssetIntensity.HIGH);
+        // this.catalog.register("spaceship_6", "spaceship-6.png", AssetType.SPACESHIP, AssetIntensity.HIGH);
+        // this.catalog.register("spaceship_7", "spaceship-7.png", AssetType.SPACESHIP, AssetIntensity.HIGH);
+        
+        this.catalog.register("playerRight", "playerRight.png", AssetType.SPACESHIP, AssetIntensity.HIGH);
+
         this.catalog.register("lab_1", "lab-1.png", AssetType.LAB, AssetIntensity.HIGH);
         this.catalog.register("lab_2", "lab-2.png", AssetType.LAB, AssetIntensity.HIGH);
         this.catalog.register("lab_3", "lab-3.png", AssetType.LAB, AssetIntensity.HIGH);
@@ -111,7 +116,9 @@ public final class ProjectAssets {
 
         this.catalog.register("signs_1", "ui-signs-1.png", AssetType.UI_SIGN, AssetIntensity.HIGH);
 
-        this.catalog.register("bullet_1", "bullet-1.png", AssetType.BULLET, AssetIntensity.LOW);
+        // this.catalog.register("bullet_1", "bullet-1.png", AssetType.BULLET, AssetIntensity.LOW);
+        this.catalog.register("projectile", "projectile.png", AssetType.BULLET, AssetIntensity.HIGH);
+
         // this.catalog.register("bomb_1", "grenade-1.png", AssetType.MINE, AssetIntensity.MEDIUM);
         this.catalog.register("bomb_2", "grenade-2.png", AssetType.MINE, AssetIntensity.MEDIUM);
         this.catalog.register("misil_1", "misil-1-mini.png", AssetType.MISSILE, AssetIntensity.HIGH);
