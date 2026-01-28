@@ -1,4 +1,4 @@
-package utils.assets.core;
+package assets.core;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -6,9 +6,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Random;
 
-import utils.assets.ports.AssetInfoDTO;
-import utils.assets.ports.AssetIntensity;
-import utils.assets.ports.AssetType;
+import assets.ports.AssetInfoDTO;
+import assets.ports.AssetIntensity;
+import assets.ports.AssetType;
 
 public class AssetCatalog {
 

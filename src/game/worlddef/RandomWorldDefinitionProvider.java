@@ -2,9 +2,9 @@ package game.worlddef;
 
 import java.awt.Dimension;
 
+import assets.impl.ProjectAssets;
+import assets.ports.AssetType;
 import model.bodies.ports.BodyType;
-import utils.assets.impl.ProjectAssets;
-import utils.assets.ports.AssetType;
 import utils.helpers.DoubleVector;
 import world.core.AbstractWorldDefinitionProvider;
 
@@ -28,21 +28,21 @@ public final class RandomWorldDefinitionProvider extends AbstractWorldDefinition
 
 		// region Decorations
 		this.addDecoratorAnywhereRandomAsset(
-				2, AssetType.STARS, density, 200, 600);
+				20, AssetType.STARS, density, 800, 2000);
 		// endregion
 
 		// region Gravity bodies => Static bodies
 		this.addGravityBodyAnywhereRandomAsset(
-				1, AssetType.PLANET, density, 100, 200);
+				5, AssetType.PLANET, density, 800, 1600);
 
 		this.addGravityBodyAnywhereRandomAsset(
-				1, AssetType.MOON, density, 40, 80);
+				2, AssetType.MOON, density, 1000, 2000);
 
 		this.addGravityBodyAnywhereRandomAsset(
-				1, AssetType.SUN, density, 20, 40);
+				2, AssetType.SUN, density, 100, 600);
 
 		this.addGravityBodyAnywhereRandomAsset(
-				1, AssetType.BLACK_HOLE, density, 45, 55);
+				2, AssetType.BLACK_HOLE, density, 50, 250);
 		// endregion
 
 		// region Dynamic bodies

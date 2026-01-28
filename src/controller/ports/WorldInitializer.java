@@ -1,6 +1,6 @@
 package controller.ports;
 
-import utils.assets.core.AssetCatalog;
+import assets.core.AssetCatalog;
 import world.ports.DefEmitterDTO;
 import world.ports.DefWeaponDTO;
 

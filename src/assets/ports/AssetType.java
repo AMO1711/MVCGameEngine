@@ -1,4 +1,4 @@
-package utils.assets.ports;
+package assets.ports;
 
 
 public enum AssetType {

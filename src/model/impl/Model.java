@@ -166,7 +166,7 @@ import utils.spatial.ports.SpatialGridStatisticsDTO;
 public class Model implements BodyEventProcessor {
 
     // region Constants
-    private static final int MAX_BODIES = 3000;
+    private static final int MAX_BODIES = 1000;
     // endregion
 
     // region Fields
@@ -190,20 +190,20 @@ public class Model implements BodyEventProcessor {
         this.maxBodies = MAX_BODIES;
     }
 
-    public Model(Dimension worldDimension, int maxDynamicBodies) {
+    public Model(DoubleVector worldDimension, int maxDynamicBodies) {
         this();
 
-        if (worldDimension == null || worldDimension.getWidth() <= 0 || worldDimension.getHeight() <= 0) {
+        if (worldDimension == null || worldDimension.x <= 0 || worldDimension.y <= 0) {
             throw new IllegalArgumentException("Invalid world dimension");
         }
         if (maxDynamicBodies <= 0 || maxDynamicBodies > MAX_BODIES) {
             throw new IllegalArgumentException("Invalid maxDynamicBodies");
         }
 
-        this.worldWidth = worldDimension.getWidth();
-        this.worldHeight = worldDimension.getHeight();
+        this.worldWidth = worldDimension.x;
+        this.worldHeight = worldDimension.y;
         this.spatialGrid = new SpatialGrid(
-                worldDimension.getWidth(), worldDimension.getHeight(),
+                worldDimension.x, worldDimension.y,
                 48, 24);
     }
     // endregion
@@ -438,8 +438,8 @@ public class Model implements BodyEventProcessor {
         return this.spatialGrid.getStatistics();
     }
 
-    public Dimension getWorldDimension() {
-        return new Dimension((int) this.worldWidth, (int) this.worldHeight);
+    public DoubleVector getWorldDimension() {
+        return new DoubleVector(this.worldWidth, this.worldHeight);
     }
     // endregion Getters
 

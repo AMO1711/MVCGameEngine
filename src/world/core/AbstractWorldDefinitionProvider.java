@@ -4,10 +4,10 @@ import java.awt.Dimension;
 import java.util.ArrayList;
 import java.util.Random;
 
+import assets.core.AssetCatalog;
+import assets.impl.ProjectAssets;
+import assets.ports.AssetType;
 import model.bodies.ports.BodyType;
-import utils.assets.core.AssetCatalog;
-import utils.assets.impl.ProjectAssets;
-import utils.assets.ports.AssetType;
 import utils.helpers.DoubleVector;
 import world.ports.DefBackgroundDTO;
 import world.ports.DefEmitterDTO;
@@ -238,6 +238,8 @@ public abstract class AbstractWorldDefinitionProvider implements WorldDefinition
             double angle = rnd.nextDouble(ANY_HEADING_MIN_DEG, ANY_HEADING_MAX_DEG);
             double posX = rnd.nextDouble(WORLD_MIN, this.worldWidth);
             double posY = rnd.nextDouble(WORLD_MIN, this.worldHeight);
+
+            System.out.println("*** MinSize: " + minSize + " | MaxSize: " + maxSize);
             double size = rnd.nextDouble(minSize, maxSize);
 
             this.addGravityBodyRandomAsset(1, assetType, angle, density, size, posX, posY);

@@ -11,10 +11,10 @@ import java.util.ArrayList;
 import javax.swing.JFrame;
 import javax.swing.SwingUtilities;
 
+import assets.core.AssetCatalog;
+import assets.ports.AssetType;
 import controller.impl.Controller;
 import controller.ports.EngineState;
-import utils.assets.core.AssetCatalog;
-import utils.assets.ports.AssetType;
 import utils.helpers.DoubleVector;
 import utils.images.Images;
 import view.renderables.ports.DynamicRenderDTO;

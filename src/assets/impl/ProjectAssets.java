@@ -1,8 +1,8 @@
-package utils.assets.impl;
+package assets.impl;
 
-import utils.assets.core.AssetCatalog;
-import utils.assets.ports.AssetIntensity;
-import utils.assets.ports.AssetType;
+import assets.core.AssetCatalog;
+import assets.ports.AssetIntensity;
+import assets.ports.AssetType;
 
 public final class ProjectAssets {
 

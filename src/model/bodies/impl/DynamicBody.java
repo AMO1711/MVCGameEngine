@@ -176,7 +176,7 @@ public class DynamicBody extends AbstractBody implements Runnable {
             }
 
             try {
-                Thread.sleep(30);
+                Thread.sleep(10);
             } catch (InterruptedException ex) {
                 System.err.println("ERROR Sleeping in vObject thread! (VObject) · " + ex.getMessage());
             }

@@ -1,10 +1,10 @@
 package controller.impl;
 
-import java.awt.Dimension;
 import java.util.ArrayList;
 import java.util.List;
 
 import actions.ActionDTO;
+import assets.core.AssetCatalog;
 import controller.mappers.DynamicRenderableMapper;
 import controller.mappers.EmitterMapper;
 import controller.mappers.PlayerRenderableMapper;
@@ -20,7 +20,6 @@ import model.bodies.ports.BodyDTO;
 import model.emitter.ports.EmitterConfigDto;
 import model.impl.Model;
 import model.weapons.ports.WeaponDto;
-import utils.assets.core.AssetCatalog;
 import utils.helpers.DoubleVector;
 import model.ports.DomainEventProcessor;
 import view.core.View;

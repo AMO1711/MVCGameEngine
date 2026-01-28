@@ -130,7 +130,7 @@ public class Renderer extends Canvas implements Runnable {
 
     private DoubleVector viewDimension;
     private View view;
-    private int delayInMillis = 1;
+    private int delayInMillis = 5;
     private long currentFrame = 0;
     private Thread thread;
 
@@ -181,7 +181,7 @@ public class Renderer extends Canvas implements Runnable {
         }
 
         this.setPreferredSize(
-            new Dimension((int)this.viewDimension.x, (int)this.viewDimension.y));
+                new Dimension((int) this.viewDimension.x, (int) this.viewDimension.y));
         this.thread = new Thread(this);
         this.thread.setName("Renderer");
         this.thread.setPriority(Thread.NORM_PRIORITY + 2);
@@ -220,7 +220,7 @@ public class Renderer extends Canvas implements Runnable {
 
     public void setViewDimension(DoubleVector viewDim) {
         this.viewDimension = viewDim;
-        this.setPreferredSize(new Dimension((int)this.viewDimension.x, (int)this.viewDimension.y));
+        this.setPreferredSize(new Dimension((int) this.viewDimension.x, (int) this.viewDimension.y));
     }
     // endregion
 
@@ -270,9 +270,10 @@ public class Renderer extends Canvas implements Runnable {
 
     // region drawers (draw***)
     private void drawDynamicRenderable(Graphics2D g) {
-        ArrayList<DynamicRenderDTO> renderablesData = this.view.getDynamicRenderablesData(); // *+
+        // ArrayList<DynamicRenderDTO> renderablesData =
+        // this.view.getDynamicRenderablesData(); // *+
 
-        this.updateDynamicRenderables(renderablesData);
+        // this.updateDynamicRenderables(renderablesData);
 
         Map<String, DynamicRenderable> renderables = this.dynamicRenderables;
         for (DynamicRenderable renderable : renderables.values()) {
@@ -316,10 +317,7 @@ public class Renderer extends Canvas implements Runnable {
             gg = (Graphics2D) bs.getDrawGraphics();
             try {
                 gg.setComposite(AlphaComposite.Src); // Opaque
-                gg.setColor(Color.BLACK);
-                gg.fillRect(0, 0, (int)this.viewDimension.x, (int)this.viewDimension.y);
                 gg.drawImage(this.getVIBackground(), 0, 0, null);
-                // this.drawTiledBackground(gg);
 
                 gg.setComposite(AlphaComposite.SrcOver); // With transparency
                 this.drawWorldRenderables(gg);
@@ -371,9 +369,12 @@ public class Renderer extends Canvas implements Runnable {
     }
 
     private void drawWorldRenderables(Graphics2D g) {
+        ArrayList<DynamicRenderDTO> renderablesData = this.view.getDynamicRenderablesData(); // *+
+        this.updateDynamicRenderables(renderablesData);
+        this.updateCamera(renderablesData);
+
         AffineTransform defaultTransform = g.getTransform();
         g.translate(-this.cameraX, -this.cameraY);
-        // g.translate(-400, -400);
 
         this.drawStaticRenderables(g);
         this.drawDynamicRenderable(g);
@@ -396,9 +397,9 @@ public class Renderer extends Canvas implements Runnable {
 
     private VolatileImage getVIBackground() {
         this.viBackground = this.getVolatileImage(
-                this.viBackground, 
-                this.background, 
-                new Dimension((int)this.viewDimension.x, (int)this.viewDimension.y));
+                this.viBackground,
+                this.background,
+                new Dimension((int) this.viewDimension.x, (int) this.viewDimension.y));
 
         return this.viBackground;
 
@@ -448,9 +449,10 @@ public class Renderer extends Canvas implements Runnable {
     private void updateCamera(ArrayList<DynamicRenderDTO> renderablesData) {
         String localPlayerId = this.view.getLocalPlayerId();
         if (localPlayerId == null || localPlayerId.isEmpty()) {
-            return;
+            return; // ======= No player to follow =======>>
         }
 
+        // TO OPTIMIZE: Lookup the local player render data
         DynamicRenderDTO target = null;
         for (DynamicRenderDTO renderableData : renderablesData) {
             if (localPlayerId.equals(renderableData.entityId)) {
@@ -483,8 +485,6 @@ public class Renderer extends Canvas implements Runnable {
             this.dynamicRenderables.clear();
             return; // ========= Nothing to render by the moment ... =========>>
         }
-
-        this.updateCamera(renderablesData);
 
         // Update or create a renderable associated with each DBodyRenderInfoDTO
         long cFrame = this.currentFrame;

@@ -2,9 +2,9 @@ package game.worlddef;
 
 import java.awt.Dimension;
 
+import assets.impl.ProjectAssets;
+import assets.ports.AssetType;
 import model.bodies.ports.BodyType;
-import utils.assets.impl.ProjectAssets;
-import utils.assets.ports.AssetType;
 import utils.helpers.DoubleVector;
 import world.core.AbstractWorldDefinitionProvider;
 

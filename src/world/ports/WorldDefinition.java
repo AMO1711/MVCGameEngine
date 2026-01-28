@@ -2,7 +2,7 @@ package world.ports;
 
 import java.util.ArrayList;
 
-import utils.assets.core.AssetCatalog;
+import assets.core.AssetCatalog;
 
 public class WorldDefinition {
 
