@@ -1,5 +1,7 @@
 package game.worlddef;
 
+import java.awt.Dimension;
+
 import model.bodies.ports.BodyType;
 import utils.assets.impl.ProjectAssets;
 import utils.assets.ports.AssetType;
@@ -9,8 +11,8 @@ public final class RandomWorldDefinitionProvider extends AbstractWorldDefinition
 
 	// *** CONSTRUCTORS ***
 
-	public RandomWorldDefinitionProvider(double worldWidth, double worldHeight, ProjectAssets assets) {
-		super(worldWidth, worldHeight, assets);
+	public RandomWorldDefinitionProvider(Dimension worldDimension, ProjectAssets assets) {
+		super(worldDimension, assets);
 	}
 
 	// *** PROTECTED (alphabetical order) ***

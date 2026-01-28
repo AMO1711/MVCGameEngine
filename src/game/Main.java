@@ -1,5 +1,7 @@
 package game;
 
+import java.awt.Dimension;
+
 import controller.impl.Controller;
 import game.actionsgen.*;
 import game.aigen.*;
@@ -17,26 +19,43 @@ public class Main {
 
 		System.setProperty("sun.java2d.uiScale", "1.0");
 
-		int worldWidth = 2450;
-		int worldHeight = 1450;
+		Dimension worldDimension = new Dimension(9000, 6000);
+		Dimension viewDimension = new Dimension(1800, 1800);
 		int maxDynamicBodies = 2000;
 		int maxAsteroidCreationDelay = 500;
 
-		// *** CORE ENGINE => MVC + controller + default actions generator ***
+		//
+		// CORE ENGINE SETUP =>
+		// world dimension +
+		// view dimension +
+		// max dynamic bodies +
+		// CONTROLLER +
+		// VIEW +
+		// MODEL +
+		// ACTIONS GENERATOR
+		//
 
 		Controller controller = new Controller(
-				worldWidth, worldHeight,
-				new View(), new Model(worldWidth, worldHeight, maxDynamicBodies),
+				worldDimension,
+				viewDimension,
+				maxDynamicBodies,
+				new View(),
+				new Model(),
 				new ActionsReboundCollisionPlayerImmunity());
 
 		controller.activate();
 
-		// *** SCENE SETUP => world definition+ level generator + IA generator ***
+		//
+		// SCENE SETUP =>
+		// world definition +
+		// level generator +
+		// AI generator
+		//
 
 		// 1) World definition
 		ProjectAssets projectAssets = new ProjectAssets();
 		WorldDefinitionProvider world = new RandomWorldDefinitionProvider(
-				worldWidth, worldHeight, projectAssets);
+			worldDimension, projectAssets);
 		WorldDefinition worldDef = world.provide();
 
 		// 2) Level generator (Level***)

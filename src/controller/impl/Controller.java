@@ -168,24 +168,50 @@ import world.ports.DefWeaponDTO;
  */
 public class Controller implements WorldEvolver, WorldInitializer, DomainEventProcessor {
 
+    // region Fields
     private volatile EngineState engineState;
     private final ActionsGenerator gameRulesEngine;
     private Model model;
     private View view;
     private Dimension viewDimension;
     private Dimension worldDimension;
+    private int maxBodies;
+    // endregion
 
     // *** CONSTRUCTORS ***
 
-    public Controller(int worldWidth, int worldHigh,
-            View view, Model model, ActionsGenerator gameRulesEngine) {
+    public Controller(
+            Dimension worldDim, Dimension viewDime, int maxBodies,
+            View view, Model model,
+            ActionsGenerator gameRulesEngine) {
+
+        if (worldDim == null) {
+            throw new IllegalArgumentException("Null world dimension");
+        }
+        if (viewDime == null) {
+            throw new IllegalArgumentException("Null view dimension");
+        }
+        if (view == null) {
+            throw new IllegalArgumentException("Null view");
+        }
+        if (model == null) {
+            throw new IllegalArgumentException("Null model");
+        }
+        if (gameRulesEngine == null) {
+            throw new IllegalArgumentException("Null game rules engine");
+        }
+        if (maxBodies <= 0) {
+            throw new IllegalArgumentException("Invalid max dynamic bodies: " + maxBodies);
+        }
 
         this.engineState = EngineState.STARTING;
         this.gameRulesEngine = gameRulesEngine;
-        this.view.setViewportDimension(this.viewDimension);
-        this.view.setWorldDimension(this.worldDimension);
+        this.maxBodies = maxBodies;
+
         this.setModel(model);
         this.setView(view);
+        this.setWorldDimension(worldDim);
+        this.setViewDimension(viewDime);
     }
 
     // *** PUBLICS (alphabetical sort) ***
@@ -193,6 +219,10 @@ public class Controller implements WorldEvolver, WorldInitializer, DomainEventPr
     public void activate() {
         if (this.worldDimension == null) {
             throw new IllegalArgumentException("Null world dimension");
+        }
+
+        if (this.viewDimension == null) {
+            throw new IllegalArgumentException("Null view dimension");
         }
 
         if (this.view == null) {
@@ -203,11 +233,10 @@ public class Controller implements WorldEvolver, WorldInitializer, DomainEventPr
             throw new IllegalArgumentException("No model injected");
         }
 
-        this.view.setViewportDimension(this.viewDimension);
-        this.view.setWorldDimension(this.worldDimension);
         this.view.activate();
         this.model.activate();
         this.engineState = EngineState.ALIVE;
+        System.out.println("Controller activated " + this.worldDimension + " / " + this.viewDimension);
     }
 
     // region Engine (engine**)
@@ -314,18 +343,28 @@ public class Controller implements WorldEvolver, WorldInitializer, DomainEventPr
         this.view.setController(this);
     }
 
-    public void setViewportDimension(Dimension dim) {
-        if (dim == null) {
+    public void setViewDimension(Dimension d) {
+        if (d == null) {
             throw new IllegalArgumentException("View dimension cannot be null");
         }
-        if (dim.width <= 0 || dim.height <= 0) {
-            throw new IllegalArgumentException("Invalid view dimension: " + dim);
+        if (d.width <= 0 || d.height <= 0) {
+            throw new IllegalArgumentException("Invalid view dimension: " + d);
         }
-        this.viewDimension = dim;
+        this.viewDimension = d;
+        this.view.setViewDimension(d);
     }
 
-    public void setWorldDimension(Dimension dim) {
-        this.worldDimension = new Dimension(dim);
+    public void setWorldDimension(Dimension d) {
+        if (d == null) {
+            throw new IllegalArgumentException("World dimension cannot be null");
+        }
+        if (d.width <= 0 || d.height <= 0) {
+            throw new IllegalArgumentException("Invalid world dimension: " + d);
+        }
+
+        this.worldDimension = new Dimension(d);
+        this.model.setWorldDimension(d);
+        this.view.setWorldDimension(d);
     }
     // endregion setters
 

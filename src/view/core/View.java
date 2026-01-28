@@ -105,6 +105,7 @@ import view.renderables.ports.SpatialGridStatisticsRenderDTO;
  */
 public class View extends JFrame implements KeyListener {
 
+    // region Fields
     private BufferedImage background;
     private Controller controller;
     private final ControlPanel controlPanel;
@@ -112,12 +113,11 @@ public class View extends JFrame implements KeyListener {
     private String localPlayerId;
     private final Renderer renderer;
     private Dimension viewDimension;
+    private Dimension worldDimension;
     private boolean fireKeyDown = false;
+    // endregion Fields
 
-    //
-    // CONSTRUCTOR
-    //
-
+    // *** CONSTRUCTOR ***
     public View() {
         this.images = new Images("");
         this.controlPanel = new ControlPanel(this);
@@ -125,27 +125,75 @@ public class View extends JFrame implements KeyListener {
         this.createFrame();
     }
 
-    //
-    // PUBLIC
-    //
+    public View(Dimension worldDimension, Dimension viewDimension) {
+        this();
+        this.worldDimension = new Dimension(worldDimension);
+        this.viewDimension = new Dimension(viewDimension);
+        this.createFrame();
+    }
+
+    // *** PUBLIC ***
 
     public void activate() {
         if (this.viewDimension == null) {
             throw new IllegalArgumentException("View dimensions not setted");
         }
+        if (this.background == null) {
+            // throw new IllegalArgumentException("Background image not setted");
+        }
+        if (this.images.getSize() == 0) {
+            // throw new IllegalArgumentException("Images catalog is empty");
+        }
+        if (this.controller == null) {
+            throw new IllegalArgumentException("Controller not setted");
+        }
+        if (this.worldDimension == null) {
+            throw new IllegalArgumentException("World dimensions not setted");
+        }
 
         this.renderer.SetViewDimension(this.viewDimension);
         this.renderer.activate();
         this.pack();
+        System.out.println("View activated");
+    }
+
+    // region adders (add***)
+    public void addDynamicRenderable(String entityId, String assetId) {
+        this.renderer.addDynamicRenderable(entityId, assetId);
     }
 
     public void addStaticRenderable(String entityId, String assetId) {
         this.renderer.addStaticRenderable(entityId, assetId);
     }
+    // endregion
 
-    public void addDynamicRenderable(String entityId, String assetId) {
-        this.renderer.addDynamicRenderable(entityId, assetId);
+    // region Getters (get***)
+    public Dimension getWorldDimension() {
+        return new Dimension(this.worldDimension);
     }
+
+    public Dimension getViewDimension() {
+        return new Dimension(this.viewDimension);
+    }
+    // endregion
+
+    // region Setters (set***)
+    public void setController(Controller controller) {
+        this.controller = controller;
+    }
+
+    public void setLocalPlayer(String localPlayerId) {
+        this.localPlayerId = localPlayerId;
+    }
+
+    public void setViewDimension(Dimension worldDim) {
+        this.viewDimension = worldDim;
+    }
+
+    public void setWorldDimension(Dimension worldDim) {
+        this.worldDimension = worldDim;
+    }
+    // endregion
 
     public void loadAssets(AssetCatalog assets) {
         String fileName;
@@ -168,18 +216,7 @@ public class View extends JFrame implements KeyListener {
         this.renderer.setImages(this.background, this.images);
     }
 
-    public void setController(Controller controller) {
-        this.controller = controller;
-    }
-
-    public void setViewportDimension(Dimension worldDim) {
-        this.viewDimension = worldDim;
-    }
-
-    public void setLocalPlayer(String localPlayerId) {
-        this.localPlayerId = localPlayerId;
-    }
-
+    // region notifiers (notify***)
     public void notifyDynamicIsDead(String entityId) {
         this.renderer.notifyDynamicIsDead(entityId);
     }
@@ -187,15 +224,15 @@ public class View extends JFrame implements KeyListener {
     public void notifyPlayerIsDead(String entityId) {
         this.setLocalPlayer(null);
     }
+    // endregion
 
     public void updateStaticRenderables(ArrayList<RenderDTO> renderablesData) {
         this.renderer.updateStaticRenderables(renderablesData);
     }
 
-    //
-    // PROTECTED
-    //
+    // *** PROTECTED ***
 
+    // region Getters (get***)
     protected ArrayList<DynamicRenderDTO> getDynamicRenderablesData() {
         if (this.controller == null) {
             throw new IllegalArgumentException("Controller not setted");
@@ -231,10 +268,9 @@ public class View extends JFrame implements KeyListener {
     protected SpatialGridStatisticsRenderDTO getSpatialGridStatistics() {
         return this.controller.getSpatialGridStatistics();
     }
+    // endregion
 
-    //
-    // PRIVATE
-    //
+    // *** PRIVATE ***
 
     private void addRendererCanva(Container container) {
         GridBagConstraints c = new GridBagConstraints();
@@ -267,10 +303,9 @@ public class View extends JFrame implements KeyListener {
 
     }
 
-    //
-    // OVERRIDES
-    //
+    // *** INTERFACE IMPLEMENTATIONS ***
 
+    // region KeyListener
     @Override
     public void keyPressed(KeyEvent e) {
         if (this.localPlayerId == null) {
@@ -348,7 +383,7 @@ public class View extends JFrame implements KeyListener {
             case KeyEvent.VK_D:
                 this.controller.playerRotateOff(this.localPlayerId);
                 break;
-                
+
             case KeyEvent.VK_SPACE:
                 fireKeyDown = false; // << permite el siguiente disparo
                 break;
@@ -359,4 +394,6 @@ public class View extends JFrame implements KeyListener {
     public void keyTyped(KeyEvent e) {
         // Nothing to do
     }
+    // endregion
+
 }

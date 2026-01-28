@@ -1,5 +1,6 @@
 package world.core;
 
+import java.awt.Dimension;
 import java.util.ArrayList;
 import java.util.Random;
 
@@ -13,7 +14,6 @@ import world.ports.DefItem;
 import world.ports.DefItemDTO;
 import world.ports.DefItemPrototypeDTO;
 import world.ports.DefWeaponDTO;
-import world.ports.DefWeaponType;
 import world.ports.WorldDefinition;
 import world.ports.WorldDefinitionProvider;
 
@@ -62,17 +62,19 @@ public abstract class AbstractWorldDefinitionProvider implements WorldDefinition
 
     // *** CONSTRUCTORS ***
 
-    public AbstractWorldDefinitionProvider(double worldWidth, double worldHeight, ProjectAssets assets) {
+    public AbstractWorldDefinitionProvider(Dimension worldDimension, ProjectAssets assets) {
         if (assets == null) {
             throw new IllegalArgumentException("ProjectAssets cannot be null.");
         }
-
-        if (worldWidth <= 0 || worldHeight <= 0) {
+        if (worldDimension == null) {
+            throw new IllegalArgumentException("WorldDimension cannot be null.");
+        }   
+        if (worldDimension.width <= 0 || worldDimension.height <= 0) {
             throw new IllegalArgumentException("World dimensions must be positive values.");
         }
 
-        this.worldWidth = worldWidth;
-        this.worldHeight = worldHeight;
+        this.worldWidth = worldDimension.width;
+        this.worldHeight = worldDimension.height;
         this.projectAssets = assets;
         this.assetsRegister = new WorldAssetsRegister(this.projectAssets, this.gameAssets);
     }

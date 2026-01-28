@@ -164,39 +164,46 @@ import utils.spatial.ports.SpatialGridStatisticsDTO;
 
 public class Model implements BodyEventProcessor {
 
-    private static final int MAX_ENTITIES = 5000;
+    // region Constants
+    private static final int MAX_BODIES = 3000;
+    // endregion
 
     // region Fields
     private int maxBodies;
     private DomainEventProcessor domainEventProcessor = null;
     private volatile ModelState state = ModelState.STARTING;
-    private final double worldWidth;
-    private final double worldHeight;
-    private final SpatialGrid spatialGrid;
+    private double worldWidth;
+    private double worldHeight;
+    private SpatialGrid spatialGrid;
     private final Map<String, AbstractBody> decorators = new ConcurrentHashMap<>(100);
-    private final Map<String, AbstractBody> dynamicBodies = new ConcurrentHashMap<>(MAX_ENTITIES);
+    private final Map<String, AbstractBody> dynamicBodies = new ConcurrentHashMap<>(MAX_BODIES);
     private final Map<String, AbstractBody> gravityBodies = new ConcurrentHashMap<>(50);
     // endregion
 
     // regions Scratch buffers (for zero-allocation snapshot generation)
-    private final ArrayList<BodyDTO> scratchDynamicsBuffer = new ArrayList<>(MAX_ENTITIES);
+    private final ArrayList<BodyDTO> scratchDynamicsBuffer = new ArrayList<>(MAX_BODIES);
     // endregion
 
     // *** CONSTRUCTORS ***
+    public Model() {
+        this.maxBodies = MAX_BODIES;
+    }
 
-    public Model(double worldWidth, double worldHeight, int maxDynamicBodies) {
-        if (worldWidth <= 0 || worldHeight <= 0) {
+    public Model(Dimension worldDimension, int maxDynamicBodies) {
+        this();
+
+        if (worldDimension == null || worldDimension.getWidth() <= 0 || worldDimension.getHeight() <= 0) {
             throw new IllegalArgumentException("Invalid world dimension");
         }
-
-        if (maxDynamicBodies <= 0) {
-            throw new IllegalArgumentException("Max dynamic bodies not set");
+        if (maxDynamicBodies <= 0 || maxDynamicBodies > MAX_BODIES) {
+            throw new IllegalArgumentException("Invalid maxDynamicBodies");
         }
 
-        this.worldWidth = worldWidth;
-        this.worldHeight = worldHeight;
-        this.maxBodies = maxDynamicBodies;
-        this.spatialGrid = new SpatialGrid(48, (int) worldWidth, (int) worldHeight, 24);
+        this.worldWidth = worldDimension.getWidth();
+        this.worldHeight = worldDimension.getHeight();
+        this.spatialGrid = new SpatialGrid(
+                worldDimension.getWidth(), worldDimension.getHeight(),
+                48, 24);
     }
 
     // *** PUBLICS ***
@@ -205,7 +212,14 @@ public class Model implements BodyEventProcessor {
         if (this.domainEventProcessor == null) {
             throw new IllegalArgumentException("Controller is not set");
         }
+        if (this.spatialGrid == null) {
+            throw new IllegalArgumentException("World dimension is not set");
+        }
+        if (this.worldHeight <= 0 || this.worldWidth <= 0) {
+            throw new IllegalArgumentException("Invalid world dimension");
+        }
 
+        System.out.println("Model activated");
         this.state = ModelState.ALIVE;
     }
 
@@ -548,6 +562,18 @@ public class Model implements BodyEventProcessor {
     public void setMaxBodies(int maxDynamicBody) {
         this.maxBodies = maxDynamicBody;
     }
+
+    public void setWorldDimension(Dimension worldDim) {
+        if (worldDim == null || worldDim.getWidth() <= 0 || worldDim.getHeight() <= 0) {
+            throw new IllegalArgumentException("Invalid world dimension");
+        }
+
+        this.worldWidth = worldDim.getWidth();
+        this.worldHeight = worldDim.getHeight();
+        this.spatialGrid = new SpatialGrid(
+                worldDim.getWidth(), worldDim.getHeight(),
+                48, 24);
+    }
     // endregion
 
     // *** INTERFACE IMPLEMENTATIONS ***
@@ -801,7 +827,7 @@ public class Model implements BodyEventProcessor {
             case MOVE_TO_CENTER:
                 PhysicsValuesDTO frozenInCenter = new PhysicsValuesDTO(
                         newPhyValues.timeStamp,
-                        this.worldWidth / 2, this.worldHeight / 2, 
+                        this.worldWidth / 2, this.worldHeight / 2,
                         newPhyValues.angle,
                         newPhyValues.size,
                         newPhyValues.speedX, newPhyValues.speedY,
@@ -909,6 +935,7 @@ public class Model implements BodyEventProcessor {
         this.checkLifeOverEvents(checkBody, domainEvents);
     }
 
+    // region getters private (get***)
     private ArrayList<BodyDTO> getBodiesData(Map<String, AbstractBody> bodies) {
         ArrayList<BodyDTO> bodyInfos = new ArrayList<>(bodies.size());
 
@@ -946,6 +973,7 @@ public class Model implements BodyEventProcessor {
 
         return bodyMap;
     }
+    // endregion
 
     private boolean intersectCircles(PhysicsValuesDTO a, PhysicsValuesDTO b) {
         // OJO: asumo size = diámetro. Si size ya es radio: ra=a.size; rb=b.size;
@@ -959,6 +987,7 @@ public class Model implements BodyEventProcessor {
         return (dx * dx + dy * dy) <= (r * r);
     }
 
+    // region boolean checks private (is***)
     private boolean isCollidable(AbstractBody body) {
         return body != null
                 && body.getBodyState() != BodyState.DEAD
@@ -970,6 +999,7 @@ public class Model implements BodyEventProcessor {
                 && this.state == ModelState.ALIVE
                 && entity.getBodyState() == BodyState.ALIVE;
     }
+    // endregion
 
     private void spawnBody(AbstractBody body, BodyToEmitDTO bodyConfig, PhysicsValuesDTO newPhyValues) {
         if (body == null) {

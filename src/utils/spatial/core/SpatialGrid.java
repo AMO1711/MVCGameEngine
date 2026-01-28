@@ -34,7 +34,7 @@ public final class SpatialGrid {
     private final ConcurrentHashMap<String, Cells> entitiesCells = new ConcurrentHashMap<>();
 
     @SuppressWarnings("unchecked")
-    public SpatialGrid(double cellSize, int worldWidth, int worldHeight, int maxCellsPerBody) {
+    public SpatialGrid(double worldWidth, double worldHeight, int cellSize,  int maxCellsPerBody) {
         if (cellSize <= 0)
             throw new IllegalArgumentException("cellSizePx must be > 0");
         if (worldWidth <= 0 || worldHeight <= 0)
