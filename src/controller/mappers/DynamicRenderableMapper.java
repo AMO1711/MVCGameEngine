@@ -19,7 +19,8 @@ public class DynamicRenderableMapper {
                 bodyDto.physicsValues.size,
                 bodyDto.physicsValues.timeStamp,
                 bodyDto.physicsValues.speedX, bodyDto.physicsValues.speedY,
-                bodyDto.physicsValues.accX, bodyDto.physicsValues.accY);
+                bodyDto.physicsValues.accX, bodyDto.physicsValues.accY,
+                bodyDto.physicsValues.timeStamp);
 
         return renderablesData;
     }

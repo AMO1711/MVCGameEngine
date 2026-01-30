@@ -43,34 +43,51 @@ public class ActionsDeadInLimitsPlayerImmunity implements ActionsGenerator {
 
             }
 
-            case LifeOver e ->
+            case LifeOver lifeOver ->
                 actions.add(new ActionDTO(
-                        e.primaryBodyRef.id(), e.primaryBodyRef.type(),
+                        lifeOver.primaryBodyRef.id(), lifeOver.primaryBodyRef.type(),
                         Action.DIE, event));
 
-            case EmitEvent e -> {
+            case EmitEvent emitEvent -> {
 
-                if (e.type == DomainEventType.EMIT_REQUESTED) {
+                if (emitEvent.type == DomainEventType.EMIT_REQUESTED) {
                     actions.add(new ActionDTO(
-                            e.primaryBodyRef.id(),
-                            e.primaryBodyRef.type(),
+                            emitEvent.primaryBodyRef.id(),
+                            emitEvent.primaryBodyRef.type(),
                             Action.SPAWN_BODY,
                             event));
 
                 } else {
                     actions.add(new ActionDTO(
-                            e.primaryBodyRef.id(),
-                            e.primaryBodyRef.type(),
+                            emitEvent.primaryBodyRef.id(),
+                            emitEvent.primaryBodyRef.type(),
                             Action.SPAWN_PROJECTILE,
                             event));
                 }
 
             }
 
-            case CollisionEvent e -> {
+            case CollisionEvent collisionEvent -> {
 
-                // No action for collision events in this generator
+                this.resolveCollision(collisionEvent, actions);
             }
         }
     }
+
+    private void resolveCollision(CollisionEvent event, List<ActionDTO> actions) {
+        BodyType primary = event.primaryBodyRef.type();
+        BodyType secondary = event.secondaryBodyRef.type();
+
+        // Ignore collisions with DECORATOR bodies
+        if (primary == BodyType.PLAYER)
+            actions.add(new ActionDTO(
+                    event.primaryBodyRef.id(), event.primaryBodyRef.type(),
+                    Action.NO_MOVE, event));
+
+        if (secondary == BodyType.PLAYER)
+            actions.add(new ActionDTO(
+                    event.secondaryBodyRef.id(), event.secondaryBodyRef.type(),
+                    Action.NO_MOVE, event));
+    }
+
 }

@@ -13,8 +13,7 @@ import controller.mappers.SpatialGridStatisticsMapper;
 import controller.mappers.WeaponMapper;
 import controller.ports.ActionsGenerator;
 import controller.ports.EngineState;
-import controller.ports.WorldEvolver;
-import controller.ports.WorldInitializer;
+import controller.ports.WorldManager;
 import events.domain.ports.eventtype.DomainEvent;
 import model.bodies.ports.BodyDTO;
 import model.emitter.ports.EmitterConfigDto;
@@ -166,7 +165,7 @@ import world.ports.DefWeaponDTO;
  * - Support hot-swapping of game rules without touching Model or View code
  * - Minimize coupling: Model/View never reference each other directly
  */
-public class Controller implements WorldEvolver, WorldInitializer, DomainEventProcessor {
+public class Controller implements WorldManager, DomainEventProcessor {
 
     // region Fields
     private volatile EngineState engineState;
@@ -180,7 +179,7 @@ public class Controller implements WorldEvolver, WorldInitializer, DomainEventPr
 
     // region Constructors
     public Controller(
-             DoubleVector worldDim, DoubleVector viewDime, int maxBodies,
+            DoubleVector worldDim, DoubleVector viewDime, int maxBodies,
             View view, Model model,
             ActionsGenerator gameRulesEngine) {
 
@@ -403,7 +402,19 @@ public class Controller implements WorldEvolver, WorldInitializer, DomainEventPr
     }
     // endregion DomainEventProcessor
 
-    // region WorldEvolver
+    // region WorldManager
+    @Override
+    public void addDecorator(String assetId, double size, double posX, double posY, double angle) {
+        String entityId = this.model.addDecorator(size, posX, posY, angle, -1L);
+
+        if (entityId == null || entityId.isEmpty()) {
+            return; // ======= Max entity quantity reached =======>
+        }
+
+        this.view.addStaticRenderable(entityId, assetId);
+        this.updateStaticRenderablesView();
+    }
+
     @Override
     public void addDynamicBody(String assetId, double size, double posX, double posY,
             double speedX, double speedY, double accX, double accY,
@@ -435,6 +446,18 @@ public class Controller implements WorldEvolver, WorldInitializer, DomainEventPr
     }
 
     @Override
+    public void addStaticBody(String assetId, double size, double posX, double posY, double angle) {
+
+        String entityId = this.model.addStatic(size, posX, posY, angle, -1L);
+        if (entityId == null || entityId.isEmpty()) {
+            return; // ======= Max entity quantity reached =======>>
+        }
+
+        this.view.addStaticRenderable(entityId, assetId);
+        this.updateStaticRenderablesView();
+    }
+
+    @Override
     public void equipTrail(String playerId, DefEmitterDTO bodyEmitterDef) {
         EmitterConfigDto bodyEmitter = EmitterMapper.fromWorldDef(bodyEmitterDef);
         this.model.bodyEquipTrail(playerId, bodyEmitter);
@@ -447,38 +470,12 @@ public class Controller implements WorldEvolver, WorldInitializer, DomainEventPr
 
         this.model.playerEquipWeapon(playerId, weapon);
     }
-    // endregion WorldEvolver
-
-    // region WorldInitializer
-    @Override
-    public void addDecorator(String assetId, double size, double posX, double posY, double angle) {
-        String entityId = this.model.addDecorator(size, posX, posY, angle, -1L);
-
-        if (entityId == null || entityId.isEmpty()) {
-            return; // ======= Max entity quantity reached =======>
-        }
-
-        this.view.addStaticRenderable(entityId, assetId);
-        this.updateStaticRenderablesView();
-    }
-
-    @Override
-    public void addStaticBody(String assetId, double size, double posX, double posY, double angle) {
-
-        String entityId = this.model.addDecorator(size, posX, posY, angle, -1L);
-        if (entityId == null || entityId.isEmpty()) {
-            return; // ======= Max entity quantity reached =======>>
-        }
-
-        this.view.addStaticRenderable(entityId, assetId);
-        this.updateStaticRenderablesView();
-    }
 
     @Override
     public void loadAssets(AssetCatalog assets) {
         this.view.loadAssets(assets);
     }
-    // endregion WorldInitializer
+    // endregion
 
     // *** PRIVATE (Internal, helpers, ...) ***
 

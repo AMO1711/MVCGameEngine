@@ -228,7 +228,7 @@ public class PlayerBody extends DynamicBody {
         }
 
         double dtNanos = newPhyValues.timeStamp - this.getPhysicsValues().timeStamp;
-        double dtSeconds = dtNanos / 1_000_000_000;
+        double dtSeconds = ((double) dtNanos) / 1_000_000_0000.0d;
 
         return weapon.mustFireNow(dtSeconds);
     }

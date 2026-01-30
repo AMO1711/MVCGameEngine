@@ -2,7 +2,7 @@ package game.levelgen;
 
 import java.util.ArrayList;
 
-import controller.ports.WorldInitializer;
+import controller.ports.WorldManager;
 import game.core.AbstractLevelGenerator;
 import world.ports.DefEmitterDTO;
 import world.ports.DefItem;
@@ -14,8 +14,8 @@ public class LevelBasic extends AbstractLevelGenerator {
 
     // *** CONSTRUCTORS ***
 
-    public LevelBasic(WorldInitializer worldInitializer, WorldDefinition worldDef) {
-        super(worldInitializer, worldDef);
+    public LevelBasic(WorldManager worldManager, WorldDefinition worldDef) {
+        super(worldManager, worldDef);
     }
 
     // *** PROTECTED (alphabetic order) ***
@@ -28,6 +28,10 @@ public class LevelBasic extends AbstractLevelGenerator {
             DefItemDTO deco = this.defItemToDTO(def);
             this.addDecoratorIntoTheGame(deco);
         }
+    }
+
+    @Override
+    protected void createDynamics() {
     }
 
     @Override

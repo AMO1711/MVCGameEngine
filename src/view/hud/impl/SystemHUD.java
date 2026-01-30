@@ -24,6 +24,7 @@ public class SystemHUD extends DataHUD {
         this.addTextItem("Cache hits");
         this.addTextItem("Entities Alive");
         this.addTextItem("Entities Dead");
+        this.addTextItem("Curren Frame");
 
         this.prepareHud();
     }

@@ -13,8 +13,6 @@ import utils.spatial.core.SpatialGrid;
 
 public class BodyFactory {
 
-
-    
     public static AbstractBody create(
             BodyEventProcessor bodyEventProcessor,
             SpatialGrid spatialGrid,

@@ -167,8 +167,8 @@ public class Model implements BodyEventProcessor {
 
     // region Constants
     private static final int MAX_BODIES = 1000;
-    private static final int SPATIAL_GRID_CELL_SIZE = 128;
-    private static final int MAX_CELLS_PER_BODY = 48;
+    private static final int SPATIAL_GRID_CELL_SIZE = 196;
+    private static final int MAX_CELLS_PER_BODY = 256;
     // endregion
 
     // region Fields
@@ -177,7 +177,8 @@ public class Model implements BodyEventProcessor {
     private volatile ModelState state = ModelState.STARTING;
     private double worldWidth;
     private double worldHeight;
-    private SpatialGrid spatialGrid;
+    private SpatialGrid spatialGridForDynamics;
+    private SpatialGrid spatialGridForGravities;
     private final Map<String, AbstractBody> decorators = new ConcurrentHashMap<>(200);
     private final Map<String, AbstractBody> dynamicBodies = new ConcurrentHashMap<>(MAX_BODIES);
     private final Map<String, AbstractBody> gravityBodies = new ConcurrentHashMap<>(200);
@@ -204,9 +205,14 @@ public class Model implements BodyEventProcessor {
 
         this.worldWidth = worldDimension.x;
         this.worldHeight = worldDimension.y;
-        this.spatialGrid = new SpatialGrid(
+
+        this.spatialGridForDynamics = new SpatialGrid(
                 worldDimension.x, worldDimension.y,
                 SPATIAL_GRID_CELL_SIZE, MAX_CELLS_PER_BODY);
+
+        this.spatialGridForGravities = new SpatialGrid(
+                worldDimension.x, worldDimension.y,
+                SPATIAL_GRID_CELL_SIZE * 2, MAX_CELLS_PER_BODY * 2);
     }
     // endregion
 
@@ -216,7 +222,7 @@ public class Model implements BodyEventProcessor {
         if (this.domainEventProcessor == null) {
             throw new IllegalArgumentException("Controller is not set");
         }
-        if (this.spatialGrid == null) {
+        if (this.spatialGridForDynamics == null) {
             throw new IllegalArgumentException("World dimension is not set");
         }
         if (this.worldHeight <= 0 || this.worldWidth <= 0) {
@@ -227,7 +233,7 @@ public class Model implements BodyEventProcessor {
         this.state = ModelState.ALIVE;
     }
 
-    // region Body creation (add***)
+    // region Body adders (add***)
     public String addBody(BodyType bodyType,
             double size,
             double posX, double posY, double speedX, double speedY,
@@ -235,7 +241,7 @@ public class Model implements BodyEventProcessor {
             double angle, double angularSpeed, double angularAcc,
             double thrust, double maxLifeTime, String shooterId) {
 
-        if (AbstractBody.getAliveQuantity() >= this.maxBodies) {
+        if (AbstractBody.getAliveQuantity() >= this.maxBodies && bodyType == BodyType.DYNAMIC) {
             return null; // ========= Max vObject quantity reached ==========>>
         }
         if (bodyType == null) {
@@ -254,12 +260,13 @@ public class Model implements BodyEventProcessor {
                 thrust);
 
         AbstractBody body = BodyFactory.create(
-                this, this.spatialGrid, phyVals, bodyType, maxLifeTime, shooterId);
+                this, this.spatialGridForDynamics, phyVals, bodyType, maxLifeTime, shooterId);
 
         body.activate();
 
         Map<String, AbstractBody> bodyMap = this.getBodyMap(bodyType);
         bodyMap.put(body.getBodyId(), body);
+
         this.spatialGridUpsert(body); // &++
 
         return body.getBodyId();
@@ -285,6 +292,15 @@ public class Model implements BodyEventProcessor {
                 size, posX, posY, speedX, speedY, accX, accY,
                 angle, angularSpeed, angularAcc,
                 thrust, maxLifeInSeconds, null);
+
+        return entityId;
+    }
+
+    public String addStatic(double size, double posX, double posY, double angle, double maxLifeInSeconds) {
+        String entityId = this.addBody(BodyType.GRAVITY,
+                size, posX, posY, 0, 0, 0, 0,
+                angle, 0, 0,
+                0, maxLifeInSeconds, null);
 
         return entityId;
     }
@@ -437,7 +453,7 @@ public class Model implements BodyEventProcessor {
     }
 
     public SpatialGridStatisticsDTO getSpatialGridStatistics() {
-        return this.spatialGrid.getStatistics();
+        return this.spatialGridForDynamics.getStatistics();
     }
 
     public DoubleVector getWorldDimension() {
@@ -532,14 +548,14 @@ public class Model implements BodyEventProcessor {
         switch (body.getBodyType()) {
             case PLAYER:
                 this.domainEventProcessor.notifyPlayerIsDead(body.getBodyId());
-                this.spatialGrid.remove(body.getBodyId());
+                this.spatialGridForDynamics.remove(body.getBodyId());
                 this.dynamicBodies.remove(body.getBodyId());
                 break;
 
             case DYNAMIC:
             case PROJECTILE:
                 this.domainEventProcessor.notifyDynamicIsDead(body.getBodyId());
-                this.spatialGrid.remove(body.getBodyId());
+                this.spatialGridForDynamics.remove(body.getBodyId());
                 this.dynamicBodies.remove(body.getBodyId());
                 break;
 
@@ -574,9 +590,14 @@ public class Model implements BodyEventProcessor {
 
         this.worldWidth = worldDim.x;
         this.worldHeight = worldDim.y;
-        this.spatialGrid = new SpatialGrid(
+
+        this.spatialGridForDynamics = new SpatialGrid(
                 worldDim.x, worldDim.y,
                 SPATIAL_GRID_CELL_SIZE, MAX_CELLS_PER_BODY);
+
+        this.spatialGridForGravities = new SpatialGrid(
+                worldDim.x, worldDim.y,
+                SPATIAL_GRID_CELL_SIZE * 2, MAX_CELLS_PER_BODY * 2);
     }
     // endregion
 
@@ -636,29 +657,38 @@ public class Model implements BodyEventProcessor {
 
         final String checkBodyId = checkBody.getBodyId();
         ArrayList<String> candidates = checkBody.getScratchClearCandidateIds();
-        this.spatialGrid.queryCollisionCandidates(checkBodyId, candidates);
+        this.spatialGridForDynamics.queryCollisionCandidates(checkBodyId, candidates);
         if (candidates.isEmpty())
             return; // =========== No candidates -> no collisions ============>
 
         HashSet<String> seen = checkBody.getScratchClearSeenCandidateIds();
         for (String bodyId : candidates) {
+
             if (bodyId == null || bodyId.isEmpty())
+                continue;
+
+            // Load other body. Pay attention to gravity bodies
+            AbstractBody otherBody = this.dynamicBodies.get(bodyId);
+            if (otherBody == null)
+                otherBody = this.gravityBodies.get(bodyId);
+
+            if (otherBody == null)
                 continue;
 
             // Dedupe by multiple references y differents cells
             if (!seen.add(bodyId))
                 continue;
 
-            // Dedupe by symetry
-            if (checkBodyId.compareTo(bodyId) >= 0)
-                continue;
+            // Dedupe by symetry only if otherBody type is not GRAVITY!!!
+            if (otherBody.getBodyType() != BodyType.GRAVITY)
+                if (checkBodyId.compareTo(bodyId) >= 0)
+                    continue;
 
-            final AbstractBody otherBody = this.dynamicBodies.get(bodyId);
-            if (otherBody == null)
+            if (!this.isCollidable(otherBody)) {
+                System.out.println("Non-collidable body in collision check");
+                System.out.println(" ****" + otherBody);
                 continue;
-
-            if (!this.isCollidable(otherBody))
-                continue;
+            }
 
             final PhysicsValuesDTO otherPhyValues = otherBody.getPhysicsValues();
             if (otherPhyValues == null)
@@ -693,29 +723,6 @@ public class Model implements BodyEventProcessor {
         }
     }
 
-    private void checkEmissionEvents2(AbstractBody checkBody, PhysicsValuesDTO newPhyValues,
-            PhysicsValuesDTO oldPhyValues, List<DomainEvent> domainEvents) {
-
-        // BodyType bodyType = checkBody.getBodyType();
-        // BodyRefDTO primaryBodyRef = checkBody.getBodyRef();
-
-        // if (bodyType == BodyType.PLAYER || bodyType == BodyType.DYNAMIC) {
-        // DynamicBody pBody = (DynamicBody) checkBody;
-
-        // double dtSeconds = (newPhyValues.timeStamp - oldPhyValues.timeStamp) /
-        // 1_000_000_000.0;
-        // if (pBody.mustEmitNow(dtSeconds)) {
-        // EmitPayloadDTO payload = new EmitPayloadDTO(
-        // primaryBodyRef, pBody.getBodyToEmitConfig());
-
-        // EmitEvent emitEvent = new EmitEvent(
-        // DomainEventType.EMIT_REQUESTED, primaryBodyRef, payload);
-
-        // domainEvents.add(emitEvent);
-        // }
-        // }
-    }
-
     private void checkEmissionEvents(AbstractBody checkBody, PhysicsValuesDTO newPhyValues,
             PhysicsValuesDTO oldPhyValues, List<DomainEvent> domainEvents) {
 
@@ -724,7 +731,8 @@ public class Model implements BodyEventProcessor {
         if (!(checkBody.emittersListEmpty())) {
             return; // ======= No emitters =======>
         }
-        double dtSeconds = (newPhyValues.timeStamp - checkBody.getPhysicsValues().timeStamp) / 1_000_000_000.0;
+        double dtSeconds = ((double) (newPhyValues.timeStamp - checkBody.getPhysicsValues().timeStamp))
+                / 1_000_000_000.0;
 
         for (Emitter emitter : checkBody.emittersList()) {
             if (emitter.mustEmitNow(dtSeconds)) {
@@ -800,6 +808,8 @@ public class Model implements BodyEventProcessor {
 
         switch (action.action) {
             case MOVE:
+
+
                 body.doMovement(newPhyValues);
                 spatialGridUpsert((AbstractBody) body);
                 break;
@@ -980,9 +990,11 @@ public class Model implements BodyEventProcessor {
     // endregion
 
     private boolean intersectCircles(PhysicsValuesDTO a, PhysicsValuesDTO b) {
-        // OJO: asumo size = diámetro. Si size ya es radio: ra=a.size; rb=b.size;
-        final double ra = a.size * 0.5;
-        final double rb = b.size * 0.5;
+        // OJO: asumo size = diámetro
+        // Recortamos a un 90% el radio para evitar colisiones falsas por margenes
+
+        final double ra = a.size * 0.5 * 0.9;
+        final double rb = b.size * 0.5 * 0.9;
 
         final double dx = a.posX - b.posX;
         final double dy = a.posY - b.posY;

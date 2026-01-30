@@ -3,7 +3,7 @@ package game.aigen;
 import java.util.ArrayList;
 import java.util.Random;
 
-import controller.ports.WorldEvolver;
+import controller.ports.WorldManager;
 import game.core.AbstractIAGenerator;
 import world.ports.DefItem;
 import world.ports.DefItemDTO;
@@ -19,7 +19,7 @@ public class AIBasicSpawner extends AbstractIAGenerator {
     // *** CONSTRUCTORS ***
 
     public AIBasicSpawner(
-            WorldEvolver worldEvolver, WorldDefinition worldDefinition,
+            WorldManager worldEvolver, WorldDefinition worldDefinition,
             int maxCreationDelay) {
 
         super(worldEvolver, worldDefinition, maxCreationDelay);

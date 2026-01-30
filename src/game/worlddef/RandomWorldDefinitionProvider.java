@@ -21,44 +21,28 @@ public final class RandomWorldDefinitionProvider extends AbstractWorldDefinition
 		double density = 100d;
 
 		// region Background
-		this.setBackgroundStatic("back_9");
+		this.setBackgroundStatic("back_10");
 		// endregion
 
 		// region Decorations
-		this.addDecoratorAnywhereRandomAsset(
-				3, AssetType.STARS, density, 200, 400);
+		this.addDecoratorAnywhereRandomAsset(5, AssetType.STARS, density, 200, 600);
+		this.addDecorator("rainbow_1", 7000, 5000, 3500);
+		this.addDecoratorAnywhereRandomAsset(5, AssetType.GALAXY, density, 200, 600);
+		this.addDecoratorAnywhereRandomAsset(5, AssetType.GALAXY, density, 50, 300);
+		this.addDecoratorAnywhereRandomAsset(5, AssetType.HALO, density, 50, 200);
 		// endregion
 
 		// region Gravity bodies => Static bodies
-		this.addGravityBodyAnywhereRandomAsset(
-				2, AssetType.PLANET, density, 100, 600);
+		this.addGravityBody("planet_4", 4500, 4500, 1000);
+		this.addGravityBody("cosmic_portal_1", 300, 1100, 400);
+		this.addGravityBody("sun_2", 24000, 2000, 2000);
+		this.addGravityBody("lab_1", 3000, 14000, 700);
+		this.addGravityBody("black_hole_1", 26000, 26000, 800);
+		this.addGravityBody("black_hole_2", 22000, 9000, 400);
 
-		this.addGravityBodyAnywhereRandomAsset(
-				3, AssetType.GALAXY, density, 100, 400);
-
-		this.addGravityBodyAnywhereRandomAsset(
-				1, AssetType.COSMIC_PORTAL, density, 200, 400);
-
-		this.addGravityBodyAnywhereRandomAsset(
-				1, AssetType.LAB, density, 100, 200);
-
-		this.addGravityBodyAnywhereRandomAsset(
-				2, AssetType.HALO, density, 100, 400);
-
-		this.addGravityBodyAnywhereRandomAsset(
-				1, AssetType.RAINBOW, density, 2000, 4000);
-
-		this.addGravityBodyAnywhereRandomAsset(
-				2, AssetType.MOON, density, 100, 1000);
-
-		this.addGravityBodyAnywhereRandomAsset(
-				1, AssetType.SUN, density, 800, 1400);
-
-		this.addGravityBodyAnywhereRandomAsset(
-				10, AssetType.MINE, density, 50, 100);
-
-		this.addGravityBodyAnywhereRandomAsset(
-				1, AssetType.BLACK_HOLE, density, 100, 400);
+		this.addGravityBodyAnywhereRandomAsset(5, AssetType.PLANET, density, 100, 300);
+		this.addGravityBodyAnywhereRandomAsset(5, AssetType.MOON, density, 100, 600);
+		this.addGravityBodyAnywhereRandomAsset(20, AssetType.MINE, density, 50, 100);
 		// endregion
 
 		// region Dynamic bodies
@@ -70,10 +54,8 @@ public final class RandomWorldDefinitionProvider extends AbstractWorldDefinition
 		// endregion
 
 		// region Players
-		this.addSpaceshipRandomAsset(
-				1, AssetType.SPACESHIP, density, 50, 60, 200, 200);
-
-		this.addTrailEmitterCosmetic("stars_6", 100, BodyType.DECORATOR, 20);
+		this.addSpaceshipRandomAsset(1, AssetType.SPACESHIP, density, 50, 60, 200, 200);
+		this.addTrailEmitterCosmetic("stars_6", 200, BodyType.DECORATOR, 20);
 		// endregion
 
 		// region Weapons (addWeapon***)

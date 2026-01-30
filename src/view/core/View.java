@@ -171,6 +171,10 @@ public class View extends JFrame implements KeyListener {
 
     // region Getters (get***)
     public DoubleVector getWorldDimension() {
+        if (this.worldDimension == null) {
+            return null;
+        }
+
         return new DoubleVector(this.worldDimension);
     }
 
@@ -271,7 +275,7 @@ public class View extends JFrame implements KeyListener {
     protected String getLocalPlayerId() {
         return this.localPlayerId;
     }
-    
+
     protected SpatialGridStatisticsRenderDTO getSpatialGridStatistics() {
         return this.controller.getSpatialGridStatistics();
     }

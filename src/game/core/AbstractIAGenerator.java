@@ -4,12 +4,11 @@ import java.util.ArrayList;
 import java.util.Random;
 
 import controller.ports.EngineState;
-import controller.ports.WorldEvolver;
+import controller.ports.WorldManager;
 import utils.helpers.DoubleVector;
 import world.ports.DefEmitterDTO;
 import world.ports.DefItem;
 import world.ports.DefItemDTO;
-import world.ports.DefItemPrototypeDTO;
 import world.ports.DefWeaponDTO;
 import world.ports.WorldDefinition;
 
@@ -18,16 +17,15 @@ public abstract class AbstractIAGenerator implements Runnable {
     // region Fields
     private final Random rnd = new Random();
     private final DefItemMaterializer defItemMaterializer;
-    protected final WorldEvolver worldEvolver;
+    protected final WorldManager worldEvolver;
     protected final WorldDefinition worldDefinition;
     protected final int maxCreationDelay;
     private Thread thread;
     // endregion
 
-    // *** CONSTRUCTORS ***
-
+    // region Constructors
     protected AbstractIAGenerator(
-            WorldEvolver worldEvolver,
+            WorldManager worldEvolver,
             WorldDefinition worldDefinition,
             int maxCreationDelay) {
 
@@ -43,6 +41,7 @@ public abstract class AbstractIAGenerator implements Runnable {
         this.worldDefinition = worldDefinition;
         this.maxCreationDelay = maxCreationDelay;
     }
+    // endregion
 
     // *** PUBLIC ***
 
@@ -59,6 +58,7 @@ public abstract class AbstractIAGenerator implements Runnable {
 
     // *** PROTECTED (alphabetical order) ***
 
+    // region adders (add***)
     protected void addDynamicIntoTheGame(DefItemDTO bodyDef) {
         this.worldEvolver.addDynamicBody(
                 bodyDef.assetId, bodyDef.size,
@@ -94,7 +94,9 @@ public abstract class AbstractIAGenerator implements Runnable {
         this.worldEvolver.setLocalPlayer(playerId);
         return playerId;
     }
+    // endregion
 
+    // region equippers (equip***)
     protected void equipEmitters(String entityId, ArrayList<DefEmitterDTO> emitterDefs) {
         for (DefEmitterDTO emitterDef : emitterDefs) {
             this.worldEvolver.equipTrail(
@@ -108,10 +110,13 @@ public abstract class AbstractIAGenerator implements Runnable {
                     entityId, weaponDef, 0);
         }
     }
+    // endregion
 
+    // region getters (get***)
     protected String getThreadName() {
         return this.getClass().getSimpleName();
     }
+    // endregion
 
     // Optional hook for subclasses (e.g., create players).
     protected void onActivate() {

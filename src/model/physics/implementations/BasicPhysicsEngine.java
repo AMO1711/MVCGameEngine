@@ -7,16 +7,14 @@ import model.physics.ports.PhysicsValuesDTO;
 
 public class BasicPhysicsEngine extends AbstractPhysicsEngine {
 
-    /**
-     * CONSTRUCTORS
-     */
+    // region Constructors
     public BasicPhysicsEngine(PhysicsValuesDTO phyVals) {
         super(phyVals);
     }
+    // endregion
 
-    /**
-     * PUBLICS
-     */
+    // *** PUBLIC ***
+
     @Override
     public void angularAccelerationInc(double angularAcc) {
         PhysicsValuesDTO old = this.getPhysicsValues();
@@ -36,13 +34,13 @@ public class BasicPhysicsEngine extends AbstractPhysicsEngine {
         PhysicsValuesDTO phyVals = this.getPhysicsValues();
         long now = nanoTime();
         long elapsedNanos = now - phyVals.timeStamp;
-        double dt = elapsedNanos / 1_000_000_000.0; // Nanos to seconds
+        double dt = ((double)elapsedNanos) / 1_000_000_000.0d; // Nanos to seconds
 
         // ✅ Protección contra valores anómalos
-        if (dt < 0.0) {
+        if (dt <= 0.0) {
             System.err.println("WARNING: Negative dt detected:  " + dt + "s.  Using 0.001s");
         } else if (dt > 0.5) {
-            System.err.println("WARNING:  Large dt detected: " + dt + "s. Clamping to 0.5s");
+            System.err.println("WARNING: Large dt detected: " + dt + "s. Clamping to 0.5s");
         }
 
         return integrateMRUA(phyVals, dt);
@@ -54,6 +52,7 @@ public class BasicPhysicsEngine extends AbstractPhysicsEngine {
         return phyValues.thrust != 0.0d;
     }
 
+    // region Rebounds
     @Override
     public void reboundInEast(PhysicsValuesDTO newPhyVals, PhysicsValuesDTO oldPhyVals,
             double worldDim_x, double worldDim_y) {
@@ -63,7 +62,7 @@ public class BasicPhysicsEngine extends AbstractPhysicsEngine {
         double speedY = newPhyVals.speedY;
 
         // New position: snapped to the east boundary (slightly inside)
-        double posX = 0.0001;
+        double posX = 0.0001d;
         double posY = newPhyVals.posY;
         double angle = newPhyVals.angle;
 
@@ -169,6 +168,7 @@ public class BasicPhysicsEngine extends AbstractPhysicsEngine {
 
         this.setPhysicsValues(reboundPhyVals);
     }
+    // endregion
 
     @Override
     public void setAngularSpeed(double angularSpeed) {
@@ -184,9 +184,8 @@ public class BasicPhysicsEngine extends AbstractPhysicsEngine {
                 old.thrust));
     }
 
-    /**
-     * PRIVATES
-     */
+     // *** PRIVATES ***
+
     private PhysicsValuesDTO integrateMRUA(PhysicsValuesDTO phyVals, double dt) {
         // Applying thrust according actual angle
         double accX = 0d;

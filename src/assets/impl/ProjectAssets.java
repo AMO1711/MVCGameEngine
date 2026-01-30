@@ -32,6 +32,7 @@ public final class ProjectAssets {
         this.catalog.register("halo_13", "halo-13.png", AssetType.HALO, AssetIntensity.HIGH);
         this.catalog.register("light_1", "light-1.png", AssetType.LIGHT, AssetIntensity.HIGH);
         this.catalog.register("light_2", "light-21.png", AssetType.LIGHT, AssetIntensity.HIGH);
+        
         this.catalog.register("shot_hole_1", "shot-hole-1.png", AssetType.SHOT_HOLE, AssetIntensity.HIGH);
         this.catalog.register("shot_hole_2", "shot-hole-2.png", AssetType.SHOT_HOLE, AssetIntensity.HIGH);
         this.catalog.register("shot_hole_3", "shot-hole-3.png", AssetType.SHOT_HOLE, AssetIntensity.HIGH);
@@ -45,6 +46,8 @@ public final class ProjectAssets {
         this.catalog.register("back_7", "bg-seamless-2.jpg", AssetType.BACKGROUND, AssetIntensity.LOW);
         this.catalog.register("back_8", "bg-seamless-3.jpg", AssetType.BACKGROUND, AssetIntensity.LOW);
         this.catalog.register("back_9", "bg-seamless-4.jpg", AssetType.BACKGROUND, AssetIntensity.LOW);
+        this.catalog.register("back_10", "bg-10.jpg", AssetType.BACKGROUND, AssetIntensity.LOW);
+        this.catalog.register("back_11", "bg-11.jpg", AssetType.BACKGROUND, AssetIntensity.LOW);
 
         this.catalog.register("black_hole_1", "black-hole-1.png", AssetType.BLACK_HOLE, AssetIntensity.HIGH);
         this.catalog.register("black_hole_2", "black-hole-2.png", AssetType.BLACK_HOLE, AssetIntensity.HIGH);
@@ -112,7 +115,7 @@ public final class ProjectAssets {
         this.catalog.register("signs_1", "ui-signs-1.png", AssetType.UI_SIGN, AssetIntensity.HIGH);
 
         this.catalog.register("bullet_1", "bullet-1.png", AssetType.BULLET, AssetIntensity.LOW);
-        // this.catalog.register("bomb_1", "grenade-1.png", AssetType.MINE, AssetIntensity.MEDIUM);
+        this.catalog.register("bomb_1", "grenade-1.png", AssetType.MINE, AssetIntensity.MEDIUM);
         this.catalog.register("bomb_2", "grenade-2.png", AssetType.MINE, AssetIntensity.MEDIUM);
         this.catalog.register("misil_1", "misil-1-mini.png", AssetType.MISSILE, AssetIntensity.HIGH);
         this.catalog.register("misil_2", "misil-2-mini.png", AssetType.MISSILE, AssetIntensity.HIGH);

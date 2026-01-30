@@ -1,7 +1,6 @@
 package utils.spatial.core;
 
 import java.util.ArrayList;
-import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 
 import utils.spatial.ports.SpatialGridStatisticsDTO;
@@ -12,7 +11,7 @@ import utils.spatial.ports.SpatialGridStatisticsDTO;
  * El caller aporta un buffer temporal (scratchIdxs) reutilizable.
  *
  * Estructuras:
- * - buckets[idx] = ConcurrentHashMap<String, Boolean> (set de ids en esa celda)
+ * - grid[idx] = ConcurrentHashMap<String, Boolean> (set de ids en esa celda)
  * - idToMembership[id] = celdas actuales del id (para remove/move O(1))
  *
  * Nota:
@@ -34,7 +33,7 @@ public final class SpatialGrid {
     private final ConcurrentHashMap<String, Cells> entitiesCells = new ConcurrentHashMap<>();
 
     @SuppressWarnings("unchecked")
-    public SpatialGrid(double worldWidth, double worldHeight, int cellSize,  int maxCellsPerBody) {
+    public SpatialGrid(double worldWidth, double worldHeight, int cellSize, int maxCellsPerBody) {
         if (cellSize <= 0)
             throw new IllegalArgumentException("cellSizePx must be > 0");
         if (worldWidth <= 0 || worldHeight <= 0)
@@ -54,7 +53,7 @@ public final class SpatialGrid {
         // Prealloc buckets (arranque más caro, runtime estable)
         this.grid = (ConcurrentHashMap<String, Boolean>[]) new ConcurrentHashMap[total];
         for (int i = 0; i < total; i++) {
-            this.grid[i] = new ConcurrentHashMap<>(8);
+            this.grid[i] = new ConcurrentHashMap<>(64);
         }
     }
 
@@ -74,8 +73,9 @@ public final class SpatialGrid {
 
         this.requireBuffer(scratchIdxs);
 
-        if (entityId == null || entityId.isEmpty())
-            return; // ======== Invalid ========>
+        if (entityId == null || entityId.isEmpty()) {
+            throw new IllegalArgumentException("upsert: entityId is null or empty");
+        }
 
         final Cells oldEntityCells = this.entitiesCells.computeIfAbsent(entityId, __ -> new Cells(maxCellsPerBody));
 
@@ -184,7 +184,8 @@ public final class SpatialGrid {
      * be observed, but the computed statistics are always safe and structurally
      * consistent.
      *
-     * @return a {@link SpatialGridStatisticsDTO} snapshot containing aggregated grid
+     * @return a {@link SpatialGridStatisticsDTO} snapshot containing aggregated
+     *         grid
      *         statistics
      */
     public SpatialGridStatisticsDTO getStatistics() {

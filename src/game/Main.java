@@ -19,13 +19,13 @@ public class Main {
 
 		System.setProperty("sun.java2d.uiScale", "1.0");
 
-		DoubleVector worldDimension = new DoubleVector(18000, 18000);
+		DoubleVector worldDimension = new DoubleVector(24000, 40000);
 		DoubleVector viewDimension = new DoubleVector(2700, 1450);
 		int maxBodies = 1000;
-		int maxAsteroidCreationDelay = 100;
+		int maxAsteroidCreationDelay = 10;
 
 		ProjectAssets projectAssets = new ProjectAssets();
-		ActionsGenerator actionsGenerator = new ActionsInLimitsGoToCenter();
+		ActionsGenerator actionsGenerator = new ActionsDeadInLimitsPlayerImmunity();
 		WorldDefinitionProvider world = new RandomWorldDefinitionProvider(
 				worldDimension, projectAssets);
 

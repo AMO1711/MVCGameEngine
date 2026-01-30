@@ -49,9 +49,9 @@ public class PhysicsValuesDTO implements Serializable {
 
     }
 
-    public PhysicsValuesDTO(double size, double x, double y, double angle) {
+    public PhysicsValuesDTO(long timeStamp, double size, double x, double y, double angle) {
         this(
-                System.nanoTime(),
+                timeStamp,
                 x, y, angle,
                 size,
                 0.0, 0.0,
@@ -59,16 +59,4 @@ public class PhysicsValuesDTO implements Serializable {
                 0.0, 0.0,
                 0.0);
     }
-
-        public PhysicsValuesDTO(PhysicsValuesDTO phyValues) {
-        this(
-                System.nanoTime(),
-                phyValues.posX, phyValues.posY, phyValues.angle,
-                phyValues.size,
-                phyValues.speedX, phyValues.speedY,
-                phyValues.accX, phyValues.accY,
-                phyValues.angularSpeed, phyValues.angularAcc,
-                phyValues.thrust);
-    }
-
 }

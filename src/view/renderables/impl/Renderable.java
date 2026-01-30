@@ -81,24 +81,31 @@ public class Renderable {
         this.renderableValues = renderInfo;
     }
 
-    public void paint(Graphics2D g) {
+    public void paint(Graphics2D g, long currentFrame) {
 
         if (this.image == null) {
             return;
         }
 
+        // Save the original (NOT rotated) transform
         AffineTransform old = g.getTransform();
 
-        g.rotate(Math.toRadians(this.renderableValues.angle),
-                this.renderableValues.posX,
-                this.renderableValues.posY);
+        final double posX = this.renderableValues.posX;
+        final double posY = this.renderableValues.posY;
+        final double angleDeg = this.renderableValues.angle;
 
-        g.drawImage(
-                this.image,
-                (int) (this.renderableValues.posX - this.renderableValues.size / 2),
-                (int) (this.renderableValues.posY - this.renderableValues.size / 2),
-                null);
+        // Using the REAL size of the sprite for the offset
+        final double halfW = this.image.getWidth(null) * 0.5;
+        final double halfH = this.image.getHeight(null) * 0.5;
 
+        final int drawX = (int) (posX - halfW);
+        final int drawY = (int) (posY - halfH);
+
+        g.rotate(Math.toRadians(angleDeg), posX, posY);
+
+        g.drawImage(this.image, drawX, drawY, null);
+
+        // Restore original (NOT rotated) transform
         g.setTransform(old);
     }
 

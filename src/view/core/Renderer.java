@@ -121,13 +121,33 @@ import utils.images.Images;
  */
 public class Renderer extends Canvas implements Runnable {
 
-    // region Fields
-    private long lastTimeMonitoring = System.nanoTime();
-    private int fpsFrames = 0;
-    private volatile int fps = 0;
-    private volatile double renderTimeInMs = 0;
-    private volatile double initDrawTimeStamp;
+    // region Monitoring
+    private static final long MONITORING_PERIOD_NS = 500_000_000L;
 
+    // Start times (timestamps)
+    private volatile long monitoringPeriodStartNs = System.nanoTime();
+    private volatile long drawStartNs;
+    private volatile long frameStartNs = 0L;
+    private volatile long lastFrameStartNs = 0L;
+
+    // End times (timestamps)
+    private volatile long drawEndNs;
+    private volatile long frameEndNs;
+
+    // Values for metrics
+    private volatile long frameDtNs = 0L; // dt real: start-to-start
+    private volatile long frameTimeNs = 0L;
+    private volatile long acumDrawNsPerPeriod = 0L;
+    private volatile long framesPerPeriod = 0L;
+    private volatile long fpsPerPeriod = 0L;
+    private volatile double avgDrawMsPerPeriod = 0.0D;
+    // endregion
+
+    // regoin Constants
+    private static final int DELAY_IN_MILLIS = 16; // ~60 FPS
+    // endregion
+
+    // region Fields
     private DoubleVector viewDimension;
     private View view;
     private int delayInMillis = 5;
@@ -142,8 +162,11 @@ public class Renderer extends Canvas implements Runnable {
     private final SystemHUD systemHUD = new SystemHUD();
     private final SpatialGridHUD spatialGridHUD = new SpatialGridHUD();
 
-    private double cameraX = 0.0;
-    private double cameraY = 0.0;
+    private double cameraX = 0.0d;
+    private double cameraY = 0.0d;
+    private double maxCameraClampY;
+    private double maxCameraClampX;
+
     private double backgroundScrollSpeedX = 1.0;
     private double backgroundScrollSpeedY = 1.0;
 
@@ -156,6 +179,7 @@ public class Renderer extends Canvas implements Runnable {
         this.view = view;
 
         this.setIgnoreRepaint(true);
+        this.setCameraClampLimits();
     }
     // endregion
 
@@ -203,6 +227,18 @@ public class Renderer extends Canvas implements Runnable {
     }
     // endregion
 
+    // region getters (get***)
+    public Renderable getLocalPlayerRenderable() {
+        String localPlayerId = this.view.getLocalPlayerId();
+
+        if (localPlayerId == null || localPlayerId.isEmpty()) {
+            return null; // ======= No player to follow =======>>
+        }
+        Renderable renderableLocalPlayer = this.dynamicRenderables.get(this.view.getLocalPlayerId());
+        return renderableLocalPlayer;
+    }
+    // endregion
+
     // region notifiers (notify***)
     public void notifyDynamicIsDead(String entityId) {
         this.dynamicRenderables.remove(entityId);
@@ -220,8 +256,10 @@ public class Renderer extends Canvas implements Runnable {
 
     public void setViewDimension(DoubleVector viewDim) {
         this.viewDimension = viewDim;
+        this.setCameraClampLimits();
         this.setPreferredSize(new Dimension((int) this.viewDimension.x, (int) this.viewDimension.y));
     }
+
     // endregion
 
     public void updateStaticRenderables(ArrayList<RenderDTO> renderablesData) {
@@ -258,15 +296,6 @@ public class Renderer extends Canvas implements Runnable {
     }
 
     // *** PRIVATES ***
-    private static double clamp(double value, double min, double max) {
-        if (value < min) {
-            return min;
-        }
-        if (value > max) {
-            return max;
-        }
-        return value;
-    }
 
     // region drawers (draw***)
     private void drawDynamicRenderable(Graphics2D g) {
@@ -277,19 +306,20 @@ public class Renderer extends Canvas implements Runnable {
 
         Map<String, DynamicRenderable> renderables = this.dynamicRenderables;
         for (DynamicRenderable renderable : renderables.values()) {
-            renderable.paint(g);
+            renderable.paint(g, this.currentFrame);
         }
     }
 
     private void drawHUDs(Graphics2D g) {
 
         this.systemHUD.draw(g,
-                this.fps,
-                String.format("%.0f", this.renderTimeInMs) + " ms",
+                this.fpsPerPeriod,
+                String.format("%.0f", this.avgDrawMsPerPeriod) + " ms",
                 this.imagesCache == null ? 0 : this.imagesCache.size(),
                 String.format("%.0f", this.imagesCache == null ? 0 : this.imagesCache.getHitsPercentage()) + "%",
                 this.view.getEntityAliveQuantity(),
-                this.view.getEntityDeadQuantity());
+                this.view.getEntityDeadQuantity(),
+                this.currentFrame);
 
         PlayerRenderDTO playerData = this.view.getLocalPlayerRenderData();
         if (playerData != null) {
@@ -306,21 +336,28 @@ public class Renderer extends Canvas implements Runnable {
         Map<String, Renderable> renderables = this.staticRenderables;
 
         for (Renderable renderable : renderables.values()) {
-            renderable.paint(g);
+            renderable.paint(g, this.currentFrame);
         }
     }
 
     private void drawScene(BufferStrategy bs) {
         Graphics2D gg;
 
+        this.drawStartNs = System.nanoTime();
+
         do {
             gg = (Graphics2D) bs.getDrawGraphics();
             try {
+                // 1) BACKGROUND opaco (tileado) usando cameraX/cameraY ya actualizados
                 gg.setComposite(AlphaComposite.Src); // Opaque
-                gg.drawImage(this.getVIBackground(), 0, 0, null);
 
+                this.drawTiledBackground(gg); // <- NUEVO: repinta VI cada frame
+                gg.drawImage(this.viBackground, 0, 0, null);
+
+                // 2) WORLD + HUD
                 gg.setComposite(AlphaComposite.SrcOver); // With transparency
-                this.drawWorldRenderables(gg);
+
+                this.drawWorldRenderables(gg); // <- no update aquí
                 this.drawHUDs(gg);
 
             } finally {
@@ -328,50 +365,46 @@ public class Renderer extends Canvas implements Runnable {
             }
 
             bs.show();
-            Toolkit.getDefaultToolkit().sync(); // <- reduce tearing en muchos setups
+            Toolkit.getDefaultToolkit().sync();
         } while (bs.contentsLost());
+
+        this.drawEndNs = System.nanoTime();
     }
 
     private void drawTiledBackground(Graphics2D g) {
-        if (this.background == null || this.viewDimension == null) {
+        if (this.background == null || this.viewDimension == null)
             return;
-        }
 
-        double viewWidth = this.viewDimension.x;
-        double viewHeight = this.viewDimension.y;
-        if (viewWidth <= 0 || viewHeight <= 0) {
+        final int viewW = (int) this.viewDimension.x;
+        final int viewH = (int) this.viewDimension.y;
+        if (viewW <= 0 || viewH <= 0)
             return;
-        }
 
-        double tileWidth = this.background.getWidth();
-        double tileHeight = this.background.getHeight();
-        if (tileWidth <= 0 || tileHeight <= 0) {
+        final int tileW = this.background.getWidth(null);
+        final int tileH = this.background.getHeight(null);
+        if (tileW <= 0 || tileH <= 0)
             return;
-        }
 
-        double scrollX = this.cameraX * this.backgroundScrollSpeedX;
-        double scrollY = this.cameraY * this.backgroundScrollSpeedY;
+        final double scrollX = this.cameraX * this.backgroundScrollSpeedX;
+        final double scrollY = this.cameraY * this.backgroundScrollSpeedY;
 
-        int startX = (int) (-scrollX % tileWidth);
-        int startY = (int) (-scrollY % tileHeight);
-        if (startX > 0) {
-            startX -= tileWidth;
-        }
-        if (startY > 0) {
-            startY -= tileHeight;
-        }
+        // Offset del tile en [-(tile-1)..0], estable con negativos
+        final int offX = -Math.floorMod((int) Math.floor(scrollX), tileW);
+        final int offY = -Math.floorMod((int) Math.floor(scrollY), tileH);
 
-        for (int x = startX; x < viewWidth; x += tileWidth) {
-            for (int y = startY; y < viewHeight; y += tileHeight) {
+        // Empieza 1 tile antes para asegurar cobertura completa
+        final int startX = offX - tileW;
+        final int startY = offY - tileH;
+
+        for (int x = startX; x < viewW + tileW; x += tileW) {
+            for (int y = startY; y < viewH + tileH; y += tileH) {
                 g.drawImage(this.background, x, y, null);
             }
         }
     }
 
     private void drawWorldRenderables(Graphics2D g) {
-        ArrayList<DynamicRenderDTO> renderablesData = this.view.getDynamicRenderablesData(); // *+
-        this.updateDynamicRenderables(renderablesData);
-        this.updateCamera(renderablesData);
+        // ** */
 
         AffineTransform defaultTransform = g.getTransform();
         g.translate(-this.cameraX, -this.cameraY);
@@ -430,53 +463,65 @@ public class Renderer extends Canvas implements Runnable {
     }
     // endregion
 
-    private void monitoring() {
-        this.fpsFrames++;
+    // Metrics updated per period
+    private void monitoringPerPeriod() {
+
+        this.framesPerPeriod++;
         long now = System.nanoTime();
-        long elapsed = now - this.lastTimeMonitoring;
+        long elapsed = now - this.monitoringPeriodStartNs;
 
-        if (elapsed >= 500_000_000L) { // 0.5 second
-            this.fps = (int) Math.round(fpsFrames * (1_000_000_000.0 / elapsed));
-            this.fpsFrames = 0;
-            this.lastTimeMonitoring = now;
+        // Acum draw time in the period
+        long lastDrawTime = this.drawEndNs - this.drawStartNs;
+        this.acumDrawNsPerPeriod += lastDrawTime;
 
-            this.renderTimeInMs = (System.nanoTime() - this.initDrawTimeStamp) / 1_000_000;
+        // Monitoring at especific rate ..
+        if (elapsed >= MONITORING_PERIOD_NS) {
+            // Update period metrics
+            this.fpsPerPeriod = (int) Math.round(framesPerPeriod * (1_000_000_000.0 / elapsed));
+            this.avgDrawMsPerPeriod = (this.acumDrawNsPerPeriod / (double) this.framesPerPeriod) / 1_000_000.0D;
+
+            // Reset acumulators to start new period
+            this.framesPerPeriod = 0L;
+            this.acumDrawNsPerPeriod = 0L;
+            this.monitoringPeriodStartNs = now;
 
         }
     }
 
+    // region setters (set***)
+    private void setCameraClampLimits() {
+        DoubleVector woldDim = this.view.getWorldDimension();
+
+        if (woldDim == null || this.viewDimension == null) {
+            this.maxCameraClampX = 0.0;
+            this.maxCameraClampY = 0.0;
+            return; // ======= No world or view dimensions info ======= >>
+        }
+
+        this.maxCameraClampX = Math.max(0.0, woldDim.x - this.viewDimension.x);
+        this.maxCameraClampY = Math.max(0.0, woldDim.y - this.viewDimension.y);
+    }
+    // endregion
+
     // region updaters (update***)
-    private void updateCamera(ArrayList<DynamicRenderDTO> renderablesData) {
-        String localPlayerId = this.view.getLocalPlayerId();
-        if (localPlayerId == null || localPlayerId.isEmpty()) {
-            return; // ======= No player to follow =======>>
+    private void updateCamera() {
+        Renderable localPlayerRenderable = this.getLocalPlayerRenderable();
+        DoubleVector worldDim = this.view.getWorldDimension();
+
+        if (localPlayerRenderable == null || this.viewDimension == null || worldDim == null) {
+            return; // ======== No player or data to follow =======>>
         }
 
-        // TO OPTIMIZE: Lookup the local player render data
-        DynamicRenderDTO target = null;
-        for (DynamicRenderDTO renderableData : renderablesData) {
-            if (localPlayerId.equals(renderableData.entityId)) {
-                target = renderableData;
-                break;
-            }
-        }
+        RenderDTO playerData = localPlayerRenderable.getRenderableValues();
+        double desiredX = playerData.posX - (this.viewDimension.x / 2.0d);
+        double desiredY = playerData.posY - (this.viewDimension.y / 2.0d);
 
-        if (target == null || this.viewDimension == null) {
-            return;
-        }
+        this.cameraX += (desiredX - this.cameraX);
+        this.cameraY += (desiredY - this.cameraY);
 
-        DoubleVector worldDimension = this.view.getWorldDimension();
-        if (worldDimension == null) {
-            worldDimension = this.viewDimension;
-        }
-
-        double desiredX = target.posX - (this.viewDimension.x / 2.0);
-        double desiredY = target.posY - (this.viewDimension.y / 2.0);
-
-        double maxX = Math.max(0.0, worldDimension.x - this.viewDimension.x);
-        double maxY = Math.max(0.0, worldDimension.y - this.viewDimension.y);
-        this.cameraX = clamp(desiredX, 0.0, maxX);
-        this.cameraY = clamp(desiredY, 0.0, maxY);
+        // // Clamp when camera goes out of world limits
+        this.cameraX = clamp(cameraX, 0.0, this.maxCameraClampX);
+        this.cameraY = clamp(cameraY, 0.0, this.maxCameraClampY);
     }
 
     private void updateDynamicRenderables(ArrayList<DynamicRenderDTO> renderablesData) {
@@ -506,15 +551,33 @@ public class Renderer extends Canvas implements Runnable {
     }
     // endregion
 
+    private static double clamp(double value, double min, double max) {
+        if (value < min) {
+            return min;
+        }
+        if (value > max) {
+            return max;
+        }
+        return value;
+    }
+
+    // *** PRIVATE STATIC ***
+
     // *** INTERFACE IMPLEMENTATIONS ***
 
     // region Runnable
-    @Override // Runnable
+    @Override
     public void run() {
         this.createBufferStrategy(2);
         BufferStrategy bs = getBufferStrategy();
 
+        // Max one frame per loop
+        this.lastFrameStartNs = System.nanoTime();
         while (true) {
+            this.frameStartNs = System.nanoTime();
+            this.frameDtNs = this.frameStartNs - this.lastFrameStartNs;
+            this.lastFrameStartNs = this.frameStartNs;
+
             EngineState engineState = this.view.getEngineState();
             if (engineState == EngineState.STOPPED) {
                 break;
@@ -523,17 +586,29 @@ public class Renderer extends Canvas implements Runnable {
             if (engineState == EngineState.ALIVE) { // TO-DO Pause condition
                 this.currentFrame++;
 
-                this.initDrawTimeStamp = System.nanoTime();
+                // Recover snapshot of dynamic renderables data
+                ArrayList<DynamicRenderDTO> renderablesData = this.view.getDynamicRenderablesData();
+
+                // Update dynamic renderables states using the snapshot
+                this.updateDynamicRenderables(renderablesData);
+
+                // Update camera position to follow local player using the latest data
+                this.updateCamera();
+
                 this.drawScene(bs);
-                this.monitoring();
+
+                this.monitoringPerPeriod();
             }
 
             try {
-                Thread.sleep(this.delayInMillis);
+                Thread.sleep(DELAY_IN_MILLIS);
             } catch (InterruptedException ex) {
-                Thread.currentThread().interrupt();
-                break;
+                throw new RuntimeException(ex);
             }
+
+            // Monitoring frame time per frame (inclusive when paused)
+            this.frameEndNs = System.nanoTime();
+            this.frameTimeNs = this.frameEndNs - this.frameStartNs;
         }
     }
     // endregion
