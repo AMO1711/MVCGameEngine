@@ -3,17 +3,17 @@ package world.core;
 import java.util.ArrayList;
 import java.util.Random;
 
+import assets.core.AssetCatalog;
+import assets.impl.ProjectAssets;
+import assets.ports.AssetType;
 import model.bodies.ports.BodyType;
-import utils.assets.core.AssetCatalog;
-import utils.assets.implementations.ProjectAssets;
-import utils.assets.ports.AssetType;
+import utils.helpers.DoubleVector;
 import world.ports.DefBackgroundDTO;
 import world.ports.DefEmitterDTO;
 import world.ports.DefItem;
 import world.ports.DefItemDTO;
 import world.ports.DefItemPrototypeDTO;
 import world.ports.DefWeaponDTO;
-import world.ports.DefWeaponType;
 import world.ports.WorldDefinition;
 import world.ports.WorldDefinitionProvider;
 
@@ -21,10 +21,25 @@ public abstract class AbstractWorldDefinitionProvider implements WorldDefinition
 
     // region Constants
     private static final String ASSET_PATH = "src/resources/images/";
-    protected static final double WORLD_MIN = 0.0;
-    protected static final double ANY_HEADING_MIN_DEG = 0.0;
-    protected static final double ANY_HEADING_MAX_DEG = 359.999;
-    protected static final double DEFAULT_DENSITY = 100;
+    private static final double WORLD_MIN = 0.0;
+    private static final double ANY_HEADING_MIN_DEG = 0.0;
+    private static final double ANY_HEADING_MAX_DEG = 359.999;
+    private static final double DEFAULT_DENSITY = 100;
+
+    private final double ZERO_ANGULAR_ACCEL = 0.0;
+    private final double ZERO_ANGULAR_SPEED = 0.0;
+    private final double ZERO_THRUST = 0.0;
+    private final double ZERO_THRUST_DURATION = 0.0;
+    private final double DEFAULT_COSMETIC_MASS = 10.0;
+    private final double LIFETIME = 1.5;
+    private final double ZERO_INITIAL_SPEED = 0.0;
+
+    private final boolean ADD_EMITTER_SPEED_ON_HEADING = true; // typical: particles inherit emitter direction
+
+    private final double ZERO_BURST_RATE = 0.0;
+    private final int ZERO_BURST_SIZE = 0;
+    private final double DEFAULT_RELOAD_TIME = 0.0;
+    private final int ZERO_MAX_BODIES = 0;
     // endregion
 
     // region Fields
@@ -37,42 +52,31 @@ public abstract class AbstractWorldDefinitionProvider implements WorldDefinition
 
     public DefBackgroundDTO background;
 
-    // Entity polymorphic lists are grouped by type to simplify core consumption
     public final ArrayList<DefItem> decorators = new ArrayList<>();
     public final ArrayList<DefItem> gravityBodies = new ArrayList<>();
     public final ArrayList<DefItem> asteroids = new ArrayList<>();
     public final ArrayList<DefItem> spaceships = new ArrayList<>();
     public final ArrayList<DefEmitterDTO> trailEmitters = new ArrayList<>();
-
-    // Weapon lists are grouped by type to simplify core consumption
-    public final ArrayList<DefWeaponDTO> bulletWeapons;
-    public final ArrayList<DefWeaponDTO> burstWeapons;
-    public final ArrayList<DefWeaponDTO> mineLaunchers;
-    public final ArrayList<DefWeaponDTO> missileLaunchers;
-    private final WeaponDefRegister weapons;
+    public final ArrayList<DefWeaponDTO> weapons = new ArrayList<>();
     // endregion
 
     // *** CONSTRUCTORS ***
 
-    public AbstractWorldDefinitionProvider(double worldWidth, double worldHeight, ProjectAssets assets) {
+    public AbstractWorldDefinitionProvider(DoubleVector worldDimension, ProjectAssets assets) {
         if (assets == null) {
             throw new IllegalArgumentException("ProjectAssets cannot be null.");
         }
-
-        if (worldWidth <= 0 || worldHeight <= 0) {
+        if (worldDimension == null) {
+            throw new IllegalArgumentException("WorldDimension cannot be null.");
+        }   
+        if (worldDimension.x <= 0 || worldDimension.y <= 0) {
             throw new IllegalArgumentException("World dimensions must be positive values.");
         }
 
-        this.worldWidth = worldWidth;
-        this.worldHeight = worldHeight;
-
+        this.worldWidth = worldDimension.x;
+        this.worldHeight = worldDimension.y;
         this.projectAssets = assets;
         this.assetsRegister = new WorldAssetsRegister(this.projectAssets, this.gameAssets);
-        this.weapons = new WeaponDefRegister(this.assetsRegister);
-        this.bulletWeapons = weapons.bucket(DefWeaponType.BULLET_WEAPON);
-        this.burstWeapons = weapons.bucket(DefWeaponType.BURST_WEAPON);
-        this.mineLaunchers = weapons.bucket(DefWeaponType.MINE_LAUNCHER);
-        this.missileLaunchers = weapons.bucket(DefWeaponType.MISSILE_LAUNCHER);
     }
 
     // *** PROTECTED ***
@@ -91,10 +95,10 @@ public abstract class AbstractWorldDefinitionProvider implements WorldDefinition
         requirePositiveInt(num, "num must be a positive integer.");
 
         for (int i = 0; i < num; i++) {
-            double angle = rnd.nextDouble(ANY_HEADING_MIN_DEG, ANY_HEADING_MAX_DEG);
-            double posX = rnd.nextDouble(WORLD_MIN, this.worldWidth);
-            double posY = rnd.nextDouble(WORLD_MIN, this.worldHeight);
-            double size = rnd.nextDouble(minSize, maxSize);
+            double angle = randomDouble(ANY_HEADING_MIN_DEG, ANY_HEADING_MAX_DEG);
+            double posX = randomDouble(WORLD_MIN, this.worldWidth);
+            double posY = randomDouble(WORLD_MIN, this.worldHeight);
+            double size = randomDouble(minSize, maxSize);
 
             this.addAsteroidRandomAsset(
                     1, assetType, angle, density, size, posX, posY);
@@ -166,10 +170,10 @@ public abstract class AbstractWorldDefinitionProvider implements WorldDefinition
 
         for (int i = 0; i < num; i++) {
 
-            double angle = rnd.nextDouble(ANY_HEADING_MIN_DEG, ANY_HEADING_MAX_DEG);
-            double posX = rnd.nextDouble(WORLD_MIN, this.worldWidth);
-            double posY = rnd.nextDouble(WORLD_MIN, this.worldHeight);
-            double size = rnd.nextDouble(minSize, maxSize);
+            double angle = randomDouble(ANY_HEADING_MIN_DEG, ANY_HEADING_MAX_DEG);
+            double posX = randomDouble(WORLD_MIN, this.worldWidth);
+            double posY = randomDouble(WORLD_MIN, this.worldHeight);
+            double size = randomDouble(minSize, maxSize);
 
             this.addDecoratorRandomAsset(1, assetType, angle, density, size, posX, posY);
         }
@@ -230,10 +234,10 @@ public abstract class AbstractWorldDefinitionProvider implements WorldDefinition
 
         for (int i = 0; i < num; i++) {
 
-            double angle = rnd.nextDouble(ANY_HEADING_MIN_DEG, ANY_HEADING_MAX_DEG);
-            double posX = rnd.nextDouble(WORLD_MIN, this.worldWidth);
-            double posY = rnd.nextDouble(WORLD_MIN, this.worldHeight);
-            double size = rnd.nextDouble(minSize, maxSize);
+            double angle = randomDouble(ANY_HEADING_MIN_DEG, ANY_HEADING_MAX_DEG);
+            double posX = randomDouble(WORLD_MIN, this.worldWidth);
+            double posY = randomDouble(WORLD_MIN, this.worldHeight);
+            double size = randomDouble(minSize, maxSize);
 
             this.addGravityBodyRandomAsset(1, assetType, angle, density, size, posX, posY);
         }
@@ -366,6 +370,7 @@ public abstract class AbstractWorldDefinitionProvider implements WorldDefinition
     // region Weapon adders (addWeapon ***)
     protected final void addWeapon(DefWeaponDTO weapon) {
         // Add every weapon type into its respective list
+        this.assetsRegister.registerAssetId(weapon.assetId);
         this.weapons.add(weapon);
     }
 
@@ -499,49 +504,17 @@ public abstract class AbstractWorldDefinitionProvider implements WorldDefinition
             boolean randomizeInitialAngle,
             boolean randomizeSize) {
 
-        // Cosmetic defaults:
-        // "no dynamics, no lifetime constraints unless you add them later"
-        final double ZERO_ANGULAR_ACCEL = 0.0;
-        final double ZERO_ANGULAR_SPEED = 0.0;
-        final double ZERO_THRUST = 0.0;
-        final double ZERO_THRUST_DURATION = 0.0;
-        final double DEFAULT_COSMETIC_MASS = 10.0;
-        final double LIFETIME = 1.5;
-        final double ZERO_INITIAL_SPEED = 0.0;
-
-        final boolean ADD_EMITTER_SPEED_ON_HEADING = true; // typical: particles inherit emitter direction
-
-        final double ZERO_BURST_RATE = 0.0;
-        final int ZERO_BURST_SIZE = 0;
-        final double DEFAULT_RELOAD_TIME = 0.0;
-        final int ZERO_MAX_BODIES = 0;
-
         return new DefEmitterDTO(
-                assetId,
-                ZERO_ANGULAR_ACCEL,
-                ZERO_ANGULAR_SPEED,
-                ADD_EMITTER_SPEED_ON_HEADING,
-                ZERO_THRUST,
-                ZERO_THRUST_DURATION,
-                DEFAULT_COSMETIC_MASS,
-                LIFETIME,
-                spriteSize,
-                ZERO_INITIAL_SPEED,
-                bodyType,
-
-                ZERO_BURST_RATE,
-                ZERO_BURST_SIZE,
-                emissionRate,
-                offsetHorizontal,
-                offsetVertical,
-                DEFAULT_RELOAD_TIME,
-                ZERO_MAX_BODIES,
-                randomizeInitialAngle,
-                randomizeSize);
+                assetId, ZERO_ANGULAR_ACCEL, ZERO_ANGULAR_SPEED,
+                ADD_EMITTER_SPEED_ON_HEADING, ZERO_THRUST,
+                ZERO_THRUST_DURATION, DEFAULT_COSMETIC_MASS,
+                LIFETIME, spriteSize, ZERO_INITIAL_SPEED, bodyType,
+                ZERO_BURST_RATE, ZERO_BURST_SIZE, emissionRate,
+                offsetHorizontal, offsetVertical, DEFAULT_RELOAD_TIME,
+                ZERO_MAX_BODIES, randomizeInitialAngle, randomizeSize);
     }
 
     private final void reset() {
-
         // Resets asset catalog to avoid cross-world leakage between provide() calls
         this.gameAssets.reset();
 
@@ -595,10 +568,7 @@ public abstract class AbstractWorldDefinitionProvider implements WorldDefinition
                 new ArrayList<>(this.asteroids),
                 new ArrayList<>(this.spaceships),
                 new ArrayList<>(this.trailEmitters),
-                new ArrayList<>(this.bulletWeapons),
-                new ArrayList<>(this.burstWeapons),
-                new ArrayList<>(this.mineLaunchers),
-                new ArrayList<>(this.missileLaunchers));
+                new ArrayList<>(this.weapons));
     }
     // endregion
 
@@ -606,7 +576,7 @@ public abstract class AbstractWorldDefinitionProvider implements WorldDefinition
 
     // region Random helpers (random***)
     protected static double randomAngle() {
-        return rnd.nextDouble(ANY_HEADING_MIN_DEG, ANY_HEADING_MAX_DEG);
+        return randomDouble(ANY_HEADING_MIN_DEG, ANY_HEADING_MAX_DEG);
     }
 
     protected static double randomDouble(double min, double max) {

@@ -1,9 +1,9 @@
 package world.core;
 
-import utils.assets.core.AssetCatalog;
-import utils.assets.implementations.ProjectAssets;
-import utils.assets.ports.AssetInfoDTO;
-import utils.assets.ports.AssetType;
+import assets.core.AssetCatalog;
+import assets.impl.ProjectAssets;
+import assets.ports.AssetInfoDTO;
+import assets.ports.AssetType;
 
 public final class WorldAssetsRegister {
 
@@ -65,18 +65,5 @@ public final class WorldAssetsRegister {
         }
 
         this.gameAssets.register(info);
-    }
-
-    public void registerAssetIds(Iterable<String> assetIds) {
-        if (assetIds == null)
-            return;
-
-        for (String id : assetIds) {
-            if (id == null || id.isBlank())
-                throw new IllegalArgumentException("assetIds cannot contain null/blank ids.");
-
-            registerAssetId(id);
-
-        }
     }
 }

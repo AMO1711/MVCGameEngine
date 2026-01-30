@@ -1,14 +1,15 @@
 package game;
 
-import controller.implementations.Controller;
-import game.implementations.actions.*;
-import game.implementations.ai.*;
-import game.implementations.level.*;
-import game.implementations.world.RandomWorldDefinitionProvider;
-import model.implementations.Model;
-import utils.assets.implementations.ProjectAssets;
+import assets.impl.ProjectAssets;
+import controller.impl.Controller;
+import controller.ports.ActionsGenerator;
+import game.actionsgen.*;
+import game.aigen.*;
+import game.levelgen.*;
+import game.worlddef.RandomWorldDefinitionProvider;
+import model.impl.Model;
+import utils.helpers.DoubleVector;
 import view.core.View;
-import world.implementations.*;
 import world.ports.WorldDefinition;
 import world.ports.WorldDefinitionProvider;
 
@@ -18,33 +19,43 @@ public class Main {
 
 		System.setProperty("sun.java2d.uiScale", "1.0");
 
-		int worldWidth = 2450;
-		int worldHeight = 1450;
-		int maxDynamicBodies = 2000;
-		int maxAsteroidCreationDelay = 500;
+		DoubleVector worldDimension = new DoubleVector(24000, 40000);
+		DoubleVector viewDimension = new DoubleVector(2700, 1450);
+		int maxBodies = 1000;
+		int maxAsteroidCreationDelay = 10;
 
-		// *** CORE ENGINE => MVC + controller + default actions generator ***
+		ProjectAssets projectAssets = new ProjectAssets();
+		ActionsGenerator actionsGenerator = new ActionsDeadInLimitsPlayerImmunity();
+		WorldDefinitionProvider world = new RandomWorldDefinitionProvider(
+				worldDimension, projectAssets);
 
+		// *** CORE ENGINE ***
+
+		// region Controller
 		Controller controller = new Controller(
-				worldWidth, worldHeight,
-				new View(), new Model(worldWidth, worldHeight, maxDynamicBodies),
-				new ActionsReboundCollisionPlayerImmunity());
+				worldDimension,
+				viewDimension,
+				maxBodies,
+				new View(),
+				new Model(),
+				actionsGenerator);
 
 		controller.activate();
+		// endregion
 
-		// *** SCENE SETUP => world definition+ level generator + IA generator ***
+		// *** SCENE ***
 
-		// 1) World definition
-		ProjectAssets projectAssets = new ProjectAssets();
-		WorldDefinitionProvider world = new RandomWorldDefinitionProvider(
-				worldWidth, worldHeight, projectAssets);
+		// region World definition
 		WorldDefinition worldDef = world.provide();
+		// endregion
 
-		// 2) Level generator (Level***)
+		// region Level generator (Level***)
 		new LevelBasic(controller, worldDef);
+		// endregion
 
-		// 3) AI generator (AI***)
+		// region AI generator (AI***)
 		new AIBasicSpawner(controller, worldDef, maxAsteroidCreationDelay).activate();
+		// endregion
 
 	}
 }

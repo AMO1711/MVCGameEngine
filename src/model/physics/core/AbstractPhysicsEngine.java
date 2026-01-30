@@ -1,5 +1,7 @@
 package model.physics.core;
 
+import static java.lang.System.nanoTime;
+
 import java.util.concurrent.atomic.AtomicReference;
 
 import model.physics.ports.PhysicsEngine;
@@ -9,9 +11,7 @@ public abstract class AbstractPhysicsEngine implements PhysicsEngine {
 
         private final AtomicReference<PhysicsValuesDTO> phyValues; // *+
 
-        /**
-         * CONSTRUCTORS
-         */
+        // region Constructors
         public AbstractPhysicsEngine(PhysicsValuesDTO phyValues) {
                 if (phyValues == null) {
                         throw new IllegalArgumentException("PhysicsValuesDTO cannot be null");
@@ -22,21 +22,21 @@ public abstract class AbstractPhysicsEngine implements PhysicsEngine {
 
         public AbstractPhysicsEngine(double size, double posX, double posY, double angle) {
                 this.phyValues = new AtomicReference<>(
-                                new PhysicsValuesDTO(size, posX, posY, angle));
+                                new PhysicsValuesDTO(nanoTime(), size, posX, posY, angle));
         }
+        // endregion
 
-        /**
-         * PUBLIC
-         */
+        // *** PUBLIC ***
 
         public abstract PhysicsValuesDTO calcNewPhysicsValues();
 
         public abstract void angularAccelerationInc(double angularAcc);
 
-        public PhysicsValuesDTO getPhysicsValues() {
+        public final PhysicsValuesDTO getPhysicsValues() {
                 return this.phyValues.get();
         }
 
+        // region Rebound (reboundIn***)
         public abstract void reboundInEast(
                         PhysicsValuesDTO newPhyValues, PhysicsValuesDTO oldPhyValues,
                         double worldDim_x, double worldDim_y);
@@ -52,6 +52,7 @@ public abstract class AbstractPhysicsEngine implements PhysicsEngine {
         public abstract void reboundInSouth(
                         PhysicsValuesDTO newPhyValues, PhysicsValuesDTO oldPhyValues,
                         double worldDim_x, double worldDim_y);
+        // endregion
 
         public void resetAcceleration() {
                 PhysicsValuesDTO old = this.getPhysicsValues();
@@ -67,7 +68,8 @@ public abstract class AbstractPhysicsEngine implements PhysicsEngine {
 
         }
 
-        public void setAngularAcceleration(double angularAcc) {
+        // region Setters (set***)
+        public final void setAngularAcceleration(double angularAcc) {
                 PhysicsValuesDTO old = this.getPhysicsValues();
                 this.setPhysicsValues(new PhysicsValuesDTO(
                                 old.timeStamp,
@@ -82,7 +84,7 @@ public abstract class AbstractPhysicsEngine implements PhysicsEngine {
 
         public abstract void setAngularSpeed(double angularSpeed);
 
-        public void setPhysicsValues(PhysicsValuesDTO phyValues) {
+        public final void setPhysicsValues(PhysicsValuesDTO phyValues) {
                 if (phyValues == null) {
                         throw new IllegalArgumentException("PhysicsValuesDTO cannot be null");
                 }
@@ -90,7 +92,7 @@ public abstract class AbstractPhysicsEngine implements PhysicsEngine {
                 this.phyValues.set(phyValues);
         }
 
-        public void setThrust(double thrust) {
+        public final void setThrust(double thrust) {
                 PhysicsValuesDTO old = this.getPhysicsValues();
                 this.setPhysicsValues(new PhysicsValuesDTO(
                                 old.timeStamp,
@@ -102,6 +104,7 @@ public abstract class AbstractPhysicsEngine implements PhysicsEngine {
                                 old.angularAcc,
                                 thrust));
         }
+        // endregion
 
         @Override
         public void stopPushing() {

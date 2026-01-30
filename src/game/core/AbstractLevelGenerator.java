@@ -1,89 +1,132 @@
 package game.core;
 
+import java.util.ArrayList;
 import java.util.Random;
 
-import controller.ports.WorldInitializer;
+import controller.ports.WorldManager;
+import world.ports.DefEmitterDTO;
 import world.ports.DefItem;
 import world.ports.DefItemDTO;
-import world.ports.DefItemPrototypeDTO;
+import world.ports.DefWeaponDTO;
 import world.ports.WorldDefinition;
 
 public abstract class AbstractLevelGenerator {
 
     // region Fields
-    protected final Random rnd = new Random();
-    protected final WorldInitializer worldInitializer;
-    protected final WorldDefinition worldDefinition;
+    private final Random rnd = new Random();
+    private final DefItemMaterializer defItemMaterializer = new DefItemMaterializer();
+    private final WorldManager worldManager;
+    private final WorldDefinition worldDefinition;
     // endregion
 
-    // *** CONSTRUCTORS ***
-
-    protected AbstractLevelGenerator(WorldInitializer worldInitializer, WorldDefinition worldDef) {
-        if (worldInitializer == null) {
+    // region Constructors
+    protected AbstractLevelGenerator(WorldManager worldManager, WorldDefinition worldDef) {
+        if (worldManager == null) {
             throw new IllegalArgumentException("WorldInitializer cannot be null.");
         }
         if (worldDef == null) {
             throw new IllegalArgumentException("WorldDefinition cannot be null.");
         }
 
-        this.worldInitializer = worldInitializer;
+        this.worldManager = worldManager;
         this.worldDefinition = worldDef;
 
         this.createWorld();
     }
+    // endregion
+
+    // *** PROTECTED ABSTRACT ***
+
+    // region creators (create***)
+    protected abstract void createStatics();
+
+    protected abstract void createDecorators();
+
+    protected abstract void createPlayers();
+
+    protected abstract void createDynamics();
+    // endregion
 
     // *** PROTECTED ***
 
-    /**
-     * Standard world creation pipeline.
-     * Subclasses decide which sections they want to create.
-     */
-    protected void createWorld() {
-        this.worldInitializer.loadAssets(this.worldDefinition.gameAssets);
-
-        this.createSpaceDecorators();
-        this.createStaticBodies();
+    // region adders (add***)
+    protected void addDecoratorIntoTheGame(DefItemDTO deco) {
+        this.worldManager.addDecorator(deco.assetId, deco.size, deco.posX, deco.posY, deco.angle);
     }
 
-    /**
-     * Default: no-op. Override if generator needs it.
-     */
-    protected void createStaticBodies() {
-        // no-op by default
+        protected void addDynamicIntoTheGame(DefItemDTO bodyDef) {
+        this.worldManager.addDynamicBody(
+                bodyDef.assetId, bodyDef.size,
+                bodyDef.posX, bodyDef.posY,
+                bodyDef.speedX, bodyDef.speedY,
+                0, 0,
+                bodyDef.angle,
+                bodyDef.angularSpeed,
+                0d,
+                bodyDef.thrust);
     }
 
-    /**
-     * Default: no-op. Override if generator needs it.
-     */
-    protected void createSpaceDecorators() {
-        // no-op by default
-    }
+    protected String addLocalPlayerIntoTheGame(
+            DefItemDTO bodyDef, ArrayList<DefWeaponDTO> weaponDefs,
+            ArrayList<DefEmitterDTO> trailDefs) {
 
-    // *** PROTECTED ***
+        String playerId = this.worldManager.addPlayer(
+                bodyDef.assetId, bodyDef.size,
+                bodyDef.posX, bodyDef.posY,
+                bodyDef.speedX, bodyDef.speedY,
+                0, 0,
+                bodyDef.angle, bodyDef.angularSpeed,
+                0,
+                bodyDef.thrust);
 
-    protected final DefItemDTO materialize(DefItem defitem) {
-        if (defitem == null) {
-            throw new IllegalArgumentException("DefItem cannot be null.");
+        if (playerId == null) {
+            throw new IllegalStateException("Failed to create local player.");
         }
 
-        if (defitem instanceof DefItemDTO concreteItem) {
-            return concreteItem;
-        }
+        this.equipEmitters(playerId, trailDefs);
+        this.equipWeapons(playerId, weaponDefs);
 
-        if (defitem instanceof DefItemPrototypeDTO prototypeItem) {
-            double size = this.randomDoubleBetween(prototypeItem.minSize, prototypeItem.maxSize);
-            double angle = this.randomDoubleBetween(prototypeItem.minAngle, prototypeItem.maxAngle);
-            double x = this.randomDoubleBetween(prototypeItem.posMinX, prototypeItem.posMaxX);
-            double y = this.randomDoubleBetween(prototypeItem.posMinY, prototypeItem.posMaxY);
-
-            return new DefItemDTO(
-                    prototypeItem.assetId, size, angle, x, y, prototypeItem.density);
-        }
-
-        // sealed -> debería ser inalcanzable salvo que cambie permits
-        throw new IllegalStateException(
-            "Unsupported DefItem implementation: " + defitem.getClass().getName());
+        this.worldManager.setLocalPlayer(playerId);
+        return playerId;
     }
+
+    protected void addStaticIntoTheGame(DefItemDTO bodyDef) {
+        this.worldManager.addStaticBody(
+                bodyDef.assetId, bodyDef.size,
+                bodyDef.posX, bodyDef.posY,
+                bodyDef.angle);
+    }
+    // endregion
+
+    // region equippers (equip***)
+    protected void equipEmitters(String entityId, ArrayList<DefEmitterDTO> emitterDefs) {
+        for (DefEmitterDTO emitterDef : emitterDefs) {
+            this.worldManager.equipTrail(
+                    entityId, emitterDef);
+        }
+    }
+
+    protected void equipWeapons(String entityId, ArrayList<DefWeaponDTO> weaponDefs) {
+        for (DefWeaponDTO weaponDef : weaponDefs) {
+            this.worldManager.equipWeapon(
+                    entityId, weaponDef, 0);
+        }
+    }
+    // endregion
+
+    protected final DefItemDTO defItemToDTO(DefItem defitem) {
+        return this.defItemMaterializer.defItemToDTO(defitem);
+    }
+
+    // region getters (get***)
+    protected WorldDefinition getWorldDefinition() {
+        return this.worldDefinition;
+    }
+
+    protected WorldManager getWorldManager() {
+        return this.worldManager;
+    }
+    // endregion
 
     protected final double randomDoubleBetween(double minInclusive, double maxInclusive) {
         if (maxInclusive < minInclusive) {
@@ -93,5 +136,17 @@ public abstract class AbstractLevelGenerator {
             return minInclusive;
         }
         return minInclusive + (this.rnd.nextDouble() * (maxInclusive - minInclusive));
+    }
+
+    // *** PRIVATE ***
+
+    // Standard world creation pipeline.
+    private final void createWorld() {
+        this.worldManager.loadAssets(this.worldDefinition.gameAssets);
+
+        this.createDecorators();
+        this.createStatics();
+        this.createPlayers();
+        this.createDynamics();
     }
 }

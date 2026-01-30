@@ -56,18 +56,6 @@ public class NullPhysicsEngine extends AbstractPhysicsEngine {
     }
 
     @Override
-    public void setAngularAcceleration(double angularAcceleration) {
-    }
-
-    @Override
     public void setAngularSpeed(double angularSpeed) {
-    }
-
-    @Override
-    public void setThrust(double thrust) {
-    }
-
-    @Override
-    public void stopPushing() {
     }
 }

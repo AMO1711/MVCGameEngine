@@ -1,29 +1,31 @@
 package game.core;
 
+import java.util.ArrayList;
 import java.util.Random;
 
 import controller.ports.EngineState;
-import controller.ports.WorldEvolver;
+import controller.ports.WorldManager;
 import utils.helpers.DoubleVector;
+import world.ports.DefEmitterDTO;
 import world.ports.DefItem;
 import world.ports.DefItemDTO;
-import world.ports.DefItemPrototypeDTO;
+import world.ports.DefWeaponDTO;
 import world.ports.WorldDefinition;
 
 public abstract class AbstractIAGenerator implements Runnable {
 
     // region Fields
-    protected final Random rnd = new Random();
-    protected final WorldEvolver worldEvolver;
+    private final Random rnd = new Random();
+    private final DefItemMaterializer defItemMaterializer;
+    protected final WorldManager worldEvolver;
     protected final WorldDefinition worldDefinition;
     protected final int maxCreationDelay;
     private Thread thread;
     // endregion
 
-    // *** CONSTRUCTORS ***
-
+    // region Constructors
     protected AbstractIAGenerator(
-            WorldEvolver worldEvolver,
+            WorldManager worldEvolver,
             WorldDefinition worldDefinition,
             int maxCreationDelay) {
 
@@ -34,10 +36,12 @@ public abstract class AbstractIAGenerator implements Runnable {
             throw new IllegalArgumentException("WorldDefinition cannot be null.");
         }
 
+        this.defItemMaterializer = new DefItemMaterializer();
         this.worldEvolver = worldEvolver;
         this.worldDefinition = worldDefinition;
         this.maxCreationDelay = maxCreationDelay;
     }
+    // endregion
 
     // *** PUBLIC ***
 
@@ -54,6 +58,7 @@ public abstract class AbstractIAGenerator implements Runnable {
 
     // *** PROTECTED (alphabetical order) ***
 
+    // region adders (add***)
     protected void addDynamicIntoTheGame(DefItemDTO bodyDef) {
         this.worldEvolver.addDynamicBody(
                 bodyDef.assetId, bodyDef.size,
@@ -66,9 +71,52 @@ public abstract class AbstractIAGenerator implements Runnable {
                 bodyDef.thrust);
     }
 
+    protected String addLocalPlayerIntoTheGame(
+            DefItemDTO bodyDef, ArrayList<DefWeaponDTO> weaponDefs,
+            ArrayList<DefEmitterDTO> trailDefs) {
+
+        String playerId = this.worldEvolver.addPlayer(
+                bodyDef.assetId, bodyDef.size,
+                bodyDef.posX, bodyDef.posY,
+                bodyDef.speedX, bodyDef.speedY,
+                0, 0,
+                bodyDef.angle, bodyDef.angularSpeed,
+                0,
+                bodyDef.thrust);
+
+        if (playerId == null) {
+            throw new IllegalStateException("Failed to create local player.");
+        }
+
+        this.equipEmitters(playerId, trailDefs);
+        this.equipWeapons(playerId, weaponDefs);
+
+        this.worldEvolver.setLocalPlayer(playerId);
+        return playerId;
+    }
+    // endregion
+
+    // region equippers (equip***)
+    protected void equipEmitters(String entityId, ArrayList<DefEmitterDTO> emitterDefs) {
+        for (DefEmitterDTO emitterDef : emitterDefs) {
+            this.worldEvolver.equipTrail(
+                    entityId, emitterDef);
+        }
+    }
+
+    protected void equipWeapons(String entityId, ArrayList<DefWeaponDTO> weaponDefs) {
+        for (DefWeaponDTO weaponDef : weaponDefs) {
+            this.worldEvolver.equipWeapon(
+                    entityId, weaponDef, 0);
+        }
+    }
+    // endregion
+
+    // region getters (get***)
     protected String getThreadName() {
         return this.getClass().getSimpleName();
     }
+    // endregion
 
     // Optional hook for subclasses (e.g., create players).
     protected void onActivate() {
@@ -76,27 +124,17 @@ public abstract class AbstractIAGenerator implements Runnable {
     }
 
     // Override to implement logic for ALIVE tick
-    protected abstract void tickAlive();
+    protected abstract void onTick();
 
     protected final DoubleVector centerPosition() {
-        double x = this.worldEvolver.getWorldDimension().width / 2.0;
-        double y = this.worldEvolver.getWorldDimension().height / 2.0;
+        DoubleVector worldDim = this.worldEvolver.getWorldDimension();
+        double x = worldDim.x / 2.0;
+        double y = worldDim.y / 2.0;
         return new DoubleVector(x, y);
     }
 
-    // Converts a DefItem (prototype or DTO) into a concrete DefItemDTO
-    protected final DefItemDTO toDTO(DefItem defItem) {
-        switch (defItem) {
-            case DefItemDTO dto -> {
-                return dto; // ========== already a DTO ==========>>
-            }
-            case DefItemPrototypeDTO proto -> {
-                return this.prototypeToDTO(proto); // ====== convert prototype ======>
-            }
-            default -> throw new IllegalStateException(
-                    "Unsupported DefItem implementation: " + defItem.getClass().getName());
-        }
-
+    protected final DefItemDTO defItemToDTO(DefItem defItem) {
+        return this.defItemMaterializer.defItemToDTO(defItem);
     }
 
     // region Random helpers (random***)
@@ -129,34 +167,6 @@ public abstract class AbstractIAGenerator implements Runnable {
     // }
     // endregion
 
-    // *** PRIVATE ***
-
-    private DefItemDTO prototypeToDTO(DefItemPrototypeDTO proto) {
-        double size = this.randomDoubleBetween(proto.minSize, proto.maxSize);
-        double angle = this.randomDoubleBetween(proto.minAngle, proto.maxAngle);
-        double x = this.randomDoubleBetween(proto.posMinX, proto.posMaxX);
-        double y = this.randomDoubleBetween(proto.posMinY, proto.posMaxY);
-        double angularSpeed = this.randomDoubleBetween(proto.angularSpeedMin, proto.angularSpeedMax);
-        double thrust = this.randomDoubleBetween(proto.thrustMin, proto.thrustMax);
-
-        // Velocity components based on angle
-
-        double angleRad = Math.toRadians(angle);
-        double speed = this.randomDoubleBetween(proto.speedMin, proto.speedMax);
-        double speedX = 0.0d;
-        double speedY = 0.0d;
-        if (speed != 0.0d) {
-            speedX = Math.cos(angleRad) * speed;
-            speedY = Math.sin(angleRad) * speed;
-        }
-
-        DefItemDTO dto = new DefItemDTO(
-                proto.assetId, size, angle, x, y, proto.density,
-                speedX, speedY, angularSpeed, thrust);
-
-        return dto;
-    }
-
     // *** INTERFACE IMPLEMENTATION ***
 
     // region Runnable
@@ -165,7 +175,7 @@ public abstract class AbstractIAGenerator implements Runnable {
         while (this.worldEvolver.getEngineState() != EngineState.STOPPED) {
 
             if (this.worldEvolver.getEngineState() == EngineState.ALIVE) {
-                this.tickAlive();
+                this.onTick();
             }
 
             try {
@@ -176,17 +186,5 @@ public abstract class AbstractIAGenerator implements Runnable {
         }
     }
     // endregion
-
-    // private DoubleVector radialSpeedFromCenter() {
-    //     double angle = this.rnd.nextDouble() * Math.PI * 2.0;
-
-    //     double module = this.AIConfig.fixedSpeed
-    //             ? Math.sqrt(this.AIConfig.speedX * this.AIConfig.speedX
-    //                     + this.AIConfig.speedY * this.AIConfig.speedY)
-    //             : this.AIConfig.maxSpeedModule * this.rnd.nextDouble();
-
-    //     return new DoubleVector(
-    //             Math.cos(angle), Math.sin(angle), module);
-    // }
 
 }

@@ -7,7 +7,7 @@ import view.renderables.ports.RenderDTO;
 
 public class RenderableMapper {
 
-   public static RenderDTO fromBodyDTO(BodyDTO bodyDto) {
+    public static RenderDTO fromBodyDTO(BodyDTO bodyDto) {
         if (bodyDto.physicsValues == null || bodyDto.entityId == null) {
             return null;
         }
@@ -16,7 +16,8 @@ public class RenderableMapper {
                 bodyDto.entityId,
                 bodyDto.physicsValues.posX, bodyDto.physicsValues.posY,
                 bodyDto.physicsValues.angle,
-                bodyDto.physicsValues.size);
+                bodyDto.physicsValues.size,
+                bodyDto.physicsValues.timeStamp);
 
         return renderablesData;
     }

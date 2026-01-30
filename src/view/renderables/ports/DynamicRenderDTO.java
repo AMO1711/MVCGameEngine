@@ -10,13 +10,15 @@ public class DynamicRenderDTO extends RenderDTO {
 
     public DynamicRenderDTO(
             String entityId,
-            double posX, double posY, double angle,
+            double posX, double posY,
+            double angle,
             double size,
             long timeStamp,
             double speedX, double speedY,
-            double accX, double accY) {
+            double accX, double accY,
+            long timestamp) {
 
-        super(entityId, posX, posY, angle, size);
+        super(entityId, posX, posY, angle, size, timestamp);
 
         this.timeStamp = timeStamp;
         this.speedX = speedX;
