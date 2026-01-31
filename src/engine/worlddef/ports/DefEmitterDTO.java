@@ -1,4 +1,4 @@
-package engine.world.ports;
+package engine.worlddef.ports;
 
 import engine.model.bodies.ports.BodyType;
 

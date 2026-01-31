@@ -1,4 +1,4 @@
-package engine.world.core;
+package engine.worlddef.core;
 
 import assets.core.AssetCatalog;
 import assets.impl.ProjectAssets;

@@ -1,7 +1,7 @@
 package engine.controller.mappers;
 
 import engine.model.weapons.ports.WeaponDto;
-import engine.world.ports.DefWeaponDTO;
+import engine.worlddef.ports.DefWeaponDTO;
 
 public class WeaponMapper {
 
