@@ -64,10 +64,87 @@ Este documento resume los acoplamientos entre packages **únicamente** a partir 
 | world.ports | 0 | 0 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 1 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 1 | 3 |
 | Total imports (target) | 2 | 16 | 7 | 3 | 10 | 2 | 6 | 13 | 4 | 28 | 35 | 7 | 0 | 3 | 0 | 0 | 0 | 10 | 5 | 0 | 6 | 7 | 37 | 1 | 1 | 10 | 2 | 2 | 2 | 17 | 3 | 7 | 3 | 4 | 4 | 21 | 2 | 3 | 3 | 4 | 18 | 0 | 2 | 35 | 159 | 504 |
 
+## Señales para evaluar acoplamiento y coherencia
+
+### Fan-out (dependencias salientes) más altos
+
+Paquetes con mayor número de imports hacia otros packages (posibles *hubs consumidores*):
+
+| Package | Total imports | Internos | Externos | % externos |
+| --- | --- | --- | --- | --- |
+| generators.implementations.actions | 54 | 49 | 5 | 9.3% |
+| view.core | 45 | 21 | 24 | 53.3% |
+| model.implementations | 41 | 33 | 8 | 19.5% |
+| model.bodies.implementations | 31 | 30 | 1 | 3.2% |
+| world.implementations | 30 | 26 | 4 | 13.3% |
+| controller.implementations | 28 | 25 | 3 | 10.7% |
+| view.huds.core | 27 | 0 | 27 | 100.0% |
+| images | 20 | 0 | 20 | 100.0% |
+| model.bodies.core | 17 | 10 | 7 | 41.2% |
+| controller.mappers | 16 | 14 | 2 | 12.5% |
+
+### Fan-in (dependencias entrantes) más altos
+
+Paquetes más referenciados por otros packages (posibles *hubs de reutilización*):
+
+| Package | Total imports (target) |
+| --- | --- |
+| model.bodies.ports | 37 |
+| events.domain.ports.eventtype | 35 |
+| world.ports | 35 |
+| events.domain.ports | 28 |
+| model.weapons.ports | 21 |
+| view.renderables.ports | 18 |
+| model.physics.ports | 17 |
+| actions | 16 |
+| controller.ports | 13 |
+| assets.ports | 10 |
+
+### Asimetrías de dependencia (A -> B vs B -> A)
+
+Pares con mayor desbalance de imports mutuos; útil para revisar direcciones de dependencia:
+
+| Package A | Package B | A -> B | B -> A | Delta |
+| --- | --- | --- | --- | --- |
+| events.domain.ports.eventtype | generators.implementations.actions | 0 | 25 | 25 |
+| world.implementations | world.ports | 16 | 0 | 16 |
+| actions | generators.implementations.actions | 0 | 10 | 10 |
+| model.bodies.implementations | model.bodies.ports | 12 | 4 | 8 |
+| events.domain.ports | events.domain.ports.eventtype | 0 | 8 | 8 |
+| view.core | view.renderables.ports | 8 | 0 | 8 |
+| controller.implementations | controller.mappers | 6 | 0 | 6 |
+| model.bodies.implementations | model.physics.ports | 6 | 0 | 6 |
+| model.bodies.ports | model.implementations | 0 | 6 | 6 |
+| events.domain.ports | generators.implementations.actions | 0 | 5 | 5 |
+
+### Posibles violaciones de coherencia (heurísticas simples)
+
+Reglas heurísticas sobre nombres de package (pueden tener falsos positivos):
+
+- `*.ports` debería depender de `*.core` o de paquetes externos, pero no de `*.implementations`.
+
+- `*.core` no debería depender de `*.implementations` si se busca inversión de dependencias.
+
+
+| Origen | Destino | Imports | Motivo |
+| --- | --- | --- | --- |
+| model.bodies.ports | model.bodies.implementations | 4 | ports -> implementations/core |
+| model.weapons.ports | model.weapons.implementations | 4 | ports -> implementations/core |
+| view.core | view.huds.implementations | 3 | core -> implementations |
+| model.bodies.ports | model.bodies.core | 2 | ports -> implementations/core |
+| view.core | view.renderables.implementations | 2 | core -> implementations |
+| controller.ports | assets.core | 1 | ports -> implementations/core |
+| model.bodies.ports | model.physics.implementations | 1 | ports -> implementations/core |
+| model.bodies.ports | model.spatial.core | 1 | ports -> implementations/core |
+| view.core | controller.implementations | 1 | core -> implementations |
+| world.ports | assets.core | 1 | ports -> implementations/core |
+
 ## Lectura rápida
 
 - Usa `external` para detectar dependencias fuera del dominio del proyecto.
 
-- Los valores altos en una fila indican un paquete muy dependiente de otros.
+- Valores altos en una fila indican un paquete muy dependiente de otros.
 
-- Los valores altos en una columna indican un paquete muy referenciado.
+- Valores altos en una columna indican un paquete muy referenciado.
+
+- Asimetrías grandes suelen indicar una dirección de dependencia clara; si no es intencional, conviene revisarlas.
