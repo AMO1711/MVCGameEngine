@@ -1,10 +1,10 @@
-package worlddef;
+package world;
 
 import assets.impl.ProjectAssets;
 import assets.ports.AssetType;
 import engine.model.bodies.ports.BodyType;
 import engine.utils.helpers.DoubleVector;
-import engine.world.core.AbstractWorldDefinitionProvider;
+import engine.worlddef.core.AbstractWorldDefinitionProvider;
 
 public final class RandomWorldDefinitionProvider extends AbstractWorldDefinitionProvider {
 

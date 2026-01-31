@@ -1,4 +1,4 @@
-package engine.world.ports;
+package engine.worlddef.ports;
 
 public final class DefItemPrototypeDTO implements DefItem {
 

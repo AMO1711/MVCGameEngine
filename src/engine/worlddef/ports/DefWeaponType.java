@@ -1,4 +1,4 @@
-package engine.world.ports;
+package engine.worlddef.ports;
 
 public enum DefWeaponType {
     BULLET_WEAPON,

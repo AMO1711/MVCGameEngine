@@ -2,9 +2,9 @@ package engine.generators;
 
 import java.util.Random;
 
-import engine.world.ports.DefItem;
-import engine.world.ports.DefItemDTO;
-import engine.world.ports.DefItemPrototypeDTO;
+import engine.worlddef.ports.DefItem;
+import engine.worlddef.ports.DefItemDTO;
+import engine.worlddef.ports.DefItemPrototypeDTO;
 
 public final class DefItemMaterializer {
 

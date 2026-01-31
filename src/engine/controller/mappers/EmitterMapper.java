@@ -1,7 +1,7 @@
 package engine.controller.mappers;
 
 import engine.model.emitter.ports.EmitterConfigDto;
-import engine.world.ports.DefEmitterDTO;
+import engine.worlddef.ports.DefEmitterDTO;
 
 public class EmitterMapper {
 

@@ -26,8 +26,8 @@ import engine.view.renderables.ports.DynamicRenderDTO;
 import engine.view.renderables.ports.PlayerRenderDTO;
 import engine.view.renderables.ports.RenderDTO;
 import engine.view.renderables.ports.SpatialGridStatisticsRenderDTO;
-import engine.world.ports.DefEmitterDTO;
-import engine.world.ports.DefWeaponDTO;
+import engine.worlddef.ports.DefEmitterDTO;
+import engine.worlddef.ports.DefWeaponDTO;
 
 /**
  * Controller
