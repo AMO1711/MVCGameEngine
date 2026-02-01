@@ -2,7 +2,6 @@ package engine.view.core;
 
 import java.awt.AlphaComposite;
 import java.awt.Canvas;
-import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Graphics2D;
 import java.awt.GraphicsConfiguration;
@@ -122,8 +121,12 @@ import java.awt.Toolkit;
  */
 public class Renderer extends Canvas implements Runnable {
 
-    // region Monitoring
+    // region Constants
+    private static final int DELAY_IN_MILLIS = 5; // 
     private static final long MONITORING_PERIOD_NS = 500_000_000L;
+    // endregion
+
+    // region Monitoring
 
     // Start times (timestamps)
     private volatile long monitoringPeriodStartNs = System.nanoTime();
@@ -142,10 +145,6 @@ public class Renderer extends Canvas implements Runnable {
     private volatile long framesPerPeriod = 0L;
     private volatile long fpsPerPeriod = 0L;
     private volatile double avgDrawMsPerPeriod = 0.0D;
-    // endregion
-
-    // regoin Constants
-    private static final int DELAY_IN_MILLIS = 16; // ~60 FPS
     // endregion
 
     // region Fields

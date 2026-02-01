@@ -203,6 +203,10 @@ public final class ProjectAssets {
         this.catalog.register("stars_07", "stars-07.png", AssetType.STARS, AssetIntensity.HIGH);
         // endregion
 
+        // region stardusts (stardust-***)
+        this.catalog.register("stardust_01", "stardust-01.png", AssetType.STARDUST, AssetIntensity.HIGH);
+        this.catalog.register("stardust_02", "stardust-02.png", AssetType.STARDUST, AssetIntensity.HIGH);
+
         // region spaceships (spaceship-***)
         this.catalog.register("spaceship_01", "spaceship-01.png", AssetType.SPACESHIP, AssetIntensity.HIGH);
         this.catalog.register("spaceship_02", "spaceship-02.png", AssetType.SPACESHIP, AssetIntensity.HIGH);
@@ -217,7 +221,7 @@ public final class ProjectAssets {
         this.catalog.register("spaceship_12", "spaceship-12.png", AssetType.SPACESHIP, AssetIntensity.HIGH);
         this.catalog.register("spaceship_13", "spaceship-13.png", AssetType.SPACESHIP, AssetIntensity.HIGH);
         this.catalog.register("spaceship_14", "spaceship-14.png", AssetType.SPACESHIP, AssetIntensity.HIGH);
-        this.catalog.register("spaceship_15", "spaceship-15.png", AssetType.SPACESHIP, AssetIntensity.HIGH);        
+        this.catalog.register("spaceship_15", "spaceship-15.png", AssetType.SPACESHIP, AssetIntensity.HIGH);
         // endregion
 
         // region suns (sun-***)
