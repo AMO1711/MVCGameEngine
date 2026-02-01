@@ -1,6 +1,8 @@
-# Informe jerárquico de paquetes para unknown/MVCGameEngine — rama: work — generado el 2026-02-01
+# Informe jerárquico de paquetes para unknown/MVCGameEngine — rama: develop (no disponible localmente; análisis sobre branch work) — generado el 2026-02-01
 
-> Nota sobre enlaces: el repositorio local no tiene remoto Git configurado, por lo que se usa un owner placeholder (`unknown`). Actualiza `unknown` con el owner real de GitHub para que los enlaces funcionen.
+> Nota de acceso: el repositorio local no tiene remoto Git configurado ni existe la rama `develop` en este entorno. No es posible “actualizar” ni contrastar cambios respecto a `develop`. Para resolverlo, configure un remoto (`git remote add origin ...`) y haga `git fetch`/`git checkout develop`. Mientras tanto, el informe refleja el árbol `src/` actual de la rama local `work`.
+>
+> Nota sobre enlaces: se usa un owner placeholder (`unknown`). Sustitúyelo por el owner real de GitHub para que los enlaces funcionen.
 
 ## Micro-resumen arquitectural
 
@@ -709,4 +711,5 @@ Define el esquema de mundo y catálogos de ítems para inicializar escenarios. (
 ## Observaciones finales
 
 - No se encontraron issues referenciados en el repositorio que afecten la comprensión de los paquetes.
+- No existe un paquete `_helper` en el árbol actual; el equivalente presente es `utils.helpers`.
 - Se recomienda añadir pruebas de integración alrededor de `Model` y `Controller`, donde confluyen eventos, reglas y render.
