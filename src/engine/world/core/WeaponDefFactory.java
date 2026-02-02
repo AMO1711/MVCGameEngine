@@ -1,7 +1,7 @@
-package engine.worlddef.core;
+package engine.world.core;
 
-import engine.worlddef.ports.DefWeaponDTO;
-import engine.worlddef.ports.DefWeaponType;
+import engine.world.ports.DefWeaponDTO;
+import engine.world.ports.DefWeaponType;
 
 public final class WeaponDefFactory {
 

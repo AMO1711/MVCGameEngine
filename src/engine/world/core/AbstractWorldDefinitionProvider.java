@@ -1,4 +1,4 @@
-package engine.worlddef.core;
+package engine.world.core;
 
 import java.util.ArrayList;
 import java.util.Random;
@@ -7,14 +7,14 @@ import engine.assets.core.AssetCatalog;
 import engine.assets.ports.AssetType;
 import engine.model.bodies.ports.BodyType;
 import engine.utils.helpers.DoubleVector;
-import engine.worlddef.ports.DefBackgroundDTO;
-import engine.worlddef.ports.DefEmitterDTO;
-import engine.worlddef.ports.DefItem;
-import engine.worlddef.ports.DefItemDTO;
-import engine.worlddef.ports.DefItemPrototypeDTO;
-import engine.worlddef.ports.DefWeaponDTO;
-import engine.worlddef.ports.WorldDefinition;
-import engine.worlddef.ports.WorldDefinitionProvider;
+import engine.world.ports.DefBackgroundDTO;
+import engine.world.ports.DefEmitterDTO;
+import engine.world.ports.DefItem;
+import engine.world.ports.DefItemDTO;
+import engine.world.ports.DefItemPrototypeDTO;
+import engine.world.ports.DefWeaponDTO;
+import engine.world.ports.WorldDefinition;
+import engine.world.ports.WorldDefinitionProvider;
 import world.ProjectAssets;
 
 public abstract class AbstractWorldDefinitionProvider implements WorldDefinitionProvider {

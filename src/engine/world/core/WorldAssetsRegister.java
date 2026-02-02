@@ -1,4 +1,4 @@
-package engine.worlddef.core;
+package engine.world.core;
 
 import engine.assets.core.AssetCatalog;
 import engine.assets.ports.AssetInfoDTO;

@@ -5,7 +5,7 @@ import java.awt.Dimension;
 import engine.assets.ports.AssetType;
 import engine.model.bodies.ports.BodyType;
 import engine.utils.helpers.DoubleVector;
-import engine.worlddef.core.AbstractWorldDefinitionProvider;
+import engine.world.core.AbstractWorldDefinitionProvider;
 
 public final class EarthInCenterWorldDefinitionProvider extends AbstractWorldDefinitionProvider {
 

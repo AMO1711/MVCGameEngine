@@ -2,8 +2,8 @@ package engine.controller.ports;
 
 import engine.assets.core.AssetCatalog;
 import engine.utils.helpers.DoubleVector;
-import engine.worlddef.ports.DefEmitterDTO;
-import engine.worlddef.ports.DefWeaponDTO;
+import engine.world.ports.DefEmitterDTO;
+import engine.world.ports.DefWeaponDTO;
 
 public interface WorldManager {
 

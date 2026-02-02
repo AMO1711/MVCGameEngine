@@ -6,8 +6,8 @@ import engine.controller.ports.ActionsGenerator;
 import engine.model.impl.Model;
 import engine.utils.helpers.DoubleVector;
 import engine.view.core.View;
-import engine.worlddef.ports.WorldDefinition;
-import engine.worlddef.ports.WorldDefinitionProvider;
+import engine.world.ports.WorldDefinition;
+import engine.world.ports.WorldDefinitionProvider;
 import level.*;
 import world.ProjectAssets;
 

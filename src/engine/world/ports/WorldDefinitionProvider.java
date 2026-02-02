@@ -1,4 +1,4 @@
-package engine.worlddef.ports;
+package engine.world.ports;
 
 public interface WorldDefinitionProvider {
 

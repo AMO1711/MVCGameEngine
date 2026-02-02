@@ -5,9 +5,9 @@ import java.util.Random;
 
 import engine.controller.ports.WorldManager;
 import engine.generators.AbstractIAGenerator;
-import engine.worlddef.ports.DefItem;
-import engine.worlddef.ports.DefItemDTO;
-import engine.worlddef.ports.WorldDefinition;
+import engine.world.ports.DefItem;
+import engine.world.ports.DefItemDTO;
+import engine.world.ports.WorldDefinition;
 
 public class AIBasicSpawner extends AbstractIAGenerator {
 
