@@ -6,11 +6,11 @@ import java.util.Random;
 import engine.controller.ports.EngineState;
 import engine.controller.ports.WorldManager;
 import engine.utils.helpers.DoubleVector;
-import engine.worlddef.ports.DefEmitterDTO;
-import engine.worlddef.ports.DefItem;
-import engine.worlddef.ports.DefItemDTO;
-import engine.worlddef.ports.DefWeaponDTO;
-import engine.worlddef.ports.WorldDefinition;
+import engine.world.ports.DefEmitterDTO;
+import engine.world.ports.DefItem;
+import engine.world.ports.DefItemDTO;
+import engine.world.ports.DefWeaponDTO;
+import engine.world.ports.WorldDefinition;
 
 public abstract class AbstractIAGenerator implements Runnable {
 
@@ -72,7 +72,7 @@ public abstract class AbstractIAGenerator implements Runnable {
     }
 
     protected String addLocalPlayerIntoTheGame(
-            DefItemDTO bodyDef, ArrayList<DefWeaponDTO> weaponDefs,
+            DefItemDTO bodyDef, ArrayList<DefEmitterDTO> weaponDefs,
             ArrayList<DefEmitterDTO> trailDefs) {
 
         String playerId = this.worldEvolver.addPlayer(
@@ -104,8 +104,8 @@ public abstract class AbstractIAGenerator implements Runnable {
         }
     }
 
-    protected void equipWeapons(String entityId, ArrayList<DefWeaponDTO> weaponDefs) {
-        for (DefWeaponDTO weaponDef : weaponDefs) {
+    protected void equipWeapons(String entityId, ArrayList<DefEmitterDTO> emitterDefs) {
+        for (DefEmitterDTO weaponDef : emitterDefs) {
             this.worldEvolver.equipWeapon(
                     entityId, weaponDef, 0);
         }

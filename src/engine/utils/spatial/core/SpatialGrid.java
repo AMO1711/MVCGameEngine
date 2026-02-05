@@ -20,18 +20,18 @@ import engine.utils.spatial.ports.SpatialGridStatisticsDTO;
  */
 public final class SpatialGrid {
 
+    // region Fields
     private final double cellSize;
+    private final double invCellSize;
     private final int cellsX;
     private final int cellsY;
     private final int maxCellsPerBody;
 
-    // ===== Datos =====
-    // buckets[idx] = set(entityId)
     private final ConcurrentHashMap<String, Boolean>[] grid;
+    private final ConcurrentHashMap<String, Cells> cellsPerEntity = new ConcurrentHashMap<>();
+    // endregion
 
-    // entityId -> celdas actuales (para remove/move O(1))
-    private final ConcurrentHashMap<String, Cells> entitiesCells = new ConcurrentHashMap<>();
-
+    // region Constructors
     @SuppressWarnings("unchecked")
     public SpatialGrid(double worldWidth, double worldHeight, int cellSize, int maxCellsPerBody) {
         if (cellSize <= 0)
@@ -42,6 +42,7 @@ public final class SpatialGrid {
             throw new IllegalArgumentException("maxCellsPerBody must be > 0");
 
         this.cellSize = cellSize;
+        this.invCellSize = 1.0d / cellSize;
         this.maxCellsPerBody = maxCellsPerBody;
 
         // Ceil div
@@ -56,106 +57,17 @@ public final class SpatialGrid {
             this.grid[i] = new ConcurrentHashMap<>(64);
         }
     }
+    // endregion
 
+    // *** PUBLIC ***
+
+    // region getters (get***)
     public int getMaxCellsPerBody() {
         return maxCellsPerBody;
     }
 
-    /**
-     * Update cells useds by entityId according to posX,posY and size.
-     * - Caller provides a reusable scratchIdxs buffer.
-     * - Assumes no two threads are moving the same entityId at the same time.
-     * - If the center is out of bounds, the entity is removed from the grid (the
-     * domain will handle it).
-     */
-    public void upsert(
-            String entityId, double minX, double maxX, double minY, double maxY, int[] scratchIdxs) {
-
-        this.requireBuffer(scratchIdxs);
-
-        if (entityId == null || entityId.isEmpty()) {
-            throw new IllegalArgumentException("upsert: entityId is null or empty");
-        }
-
-        final Cells oldEntityCells = this.entitiesCells.computeIfAbsent(entityId, __ -> new Cells(maxCellsPerBody));
-
-        // Contract: newCellIdxs[0..newCount) are valid, rest is garbage/previous
-        final int[] newCellIdxs = scratchIdxs; // alias for semantic clarity: scratch used as "new cells"
-        final int newCount = computeCellIdxsClamped(minX, maxX, minY, maxY, newCellIdxs);
-
-        // olds not in news ---> body not in those cells anymore
-        for (int i = 0; i < oldEntityCells.count; i++)
-            if (!contains(newCellIdxs, newCount, oldEntityCells.idxs[i]))
-                grid[oldEntityCells.idxs[i]].remove(entityId); // Remove entity from cell
-
-        // news not in olds ---> body now in those cells
-        for (int i = 0; i < newCount; i++)
-            if (!contains(oldEntityCells.idxs, oldEntityCells.count, newCellIdxs[i]))
-                grid[newCellIdxs[i]].put(entityId, Boolean.TRUE); // Add entity to cell
-
-        // New are now old
-        oldEntityCells.updateFrom(newCellIdxs, newCount);
-    }
-
-    /**
-     * Use it when an entityId leaves the world or is removed.
-     */
-    public void remove(String entityId) {
-        if (entityId == null || entityId.isEmpty())
-            return;
-
-        // Remove cells associated to entityId (from reverse mapping
-        final Cells cells = this.entitiesCells.remove(entityId);
-        if (cells == null)
-            return;
-
-        // Remove entityId from all associated cells (from grid)
-        for (int i = 0; i < cells.count; i++) {
-            grid[cells.idxs[i]].remove(entityId);
-        }
-    }
-
-    /**
-     * Returns collision candidates for the given entity.
-     *
-     * This method uses the entityId to retrieve the current cell membership
-     * of the entity from the spatial grid (reverse mapping), and then iterates
-     * all grid buckets corresponding to those cells to collect nearby entityIds.
-     *
-     * Important notes
-     * ---------------
-     * - Returned list may contain duplicates
-     * - Iteration is weakly consistent: concurrent inserts/removals may be
-     * observed, but the result is always safe and free of structural corruption.
-     *
-     * Performance characteristics
-     * ---------------------------
-     * - No spatial recomputation is performed (cell indices are reused).
-     * - Time complexity is proportional to the number of occupied cells of the
-     * entity and the number of entities in those cells.
-     *
-     * @param entityId the entity whose collision neighborhood is queried
-     * @return the list of collision candidate entityIds (possibly empty) or null
-     */
-    public ArrayList<String> queryCollisionCandidates(String entityId, ArrayList<String> scratchCandidateIds) {
-        if (entityId == null || entityId.isEmpty())
-            return null;
-
-        final Cells cells = this.entitiesCells.get(entityId);
-        if (cells == null || cells.count <= 0)
-            return null;
-
-        scratchCandidateIds.clear();
-        for (int i = 0; i < cells.count; i++) {
-            final int cellIndex = cells.idxs[i];
-            final ConcurrentHashMap<String, Boolean> bucket = this.grid[cellIndex];
-
-            for (String id : bucket.keySet())
-                if (!entityId.equals(id))
-                    scratchCandidateIds.add(id);
-        }
-
-        return scratchCandidateIds;
+    public double getCellSize() {
+        return cellSize;
     }
 
     /**
@@ -217,10 +129,148 @@ public final class SpatialGrid {
                 nonEmptyBuckets, emptyBuckets, avgKeysPerBucketNotEmpty, maxBucketKeys, sumPairs,
                 cellSize, cellsX, cellsY, maxCellsPerBody);
     }
+    // endregion
 
-    //
-    // PRIVATE METHODS
-    //
+    /**
+     * Update cells useds by entityId according to posX,posY and size.
+     * - Caller provides a reusable scratchIdxs buffer.
+     * - Assumes no two threads are moving the same entityId at the same time.
+     * - If the center is out of bounds, the entity is removed from the grid
+     */
+    public void upsert(
+            String entityId, double minX, double maxX, double minY, double maxY, int[] scratchIdxs) {
+
+        this.requireBuffer(scratchIdxs);
+
+        if (entityId == null || entityId.isEmpty()) {
+            throw new IllegalArgumentException("upsert: entityId is null or empty");
+        }
+
+        // Get old cells of entityId (from reverse mapping), or create new if not exists
+        final Cells oldEntityCells = this.cellsPerEntity.computeIfAbsent(entityId, __ -> new Cells(maxCellsPerBody));
+
+        // Contract: newCellIdxs[0..newCount) are valid, rest is garbage
+        // alias for semantic clarity: scratch used as "new cells"
+        final int[] newCellIdxs = scratchIdxs;
+
+        // Compute overlapping cells for the query region
+        final int newCount = computeCellIdxsClamped(minX, maxX, minY, maxY, newCellIdxs);
+
+        // olds not in news ---> body not in those cells anymore
+        for (int i = 0; i < oldEntityCells.count; i++)
+            if (!contains(newCellIdxs, newCount, oldEntityCells.idxs[i]))
+                grid[oldEntityCells.idxs[i]].remove(entityId); // Remove entity from cell
+
+        // news not in olds ---> body now in those cells
+        for (int i = 0; i < newCount; i++)
+            if (!contains(oldEntityCells.idxs, oldEntityCells.count, newCellIdxs[i]))
+                grid[newCellIdxs[i]].put(entityId, Boolean.TRUE); // Add entity to cell
+
+        // New are now old
+        oldEntityCells.updateFrom(newCellIdxs, newCount);
+    }
+
+    /**
+     * Use it when an entityId leaves the world or is removed.
+     */
+    public void remove(String entityId) {
+        if (entityId == null || entityId.isEmpty())
+            return;
+
+        // Remove cells associated to entityId (from reverse mapping
+        final Cells cells = this.cellsPerEntity.remove(entityId);
+        if (cells == null)
+            return;
+
+        // Remove entityId from all associated cells (from grid)
+        for (int i = 0; i < cells.count; i++) {
+            grid[cells.idxs[i]].remove(entityId);
+        }
+    }
+
+    // region queries (query***)
+    /**
+     * Returns collision candidates for the given entity.
+     *
+     * This method uses the entityId to retrieve the current cell membership
+     * of the entity from the spatial grid (reverse mapping), and then iterates
+     * all grid buckets corresponding to those cells to collect nearby entityIds.
+     *
+     * Important notes
+     * ---------------
+     * - Returned list may contain duplicates
+     * - Iteration is weakly consistent: concurrent inserts/removals may be
+     * observed, but the result is always safe and free of structural corruption.
+     *
+     * Performance characteristics
+     * ---------------------------
+     * - No spatial recomputation is performed (cell indices are reused).
+     * - Time complexity is proportional to the number of occupied cells of the
+     * entity and the number of entities in those cells.
+     *
+     * @param entityId the entity whose collision neighborhood is queried
+     * @return the list of collision candidate entityIds (possibly empty) or null
+     */
+    public ArrayList<String> queryCollisionCandidates(String entityId, ArrayList<String> scratchCandidateIds) {
+        if (entityId == null || entityId.isEmpty())
+            return null;
+
+        final Cells cells = this.cellsPerEntity.get(entityId);
+        if (cells == null || cells.count <= 0)
+            return null;
+
+        scratchCandidateIds.clear();
+        for (int i = 0; i < cells.count; i++) {
+            final int cellIndex = cells.idxs[i];
+            final ConcurrentHashMap<String, Boolean> bucket = this.grid[cellIndex];
+
+            for (String id : bucket.keySet())
+                if (!entityId.equals(id))
+                    scratchCandidateIds.add(id);
+        }
+
+        return scratchCandidateIds;
+    }
+
+    /**
+     * Returns all entity IDs within the specified rectangular region (AABB).
+     * 
+     * Use case: Frustum culling for camera viewport.
+     * 
+     * @param minX              left edge of query region (world coords)
+     * @param maxX              right edge of query region (world coords)
+     * @param minY              top edge of query region (world coords)
+     * @param maxY              bottom edge of query region (world coords)
+     * @param scratchIdxs       reusable buffer for cell indices (min size:
+     *                          maxCellsPerBody)
+     * @param scratchCandidates reusable list for results
+     * @return list of entity IDs in region (may contain duplicates)
+     */
+    public ArrayList<String> queryRegion(
+            double minX, double maxX, double minY, double maxY,
+            int[] scratchIdxs, ArrayList<String> scratchCandidates) {
+
+        this.requireBuffer(scratchIdxs);
+        scratchCandidates.clear();
+
+        // Compute overlapping cells for the query region
+        final int cellCount = computeCellIdxsClamped(minX, maxX, minY, maxY, scratchIdxs);
+
+        // Collect all entities in those cells
+        for (int i = 0; i < cellCount; i++) {
+            final int cellIdx = scratchIdxs[i];
+            final ConcurrentHashMap<String, Boolean> bucket = this.grid[cellIdx];
+
+            for (String entityId : bucket.keySet()) {
+                scratchCandidates.add(entityId);
+            }
+        }
+
+        return scratchCandidates;
+    }
+    // endregion
+
+    // *** PRIVATE ***
 
     /**
      * Computes the set of grid cell indices overlapped by an axis-aligned bounding
@@ -252,35 +302,75 @@ public final class SpatialGrid {
     private int computeCellIdxsClamped(
             double minX, double maxX, double minY, double maxY, int[] outIdxs) {
 
-        int minCx = (int) (minX / cellSize);
-        int maxCx = (int) (maxX / cellSize);
-        int minCy = (int) (minY / cellSize);
-        int maxCy = (int) (maxY / cellSize);
+        int minCx = (int) (minX * this.invCellSize);
+        int maxCx = (int) (maxX * this.invCellSize);
+        int minCy = (int) (minY * this.invCellSize);
+        int maxCy = (int) (maxY * this.invCellSize);
 
         // Clamp to the fixed grid topology
-        minCx = this.clamp0Hi(minCx, cellsX - 1);
-        maxCx = this.clamp0Hi(maxCx, cellsX - 1);
-        minCy = this.clamp0Hi(minCy, cellsY - 1);
-        maxCy = this.clamp0Hi(maxCy, cellsY - 1);
+        minCx = this.clamp0ToHi(minCx, this.cellsX - 1);
+        maxCx = this.clamp0ToHi(maxCx, this.cellsX - 1);
+        minCy = this.clamp0ToHi(minCy, this.cellsY - 1);
+        maxCy = this.clamp0ToHi(maxCy, this.cellsY - 1);
 
+        // Estimate how many cells we need to iterate (for validation before the loop)
+        int cellCountNeeded = (maxCx - minCx + 1) * (maxCy - minCy + 1);
+
+        // Validate BEFORE iterating
+        if (cellCountNeeded > outIdxs.length) {
+            throw new IllegalArgumentException(
+                    "Query region requires " + cellCountNeeded + " cells, but buffer only has " + outIdxs.length);
+        }
+
+        // Generate cell indices without bounds checks inside the loop
         int idx = 0;
         for (int cx = minCx; cx <= maxCx; cx++) {
             for (int cy = minCy; cy <= maxCy; cy++) {
-                if (idx >= this.maxCellsPerBody) {
-                    System.err.println(
-                            "Warning: computeCellIdxsClamped() overflow. maxCellsPerBody="
-                                    + this.maxCellsPerBody);
-                    return idx; // if this happens, increase maxCellsPerBody (e.g. 9)
-                }
-
                 outIdxs[idx++] = cellIdx(cx, cy);
             }
         }
         return idx;
     }
 
+    private int computeCellIdxsClampedFromCenter(
+            double centerX, double centerY, double radius, int[] outIdxs) {
+
+        int minCx = (int) ((centerX - radius) * invCellSize);
+        int maxCx = (int) ((centerX + radius) * invCellSize);
+        int minCy = (int) ((centerY - radius) * invCellSize);
+        int maxCy = (int) ((centerY + radius) * invCellSize);
+
+        minCx = this.clamp0ToHi(minCx, cellsX - 1);
+        maxCx = this.clamp0ToHi(maxCx, cellsX - 1);
+        minCy = this.clamp0ToHi(minCy, cellsY - 1);
+        maxCy = this.clamp0ToHi(maxCy, cellsY - 1);
+
+        // Estimar cuántas celdas necesitamos
+        int cellCountNeeded = (maxCx - minCx + 1) * (maxCy - minCy + 1);
+
+        // Validar ANTES de iterar
+        if (cellCountNeeded > outIdxs.length) {
+            throw new IllegalArgumentException(
+                    "Query region requires " + cellCountNeeded + " cells, but buffer only has " + outIdxs.length);
+        }
+
+        // Iterar sin checkeos de límite en el loop
+        int idx = 0;
+        for (int cx = minCx; cx <= maxCx; cx++) {
+            for (int cy = minCy; cy <= maxCy; cy++) {
+                outIdxs[idx++] = cellIdx(cx, cy);
+            }
+        }
+
+        return idx;
+    }
+
     private int cellIdx(int cx, int cy) {
         return cy * this.cellsX + cx;
+    }
+
+    private int clamp0ToHi(int value, int highLimit) {
+        return (value < 0) ? 0 : (value > highLimit) ? highLimit : value;
     }
 
     private void requireBuffer(int[] buf) {
@@ -289,9 +379,7 @@ public final class SpatialGrid {
                     "idxsBuffer length must be >= maxCellsPerBody (" + maxCellsPerBody + ")");
     }
 
-    private int clamp0Hi(int value, int highLimit) {
-        return (value < 0) ? 0 : (value > highLimit) ? highLimit : value;
-    }
+    // *** PRIVATE STATIC ***
 
     private static boolean contains(int[] arr, int count, int value) {
         for (int i = 0; i < count; i++)

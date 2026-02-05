@@ -4,11 +4,11 @@ import java.util.ArrayList;
 import java.util.Random;
 
 import engine.controller.ports.WorldManager;
-import engine.worlddef.ports.DefEmitterDTO;
-import engine.worlddef.ports.DefItem;
-import engine.worlddef.ports.DefItemDTO;
-import engine.worlddef.ports.DefWeaponDTO;
-import engine.worlddef.ports.WorldDefinition;
+import engine.world.ports.DefEmitterDTO;
+import engine.world.ports.DefItem;
+import engine.world.ports.DefItemDTO;
+import engine.world.ports.DefWeaponDTO;
+import engine.world.ports.WorldDefinition;
 
 public abstract class AbstractLevelGenerator {
 
@@ -67,7 +67,7 @@ public abstract class AbstractLevelGenerator {
     }
 
     protected String addLocalPlayerIntoTheGame(
-            DefItemDTO bodyDef, ArrayList<DefWeaponDTO> weaponDefs,
+            DefItemDTO bodyDef, ArrayList<DefEmitterDTO> weaponDefs,
             ArrayList<DefEmitterDTO> trailDefs) {
 
         String playerId = this.worldManager.addPlayer(
@@ -106,8 +106,8 @@ public abstract class AbstractLevelGenerator {
         }
     }
 
-    protected void equipWeapons(String entityId, ArrayList<DefWeaponDTO> weaponDefs) {
-        for (DefWeaponDTO weaponDef : weaponDefs) {
+    protected void equipWeapons(String entityId, ArrayList<DefEmitterDTO> weaponDefs) {
+        for (DefEmitterDTO weaponDef : weaponDefs) {
             this.worldManager.equipWeapon(
                     entityId, weaponDef, 0);
         }

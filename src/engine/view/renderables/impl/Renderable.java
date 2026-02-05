@@ -14,10 +14,10 @@ public class Renderable {
     private final ImageCache cache;
 
     private long lastFrameSeen;
-    private RenderDTO renderableValues = null;
+    private RenderDTO renderData = null;
     private BufferedImage image = null;
 
-    public Renderable(RenderDTO renderInfo, String assetId, ImageCache cache, long currentFrame) {
+    public Renderable(RenderDTO renderData, String assetId, ImageCache cache, long currentFrame) {
         if (assetId == null || assetId.isEmpty()) {
             throw new IllegalArgumentException("Asset ID not set");
         }
@@ -25,12 +25,12 @@ public class Renderable {
             throw new IllegalArgumentException("Image cache not set");
         }
 
-        this.entityId = renderInfo.entityId;
+        this.entityId = renderData.entityId;
         this.assetId = assetId;
         this.lastFrameSeen = currentFrame;
-        this.renderableValues = renderInfo;
+        this.renderData = renderData;
         this.cache = cache;
-        this.updateImageFromCache(this.assetId, (int) renderInfo.size, renderInfo.angle);
+        this.updateImageFromCache(this.assetId, (int) renderData.size, renderData.angle);
     }
 
     public Renderable(String entityId, String assetId, ImageCache cache, long currentFrame) {
@@ -49,7 +49,7 @@ public class Renderable {
         this.lastFrameSeen = currentFrame;
         this.cache = cache;
         this.image = null;
-        this.renderableValues = null;
+        this.renderData = null;
     }
 
     /**
@@ -67,8 +67,8 @@ public class Renderable {
         return this.entityId;
     }
 
-    public RenderDTO getRenderableValues() {
-        return this.renderableValues;
+    public RenderDTO getRenderData() {
+        return this.renderData;
     }
 
     public BufferedImage getImage() {
@@ -78,7 +78,7 @@ public class Renderable {
     public void update(RenderDTO renderInfo, long currentFrame) {
         this.updateImageFromCache(this.assetId, (int) renderInfo.size, renderInfo.angle);
         this.lastFrameSeen = currentFrame;
-        this.renderableValues = renderInfo;
+        this.renderData = renderInfo;
     }
 
     public void paint(Graphics2D g, long currentFrame) {
@@ -90,9 +90,9 @@ public class Renderable {
         // Save the original (NOT rotated) transform
         AffineTransform old = g.getTransform();
 
-        final double posX = this.renderableValues.posX;
-        final double posY = this.renderableValues.posY;
-        final double angleDeg = this.renderableValues.angle;
+        final double posX = this.renderData.posX;
+        final double posY = this.renderData.posY;
+        final double angleDeg = this.renderData.angle;
 
         // Using the REAL size of the sprite for the offset
         final double halfW = this.image.getWidth(null) * 0.5;
@@ -115,10 +115,10 @@ public class Renderable {
 
     private boolean updateImageFromCache(String assetId, int size, double angle) {
         boolean imageNeedsUpdate = this.image == null
-                || this.renderableValues == null
+                || this.renderData == null
                 || !this.assetId.equals(assetId)
-                || this.renderableValues.size != size
-                || (int) this.renderableValues.angle != (int) angle;
+                || this.renderData.size != size
+                || (int) this.renderData.angle != (int) angle;
 
         if (imageNeedsUpdate) {
             int normalizedAngle = ((int) angle % 360 + 360) % 360;

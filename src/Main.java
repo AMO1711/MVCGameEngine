@@ -1,15 +1,12 @@
 
-
-import ai.*;
-import assets.impl.ProjectAssets;
 import engine.controller.impl.Controller;
 import engine.controller.ports.ActionsGenerator;
 import engine.model.impl.Model;
 import engine.utils.helpers.DoubleVector;
 import engine.view.core.View;
-import engine.worlddef.ports.WorldDefinition;
-import engine.worlddef.ports.WorldDefinitionProvider;
-import level.*;
+import engine.world.ports.WorldDefinition;
+import engine.world.ports.WorldDefinitionProvider;
+import gameworld.ProjectAssets;
 
 public class Main {
 
@@ -19,23 +16,25 @@ public class Main {
 
 		DoubleVector worldDimension = new DoubleVector(40000, 40000);
 		DoubleVector viewDimension = new DoubleVector(2400, 1500);
-		int maxBodies = 800;
-		int maxAsteroidCreationDelay = 100;
+		int maxBodies = 1000;
+		int maxAsteroidCreationDelay = 25;
 
 		ProjectAssets projectAssets = new ProjectAssets();
-		ActionsGenerator gameRules = new rules.DeadInLimitsPlayerImmunity();
-		WorldDefinitionProvider worldProv = new world.RandomWorldDefinitionProvider(
+
+		// ActionsGenerator gameRules = new gamerules.LimitRebound();
+		// ActionsGenerator gameRules = new gamerules.ReboundAndCollision();
+		ActionsGenerator gameRules = new gamerules.DeadInLimitsPlayerImmunity();
+
+		// *** WORLD DEFINITION PROVIDER ***
+		WorldDefinitionProvider worldProv = new gameworld.RandomWorldDefinitionProvider(
 				worldDimension, projectAssets);
 
 		// *** CORE ENGINE ***
 
 		// region Controller
 		Controller controller = new Controller(
-				worldDimension,
-				viewDimension,
-				maxBodies,
-				new View(),
-				new Model(),
+				worldDimension, viewDimension, maxBodies,
+				new View(), new Model(),
 				gameRules);
 
 		controller.activate();
@@ -48,11 +47,11 @@ public class Main {
 		// endregion
 
 		// region Level generator (Level***)
-		new level.LevelBasic(controller, worldDef);
+		new gamelevel.LevelBasic(controller, worldDef);
 		// endregion
 
 		// region AI generator (AI***)
-		new ai.AIBasicSpawner(controller, worldDef, maxAsteroidCreationDelay).activate();
+		new gameai.AIBasicSpawner(controller, worldDef, maxAsteroidCreationDelay).activate();
 		// endregion
 
 	}

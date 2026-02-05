@@ -1,22 +1,28 @@
 package engine.view.core;
 
 import java.awt.Container;
-import java.awt.Dimension;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
+import java.awt.event.WindowEvent;
+import java.awt.event.WindowFocusListener;
 import java.awt.image.BufferedImage;
 import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.Set;
+import java.util.concurrent.atomic.AtomicBoolean;
+
 import javax.swing.JFrame;
 import javax.swing.SwingUtilities;
 
-import assets.core.AssetCatalog;
-import assets.ports.AssetType;
+import engine.assets.core.AssetCatalog;
+import engine.assets.ports.AssetType;
 import engine.controller.impl.Controller;
 import engine.controller.ports.EngineState;
 import engine.utils.helpers.DoubleVector;
 import engine.utils.images.Images;
+import engine.utils.spatial.core.SpatialGrid;
 import engine.view.renderables.ports.DynamicRenderDTO;
 import engine.view.renderables.ports.PlayerRenderDTO;
 import engine.view.renderables.ports.RenderDTO;
@@ -104,7 +110,7 @@ import engine.view.renderables.ports.SpatialGridStatisticsRenderDTO;
  * - Keep rendering independent and real-time (active rendering).
  * - Translate user input into controller commands cleanly and predictably.
  */
-public class View extends JFrame implements KeyListener {
+public class View extends JFrame implements KeyListener, WindowFocusListener {
 
     // region Fields
     private BufferedImage background;
@@ -115,7 +121,15 @@ public class View extends JFrame implements KeyListener {
     private final Renderer renderer;
     private DoubleVector viewDimension;
     private DoubleVector worldDimension;
-    private boolean fireKeyDown = false;
+    private AtomicBoolean fireKeyDown = new AtomicBoolean(false);
+
+    // Key state tracking (FIX: Para no confiar en keyReleased() del OS)
+    // PROBLEMA: El OS puede consumir ciertos eventos de teclado
+    // (Alt+Tab, Win+X, etc) sin generar keyReleased().
+    // SOLUCIÓN: Mantener tracking del estado real de teclas presionadas
+    // y sincronizar periódicamente con el modelo.
+    private final Set<Integer> pressedKeys = new HashSet<>();
+    private boolean wasWindowFocused = true;
     // endregion Fields
 
     // region Constructors
@@ -240,12 +254,12 @@ public class View extends JFrame implements KeyListener {
     // *** PROTECTED ***
 
     // region protected Getters (get***)
-    protected ArrayList<DynamicRenderDTO> getDynamicRenderablesData() {
+    protected ArrayList<DynamicRenderDTO> snapshotRenderData() {
         if (this.controller == null) {
             throw new IllegalArgumentException("Controller not setted");
         }
 
-        return this.controller.getDynamicRenderablesData();
+        return this.controller.snapshotRenderData();
     }
 
     protected EngineState getEngineState() {
@@ -281,9 +295,32 @@ public class View extends JFrame implements KeyListener {
     }
     // endregion
 
+    /**
+     * Queries the model via controller for entities visible in the specified
+     * region.
+     * Fills the provided buffers with results.
+     * 
+     * @param minX               left edge of query region
+     * @param maxX               right edge of query region
+     * @param minY               top edge of query region
+     * @param maxY               bottom edge of query region
+     * @param scratchCellIndices buffer for spatial grid cell indices
+     * @param scratchEntityIds   buffer to fill with visible entity IDs
+     * @return list of entity IDs in region
+     */
+    public ArrayList<String> queryEntitiesInRegion(
+            double minX, double maxX, double minY, double maxY,
+            int[] scratchCellIndices, ArrayList<String> scratchEntityIds) {
+
+        // Relay al controller (que tiene acceso al modelo)
+        return this.controller.queryEntitiesInRegion(
+                minX, maxX, minY, maxY,
+                scratchCellIndices, scratchEntityIds);
+    }
+
     // *** PRIVATE ***
 
-    private void addRendererCanva(Container container) {
+    private void addRenderer(Container container) {
         GridBagConstraints c = new GridBagConstraints();
 
         c.anchor = GridBagConstraints.NORTHWEST;
@@ -304,31 +341,182 @@ public class View extends JFrame implements KeyListener {
         this.setLayout(new GridBagLayout());
 
         panel = this.getContentPane();
-        this.addRendererCanva(panel);
-        this.renderer.setFocusable(true);
-        this.renderer.addKeyListener(this);
+        this.addRenderer(panel);
+
+        this.setFocusable(true);
+        this.addKeyListener(this);
+        this.addWindowFocusListener(this);
+
+        this.renderer.setFocusable(false); // El Renderer NO necesita foco
+        this.renderer.setIgnoreRepaint(true); // Mejor performance
 
         this.pack();
         this.setVisible(true);
-        SwingUtilities.invokeLater(() -> this.renderer.requestFocusInWindow());
 
+        SwingUtilities.invokeLater(() -> this.requestFocusInWindow());
+    }
+
+    private void resetAllKeyStates() {
+        if (this.localPlayerId == null || this.controller == null) {
+            return;
+        }
+
+        try {
+            // Resetear TODOS los controles activos
+            this.controller.playerThrustOff(this.localPlayerId);
+            this.controller.playerRotateOff(this.localPlayerId);
+            this.fireKeyDown.set(false);
+        } catch (Exception ex) {
+            throw new RuntimeException("Error resetting key states: " + ex.getMessage(), ex);
+        }
+    }
+
+    /**
+     * Sincroniza el estado de entrada cada frame.
+     * 
+     * PROBLEMA CRÍTICO:
+     * El OS puede consumir ciertos eventos de teclado (Alt+Tab, Win+X, etc)
+     * sin generar keyReleased(). Esto causa que el tracking de teclas quede
+     * inconsistente.
+     * 
+     * SOLUCIÓN:
+     * Este método es llamado periódicamente desde el Renderer (cada frame).
+     * Verifica que las teclas que se supone están presionadas realmente lo estén.
+     * Si una tecla en el tracking no debería estar (el usuario la liberó pero
+     * no hubo keyReleased), la liberamos aquí.
+     * 
+     * Uso: Desde Renderer.render() o similar, llamar a view.syncInputState()
+     * cada frame después de actualizar física.
+     */
+    public void syncInputState() {
+        if (this.localPlayerId == null || this.controller == null || this.pressedKeys.isEmpty()) {
+            return;
+        }
+
+        // Si la ventana no tiene foco, todas las teclas deben estar liberadas
+        if (!this.wasWindowFocused) {
+            if (!this.pressedKeys.isEmpty()) {
+                System.out.println("View.syncInputState: Window not focused but keys tracked: "
+                        + this.pressedKeys + " - clearing");
+
+                Set<Integer> keysToRelease = new HashSet<>(this.pressedKeys);
+                this.pressedKeys.clear();
+
+                for (int keyCode : keysToRelease) {
+                    try {
+                        this.processKeyRelease(keyCode);
+                    } catch (Exception ex) {
+                        System.err.println("Error releasing key " + keyCode + ": " + ex.getMessage());
+                    }
+                }
+            }
+            return;
+        }
+
+        // Verificar que las teclas que el SO reporta presionadas coincidan
+        // con nuestro tracking. Esto detiene leaks de teclas.
+        //
+        // NOTA: No podemos usar KeyboardFocusManager para verificar estado,
+        // pero podemos usar timing: si una tecla lleva demasiado tiempo presionada
+        // sin que se libere, asumimos que el keyReleased se perdió.
+        //
+        // Por ahora, confiamos en que keyReleased se genera NORMALMENTE
+        // (excepto al perder foco, que ya se trata arriba).
+        // El resto de fallos serán raros y se diagnosticarán con logs.
     }
 
     // *** INTERFACE IMPLEMENTATIONS ***
 
+    // region WindowFocusListener
+    /**
+     * Detectamos pérdida de foco para resetear estado de teclas.
+     * Esto es crítico porque si el usuario presiona Alt+Tab,
+     * el keyReleased() nunca se genera.
+     */
+    @Override
+    public void windowLostFocus(WindowEvent e) {
+        this.wasWindowFocused = false;
+
+        // Limpiar tracking de teclas presionadas
+        // (ya que no recibiremos keyReleased para ellas)
+        Set<Integer> keysToRelease = new HashSet<>(this.pressedKeys);
+        this.pressedKeys.clear();
+
+        // Resetear todas las acciones asociadas
+        for (int keyCode : keysToRelease) {
+            try {
+                this.processKeyRelease(keyCode);
+            } catch (Exception ex) {
+                System.err.println("Error releasing key " + keyCode + ": " + ex.getMessage());
+            }
+        }
+
+        System.out.println("View: Window lost focus - pressed keys cleared: " + keysToRelease);
+    }
+
+    @Override
+    public void windowGainedFocus(WindowEvent e) {
+        this.wasWindowFocused = true;
+        System.out.println("View: Window gained focus");
+    }
+    // endregion
+
     // region KeyListener
     @Override
     public void keyPressed(KeyEvent e) {
-        if (this.localPlayerId == null) {
-            return;
-        }
+        try {
+            if (this.localPlayerId == null || this.controller == null) {
+                return;
+            }
 
-        if (this.controller == null) {
-            System.out.println("Controller not set yet");
-            return;
-        }
+            int keyCode = e.getKeyCode();
 
-        switch (e.getKeyCode()) {
+            // Agregar a tracking si ya no estaba presionada
+            if (!this.pressedKeys.contains(keyCode)) {
+                this.pressedKeys.add(keyCode);
+
+                // Procesar acción SOLO en el primer press
+                // (no en repeat del SO)
+                this.processKeyPress(keyCode);
+            }
+        } catch (Exception ex) {
+            System.err.println("Error in keyPressed: " + ex.getMessage());
+            ex.printStackTrace();
+            resetAllKeyStates();
+        }
+    }
+
+    @Override
+    public void keyReleased(KeyEvent e) {
+        try {
+            if (this.localPlayerId == null || this.controller == null) {
+                return;
+            }
+
+            int keyCode = e.getKeyCode();
+
+            // Remover de tracking
+            this.pressedKeys.remove(keyCode);
+
+            // Procesar acción de release
+            this.processKeyRelease(keyCode);
+        } catch (Exception ex) {
+            System.err.println("Error in keyReleased: " + ex.getMessage());
+            ex.printStackTrace();
+        }
+    }
+
+    @Override
+    public void keyTyped(KeyEvent e) {
+        // Nothing to do
+    }
+
+    /**
+     * Procesamiento de keyPress (se llama solo una vez cuando se presiona).
+     * NO se llama en key repeat.
+     */
+    private void processKeyPress(int keyCode) {
+        switch (keyCode) {
             case KeyEvent.VK_UP:
             case KeyEvent.VK_W:
                 this.controller.playerThrustOn(this.localPlayerId);
@@ -350,8 +538,8 @@ public class View extends JFrame implements KeyListener {
                 break;
 
             case KeyEvent.VK_SPACE:
-                if (!this.fireKeyDown) { // Discard autoreptition PRESS
-                    this.fireKeyDown = true;
+                if (!this.fireKeyDown.get()) {
+                    this.fireKeyDown.set(true);
                     this.controller.playerFire(this.localPlayerId);
                 }
                 break;
@@ -362,19 +550,12 @@ public class View extends JFrame implements KeyListener {
         }
     }
 
-    @Override
-    public void keyReleased(KeyEvent e) {
-        if (this.localPlayerId == null) {
-            System.out.println("Local player not setted!");
-            return;
-        }
-
-        if (this.controller == null) {
-            System.out.println("Controller not set yet");
-            return;
-        }
-
-        switch (e.getKeyCode()) {
+    /**
+     * Procesamiento de keyRelease (se llama cuando se libera la tecla).
+     * Puede no llamarse si el OS consume el evento.
+     */
+    private void processKeyRelease(int keyCode) {
+        switch (keyCode) {
             case KeyEvent.VK_UP:
             case KeyEvent.VK_W:
                 this.controller.playerThrustOff(this.localPlayerId);
@@ -396,14 +577,9 @@ public class View extends JFrame implements KeyListener {
                 break;
 
             case KeyEvent.VK_SPACE:
-                fireKeyDown = false; // << permite el siguiente disparo
+                this.fireKeyDown.set(false);
                 break;
         }
-    }
-
-    @Override
-    public void keyTyped(KeyEvent e) {
-        // Nothing to do
     }
     // endregion
 

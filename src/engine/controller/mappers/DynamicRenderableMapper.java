@@ -2,33 +2,36 @@ package engine.controller.mappers;
 
 import java.util.ArrayList;
 
-import engine.model.bodies.ports.BodyDTO;
+import engine.model.bodies.ports.BodyData;
+import engine.model.physics.ports.PhysicsValuesDTO;
 import engine.view.renderables.ports.DynamicRenderDTO;
 
 public class DynamicRenderableMapper {
 
-    public static DynamicRenderDTO fromBodyDTO(BodyDTO bodyDto) {
-        if (bodyDto.physicsValues == null || bodyDto.entityId == null) {
+    public static DynamicRenderDTO fromBodyDTO(BodyData bodyData) {
+        PhysicsValuesDTO phyValues = bodyData.getPhysicsValues();
+
+        if (phyValues == null || bodyData.entityId == null) {
             return null;
         }
 
         DynamicRenderDTO renderablesData = new DynamicRenderDTO(
-                bodyDto.entityId,
-                bodyDto.physicsValues.posX, bodyDto.physicsValues.posY,
-                bodyDto.physicsValues.angle,
-                bodyDto.physicsValues.size,
-                bodyDto.physicsValues.timeStamp,
-                bodyDto.physicsValues.speedX, bodyDto.physicsValues.speedY,
-                bodyDto.physicsValues.accX, bodyDto.physicsValues.accY,
-                bodyDto.physicsValues.timeStamp);
+                bodyData.entityId,
+                phyValues.posX, phyValues.posY,
+                phyValues.angle,
+                phyValues.size,
+                phyValues.timeStamp,
+                phyValues.speedX, phyValues.speedY,
+                phyValues.accX, phyValues.accY,
+                phyValues.timeStamp);
 
         return renderablesData;
     }
 
-    public static ArrayList<DynamicRenderDTO> fromBodyDTO(ArrayList<BodyDTO> bodyData) {
+    public static ArrayList<DynamicRenderDTO> fromBodyDTO(ArrayList<BodyData> bodyData) {
         ArrayList<DynamicRenderDTO> renderableValues = new ArrayList<>();
 
-        for (BodyDTO bodyDto : bodyData) {
+        for (BodyData bodyDto : bodyData) {
             DynamicRenderDTO renderable = DynamicRenderableMapper.fromBodyDTO(bodyDto);
             renderableValues.add(renderable);
         }

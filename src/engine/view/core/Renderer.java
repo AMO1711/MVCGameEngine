@@ -2,7 +2,6 @@ package engine.view.core;
 
 import java.awt.AlphaComposite;
 import java.awt.Canvas;
-import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Graphics2D;
 import java.awt.GraphicsConfiguration;
@@ -122,30 +121,34 @@ import java.awt.Toolkit;
  */
 public class Renderer extends Canvas implements Runnable {
 
-    // region Monitoring
+    // region Constants
+    private static final int REFRESH_DELAY_IN_MILLIS = 2; //
     private static final long MONITORING_PERIOD_NS = 500_000_000L;
+    // endregion
+
+    // region Monitoring
 
     // Start times (timestamps)
     private volatile long monitoringPeriodStartNs = System.nanoTime();
     private volatile long drawStartNs;
     private volatile long frameStartNs = 0L;
     private volatile long lastFrameStartNs = 0L;
+    private volatile long updateStartNs = 0L; // -------
 
     // End times (timestamps)
     private volatile long drawEndNs;
     private volatile long frameEndNs;
+    private volatile long updateEndNs; // -------
 
     // Values for metrics
     private volatile long frameDtNs = 0L; // dt real: start-to-start
     private volatile long frameTimeNs = 0L;
     private volatile long acumDrawNsPerPeriod = 0L;
+    private volatile long acumUpdateNsPerPeriod = 0L; // -------
     private volatile long framesPerPeriod = 0L;
     private volatile long fpsPerPeriod = 0L;
     private volatile double avgDrawMsPerPeriod = 0.0D;
-    // endregion
-
-    // regoin Constants
-    private static final int DELAY_IN_MILLIS = 16; // ~60 FPS
+    private volatile double avgUpdateMsPerPeriod = 0.0D; // --------
     // endregion
 
     // region Fields
@@ -167,9 +170,11 @@ public class Renderer extends Canvas implements Runnable {
     private double cameraY = 0.0d;
     private double maxCameraClampY;
     private double maxCameraClampX;
+    private double backgroundScrollSpeedX = 0.5;
+    private double backgroundScrollSpeedY = 0.5;
 
-    private double backgroundScrollSpeedX = 1.0;
-    private double backgroundScrollSpeedY = 1.0;
+    private final ArrayList<String> visibleEntityIds = new ArrayList<>(1000);
+    private final int[] scratchIdxBuffer = new int[1000];
 
     private final Map<String, DynamicRenderable> dynamicRenderables = new ConcurrentHashMap<>(2500);
     private volatile Map<String, Renderable> staticRenderables = new ConcurrentHashMap<>(100);
@@ -300,14 +305,17 @@ public class Renderer extends Canvas implements Runnable {
 
     // region drawers (draw***)
     private void drawDynamicRenderable(Graphics2D g) {
-        // ArrayList<DynamicRenderDTO> renderablesData =
-        // this.view.getDynamicRenderablesData(); // *+
+        ArrayList<String> visibleIds = this.view.queryEntitiesInRegion(
+                this.cameraX, this.cameraX + this.viewDimension.x,
+                this.cameraY, this.cameraY + this.viewDimension.y,
+                this.scratchIdxBuffer,
+                this.visibleEntityIds);
 
-        // this.updateDynamicRenderables(renderablesData);
-
-        Map<String, DynamicRenderable> renderables = this.dynamicRenderables;
-        for (DynamicRenderable renderable : renderables.values()) {
-            renderable.paint(g, this.currentFrame);
+        for (String entityId : visibleIds) {
+            DynamicRenderable renderable = this.dynamicRenderables.get(entityId);
+            if (renderable != null) {
+                renderable.paint(g, this.currentFrame);
+            }
         }
     }
 
@@ -337,28 +345,72 @@ public class Renderer extends Canvas implements Runnable {
         Map<String, Renderable> renderables = this.staticRenderables;
 
         for (Renderable renderable : renderables.values()) {
-            renderable.paint(g, this.currentFrame);
+            if (this.isVisible(renderable)) {
+                renderable.paint(g, this.currentFrame);
+            }
         }
+    }
+
+    private boolean isVisible(Renderable renderable) {
+        RenderDTO renderData = renderable.getRenderData();
+        if (renderData == null) {
+            return false;
+        }
+
+        double viewW = this.viewDimension.x;
+        double viewH = this.viewDimension.y;
+
+        double camLeft = this.cameraX;
+        double camTop = this.cameraY;
+        double camRight = camLeft + viewW;
+        double camBottom = camTop + viewH;
+
+        double half = renderData.size * 0.5d;
+        if (renderable.getImage() != null) {
+            double halfW = renderable.getImage().getWidth(null) * 0.5d;
+            double halfH = renderable.getImage().getHeight(null) * 0.5d;
+            half = Math.max(halfW, halfH);
+        }
+
+        double minX = renderData.posX - half;
+        double maxX = renderData.posX + half;
+        double minY = renderData.posY - half;
+        double maxY = renderData.posY + half;
+
+        if (maxX < camLeft || minX > camRight) {
+            return false; // ==== Out of horizontal bounds ======>>
+        }
+
+        if (maxY < camTop || minY > camBottom) {
+            return false; // ==== Out of vertical bounds ======>>
+        }
+
+        return true;
     }
 
     private void drawScene(BufferStrategy bs) {
         Graphics2D gg;
 
-        this.drawStartNs = System.nanoTime();
-
         do {
             gg = (Graphics2D) bs.getDrawGraphics();
             try {
-                // 1) BACKGROUND opaco (tileado) usando cameraX/cameraY ya actualizados
+                // 1) BACKGROUND
                 gg.setComposite(AlphaComposite.Src); // Opaque
-
-                this.drawTiledBackground(gg); // <- NUEVO: repinta VI cada frame
+                this.drawTiledBackground(gg);
                 gg.drawImage(this.viBackground, 0, 0, null);
 
-                // 2) WORLD + HUD
+                // 2) WORLD (translated due camera)
                 gg.setComposite(AlphaComposite.SrcOver); // With transparency
+                AffineTransform defaultTransform = gg.getTransform();
+                gg.translate(-this.cameraX, -this.cameraY);
 
-                this.drawWorldRenderables(gg); // <- no update aquí
+                this.drawStaticRenderables(gg);
+                this.drawDynamicRenderable(gg);
+
+                gg.setTransform(defaultTransform);
+
+                // 3) HUD (on top of everything)
+                gg.setComposite(AlphaComposite.SrcOver); // With transparency
                 this.drawHUDs(gg);
 
             } finally {
@@ -368,8 +420,6 @@ public class Renderer extends Canvas implements Runnable {
             bs.show();
             Toolkit.getDefaultToolkit().sync();
         } while (bs.contentsLost());
-
-        this.drawEndNs = System.nanoTime();
     }
 
     private void drawTiledBackground(Graphics2D g) {
@@ -401,18 +451,6 @@ public class Renderer extends Canvas implements Runnable {
                 g.drawImage(this.background, x, y, null);
             }
         }
-    }
-
-    private void drawWorldRenderables(Graphics2D g) {
-        // ** */
-
-        AffineTransform defaultTransform = g.getTransform();
-        g.translate(-this.cameraX, -this.cameraY);
-
-        this.drawStaticRenderables(g);
-        this.drawDynamicRenderable(g);
-
-        g.setTransform(defaultTransform);
     }
     // endregion
 
@@ -463,9 +501,8 @@ public class Renderer extends Canvas implements Runnable {
     }
     // endregion
 
-    // Metrics updated per period
+    // region Monitoring (monitoring***)
     private void monitoringPerPeriod() {
-
         this.framesPerPeriod++;
         long now = System.nanoTime();
         long elapsed = now - this.monitoringPeriodStartNs;
@@ -473,6 +510,10 @@ public class Renderer extends Canvas implements Runnable {
         // Acum draw time in the period
         long lastDrawTime = this.drawEndNs - this.drawStartNs;
         this.acumDrawNsPerPeriod += lastDrawTime;
+
+        // Acum update time in the period
+        long lastUpdateTime = this.updateEndNs - this.updateStartNs;
+        this.acumUpdateNsPerPeriod += lastUpdateTime;
 
         // Monitoring at especific rate ..
         if (elapsed >= MONITORING_PERIOD_NS) {
@@ -487,6 +528,7 @@ public class Renderer extends Canvas implements Runnable {
 
         }
     }
+    // endregion
 
     // region setters (set***)
     private void setCameraClampLimits() {
@@ -512,9 +554,37 @@ public class Renderer extends Canvas implements Runnable {
             return; // ======== No player or data to follow =======>>
         }
 
-        RenderDTO playerData = localPlayerRenderable.getRenderableValues();
-        double desiredX = playerData.posX - (this.viewDimension.x / 2.0d);
-        double desiredY = playerData.posY - (this.viewDimension.y / 2.0d);
+        RenderDTO playerData = localPlayerRenderable.getRenderData();
+
+        double playerX = playerData.posX - this.cameraX;
+        double playerY = playerData.posY - this.cameraY;
+
+        double desiredX;
+        double desiredY;
+
+        double minX = this.viewDimension.x * 0.3;
+        double maxX = this.viewDimension.x * 0.7;
+        double minY = this.viewDimension.y * 0.3;
+        double maxY = this.viewDimension.y * 0.7;
+
+        if (playerX < minX) {
+            desiredX = playerData.posX - minX;
+        } else if (playerX > maxX) {
+            desiredX = playerData.posX - maxX;
+        } else {
+            desiredX = playerData.posX - (playerX);
+        }
+
+        if (playerY < minY) {
+            desiredY = playerData.posY - minY;
+        } else if (playerY > maxY) {
+            desiredY = playerData.posY - maxY;
+        } else {
+            desiredY = playerData.posY - (playerY);
+        }
+
+        // double desiredX = playerData.posX - (this.viewDimension.x / 2.0d);
+        // double desiredY = playerData.posY - (this.viewDimension.y / 2.0d);
 
         this.cameraX += (desiredX - this.cameraX);
         this.cameraY += (desiredY - this.cameraY);
@@ -561,8 +631,6 @@ public class Renderer extends Canvas implements Runnable {
         return value;
     }
 
-    // *** PRIVATE STATIC ***
-
     // *** INTERFACE IMPLEMENTATIONS ***
 
     // region Runnable
@@ -580,33 +648,35 @@ public class Renderer extends Canvas implements Runnable {
 
             EngineState engineState = this.view.getEngineState();
             if (engineState == EngineState.STOPPED) {
-                break;
+                break; // ======= Engine stopped, exit render loop =======>>
             }
 
             if (engineState == EngineState.ALIVE) { // TO-DO Pause condition
                 this.currentFrame++;
 
-                // Recover snapshot of dynamic renderables data
-                ArrayList<DynamicRenderDTO> renderablesData = this.view.getDynamicRenderablesData();
-
-                // Update dynamic renderables states using the snapshot
-                this.updateDynamicRenderables(renderablesData);
-
-                // Update camera position to follow local player using the latest data
+                // 1) Recover snapshot of dynamic renderables data
+                this.updateStartNs = System.nanoTime();
+                ArrayList<DynamicRenderDTO> renderData = this.view.snapshotRenderData();
+                this.updateDynamicRenderables(renderData);
                 this.updateCamera();
+                this.updateEndNs = System.nanoTime();
 
+                // 2) Draw the scene with the current snapshot
+                this.drawStartNs = System.nanoTime();
                 this.drawScene(bs);
+                this.drawEndNs = System.nanoTime();
 
+                this.view.syncInputState(); // To prevent key events
                 this.monitoringPerPeriod();
             }
 
             try {
-                Thread.sleep(DELAY_IN_MILLIS);
+                Thread.sleep(REFRESH_DELAY_IN_MILLIS);
             } catch (InterruptedException ex) {
                 throw new RuntimeException(ex);
             }
 
-            // Monitoring frame time per frame (inclusive when paused)
+            // Monitoring frame time per frame (inclusive sleep time)
             this.frameEndNs = System.nanoTime();
             this.frameTimeNs = this.frameEndNs - this.frameStartNs;
         }

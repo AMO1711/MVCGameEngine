@@ -3,31 +3,28 @@ package engine.controller.impl;
 import java.util.ArrayList;
 import java.util.List;
 
-import assets.core.AssetCatalog;
 import engine.actions.ActionDTO;
+import engine.assets.core.AssetCatalog;
 import engine.controller.mappers.DynamicRenderableMapper;
 import engine.controller.mappers.EmitterMapper;
 import engine.controller.mappers.PlayerRenderableMapper;
 import engine.controller.mappers.RenderableMapper;
 import engine.controller.mappers.SpatialGridStatisticsMapper;
-import engine.controller.mappers.WeaponMapper;
 import engine.controller.ports.ActionsGenerator;
 import engine.controller.ports.EngineState;
 import engine.controller.ports.WorldManager;
 import engine.events.domain.ports.eventtype.DomainEvent;
-import engine.model.bodies.ports.BodyDTO;
+import engine.model.bodies.ports.BodyData;
 import engine.model.emitter.ports.EmitterConfigDto;
 import engine.model.impl.Model;
 import engine.model.ports.DomainEventProcessor;
-import engine.model.weapons.ports.WeaponDto;
 import engine.utils.helpers.DoubleVector;
 import engine.view.core.View;
 import engine.view.renderables.ports.DynamicRenderDTO;
 import engine.view.renderables.ports.PlayerRenderDTO;
 import engine.view.renderables.ports.RenderDTO;
 import engine.view.renderables.ports.SpatialGridStatisticsRenderDTO;
-import engine.worlddef.ports.DefEmitterDTO;
-import engine.worlddef.ports.DefWeaponDTO;
+import engine.world.ports.DefEmitterDTO;
 
 /**
  * Controller
@@ -205,6 +202,7 @@ public class Controller implements WorldManager, DomainEventProcessor {
         this.engineState = EngineState.STARTING;
         this.gameRulesEngine = gameRulesEngine;
         this.maxBodies = maxBodies;
+        model.setMaxBodies(maxBodies);
 
         this.setModel(model);
         this.setView(view);
@@ -251,18 +249,6 @@ public class Controller implements WorldManager, DomainEventProcessor {
     // region Getters
     public EngineState getEngineState() {
         return this.engineState;
-    }
-
-    public ArrayList<DynamicRenderDTO> getDynamicRenderablesData() {
-        ArrayList<BodyDTO> bodyData = this.model.getDynamicsData();
-        ArrayList<DynamicRenderDTO> renderables = new ArrayList<>();
-
-        for (BodyDTO bodyDto : bodyData) {
-            DynamicRenderDTO renderable = DynamicRenderableMapper.fromBodyDTO(bodyDto);
-            renderables.add(renderable);
-        }
-
-        return renderables;
     }
 
     public int getEntityAliveQuantity() {
@@ -326,6 +312,18 @@ public class Controller implements WorldManager, DomainEventProcessor {
     }
     // endregion
 
+    // region Queries
+    public ArrayList<String> queryEntitiesInRegion(
+            double minX, double maxX, double minY, double maxY,
+            int[] scratchCellIndices, ArrayList<String> scratchEntityIds) {
+
+        // Query al modelo (que tiene el SpatialGrid)
+        return this.model.queryEntitiesInRegion(
+                minX, maxX, minY, maxY,
+                scratchCellIndices, scratchEntityIds);
+    }
+    // endregion
+
     // region setters
     public void setLocalPlayer(String playerId) {
         this.view.setLocalPlayer(playerId);
@@ -365,6 +363,18 @@ public class Controller implements WorldManager, DomainEventProcessor {
         this.view.setWorldDimension(d);
     }
     // endregion setters
+
+    public ArrayList<DynamicRenderDTO> snapshotRenderData() {
+        ArrayList<BodyData> snapshot = this.model.snapshotRenderData();
+        ArrayList<DynamicRenderDTO> renderables = new ArrayList<>();
+
+        for (BodyData bodyData : snapshot) {
+            DynamicRenderDTO renderable = DynamicRenderableMapper.fromBodyDTO(bodyData);
+            renderables.add(renderable);
+        }
+
+        return renderables;
+    }
 
     // *** INTERFACE IMPLEMENTATIONS (one region per interface) ***
 
@@ -464,11 +474,10 @@ public class Controller implements WorldManager, DomainEventProcessor {
     }
 
     @Override
-    public void equipWeapon(String playerId, DefWeaponDTO weaponDef, int shootingOffset) {
+    public void equipWeapon(String playerId, DefEmitterDTO bodyEmitterDef, int shootingOffset) {
 
-        WeaponDto weapon = WeaponMapper.fromWorldDef(weaponDef, shootingOffset);
-
-        this.model.playerEquipWeapon(playerId, weapon);
+        EmitterConfigDto bodyEmitter = EmitterMapper.fromWorldDef(bodyEmitterDef);
+        this.model.playerEquipWeapon(playerId, bodyEmitter);
     }
 
     @Override
@@ -480,7 +489,7 @@ public class Controller implements WorldManager, DomainEventProcessor {
     // *** PRIVATE (Internal, helpers, ...) ***
 
     private void updateStaticRenderablesView() {
-        ArrayList<BodyDTO> bodiesData = this.model.getStaticsData();
+        ArrayList<BodyData> bodiesData = this.model.getStaticsData();
         ArrayList<RenderDTO> renderablesData = RenderableMapper.fromBodyDTO(bodiesData);
         this.view.updateStaticRenderables(renderablesData);
     }
