@@ -165,11 +165,14 @@ public class DynamicBody extends AbstractBody implements Runnable {
             if (this.getBodyState() == BodyState.ALIVE) {
                 newPhyValues = this.getPhysicsEngine().calcNewPhysicsValues();
 
-                double r = newPhyValues.size * 0.5;
-                double minX = newPhyValues.posX - r;
-                double maxX = newPhyValues.posX + r;
-                double minY = newPhyValues.posY - r;
-                double maxY = newPhyValues.posY + r;
+                if (this.spatialCellSize <= 0.0d) {
+                    this.spatialCellSize = this.getSpatialGrid().getCellSize();
+                }
+
+                if (this.spatialCellRadius < 0 || this.spatialCellSize <= 0.0d) {
+                    double r = newPhyValues.size * 0.5d;
+                    this.spatialCellRadius = (int) Math.ceil(r / this.spatialCellSize);
+                }
 
                 this.getSpatialGrid().upsert(
                         this.getBodyId(), minX, maxX, minY, maxY, this.getScratchIdxs());
