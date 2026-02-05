@@ -24,7 +24,7 @@ public class DynamicRenderable extends Renderable {
 
     @Override
     public void paint(Graphics2D g, long currentFrame) {
-        DynamicRenderDTO bodyInfo = (DynamicRenderDTO) this.getRenderableValues();
+        DynamicRenderDTO bodyInfo = (DynamicRenderDTO) this.getRenderData();
 
         super.paint(g, currentFrame);
 

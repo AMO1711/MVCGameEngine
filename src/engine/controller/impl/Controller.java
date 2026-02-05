@@ -14,7 +14,7 @@ import engine.controller.ports.ActionsGenerator;
 import engine.controller.ports.EngineState;
 import engine.controller.ports.WorldManager;
 import engine.events.domain.ports.eventtype.DomainEvent;
-import engine.model.bodies.ports.BodyDTO;
+import engine.model.bodies.ports.BodyData;
 import engine.model.emitter.ports.EmitterConfigDto;
 import engine.model.impl.Model;
 import engine.model.ports.DomainEventProcessor;
@@ -251,18 +251,6 @@ public class Controller implements WorldManager, DomainEventProcessor {
         return this.engineState;
     }
 
-    public ArrayList<DynamicRenderDTO> getDynamicRenderablesData() {
-        ArrayList<BodyDTO> bodyData = this.model.getDynamicsData();
-        ArrayList<DynamicRenderDTO> renderables = new ArrayList<>();
-
-        for (BodyDTO bodyDto : bodyData) {
-            DynamicRenderDTO renderable = DynamicRenderableMapper.fromBodyDTO(bodyDto);
-            renderables.add(renderable);
-        }
-
-        return renderables;
-    }
-
     public int getEntityAliveQuantity() {
         return this.model.getAliveQuantity();
     }
@@ -324,6 +312,18 @@ public class Controller implements WorldManager, DomainEventProcessor {
     }
     // endregion
 
+    // region Queries
+    public ArrayList<String> queryEntitiesInRegion(
+            double minX, double maxX, double minY, double maxY,
+            int[] scratchCellIndices, ArrayList<String> scratchEntityIds) {
+
+        // Query al modelo (que tiene el SpatialGrid)
+        return this.model.queryEntitiesInRegion(
+                minX, maxX, minY, maxY,
+                scratchCellIndices, scratchEntityIds);
+    }
+    // endregion
+
     // region setters
     public void setLocalPlayer(String playerId) {
         this.view.setLocalPlayer(playerId);
@@ -363,6 +363,18 @@ public class Controller implements WorldManager, DomainEventProcessor {
         this.view.setWorldDimension(d);
     }
     // endregion setters
+
+    public ArrayList<DynamicRenderDTO> snapshotRenderData() {
+        ArrayList<BodyData> snapshot = this.model.snapshotRenderData();
+        ArrayList<DynamicRenderDTO> renderables = new ArrayList<>();
+
+        for (BodyData bodyData : snapshot) {
+            DynamicRenderDTO renderable = DynamicRenderableMapper.fromBodyDTO(bodyData);
+            renderables.add(renderable);
+        }
+
+        return renderables;
+    }
 
     // *** INTERFACE IMPLEMENTATIONS (one region per interface) ***
 
@@ -477,7 +489,7 @@ public class Controller implements WorldManager, DomainEventProcessor {
     // *** PRIVATE (Internal, helpers, ...) ***
 
     private void updateStaticRenderablesView() {
-        ArrayList<BodyDTO> bodiesData = this.model.getStaticsData();
+        ArrayList<BodyData> bodiesData = this.model.getStaticsData();
         ArrayList<RenderDTO> renderablesData = RenderableMapper.fromBodyDTO(bodiesData);
         this.view.updateStaticRenderables(renderablesData);
     }

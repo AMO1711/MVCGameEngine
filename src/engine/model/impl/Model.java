@@ -22,7 +22,7 @@ import engine.events.domain.ports.payloads.EmitPayloadDTO;
 import engine.model.bodies.core.AbstractBody;
 import engine.model.bodies.impl.DynamicBody;
 import engine.model.bodies.impl.PlayerBody;
-import engine.model.bodies.ports.BodyDTO;
+import engine.model.bodies.ports.BodyData;
 import engine.model.bodies.ports.BodyEventProcessor;
 import engine.model.bodies.ports.BodyFactory;
 import engine.model.bodies.ports.BodyState;
@@ -159,8 +159,8 @@ public class Model implements BodyEventProcessor {
 
     // region Constants
     private static final int DEFAULT_MAX_BODIES = 1000;
-    private static final int SPATIAL_GRID_CELL_SIZE = 256;
-    private static final int MAX_CELLS_PER_BODY = 256;
+    private static final int SPATIAL_GRID_CELL_SIZE = 512;
+    private static final int MAX_CELLS_PER_BODY = 512;
     // endregion
 
     // region Fields
@@ -169,15 +169,14 @@ public class Model implements BodyEventProcessor {
     private volatile ModelState state = ModelState.STARTING;
     private double worldWidth;
     private double worldHeight;
-    private SpatialGrid spatialGridForDynamics;
-    private SpatialGrid spatialGridForGravities;
+    private SpatialGrid spatialGrid;
     private final Map<String, AbstractBody> decorators = new ConcurrentHashMap<>(200);
     private final Map<String, AbstractBody> dynamicBodies = new ConcurrentHashMap<>(DEFAULT_MAX_BODIES);
     private final Map<String, AbstractBody> gravityBodies = new ConcurrentHashMap<>(200);
     // endregion
 
     // regions Scratch buffers (for zero-allocation snapshot generation)
-    private final ArrayList<BodyDTO> scratchDynamicsBuffer = new ArrayList<>(DEFAULT_MAX_BODIES);
+    private final ArrayList<BodyData> scratchDynamicsBuffer = new ArrayList<>(DEFAULT_MAX_BODIES);
     // endregion
 
     // region Constructors
@@ -198,13 +197,9 @@ public class Model implements BodyEventProcessor {
         this.worldWidth = worldDimension.x;
         this.worldHeight = worldDimension.y;
 
-        this.spatialGridForDynamics = new SpatialGrid(
+        this.spatialGrid = new SpatialGrid(
                 worldDimension.x, worldDimension.y,
                 SPATIAL_GRID_CELL_SIZE, MAX_CELLS_PER_BODY);
-
-        this.spatialGridForGravities = new SpatialGrid(
-                worldDimension.x, worldDimension.y,
-                SPATIAL_GRID_CELL_SIZE * 2, MAX_CELLS_PER_BODY * 2);
     }
     // endregion
 
@@ -214,7 +209,7 @@ public class Model implements BodyEventProcessor {
         if (this.domainEventProcessor == null) {
             throw new IllegalArgumentException("Controller is not set");
         }
-        if (this.spatialGridForDynamics == null) {
+        if (this.spatialGrid == null) {
             throw new IllegalArgumentException("World dimension is not set");
         }
         if (this.worldHeight <= 0 || this.worldWidth <= 0) {
@@ -252,7 +247,7 @@ public class Model implements BodyEventProcessor {
                 thrust);
 
         AbstractBody body = BodyFactory.create(
-                this, this.spatialGridForDynamics, phyVals, bodyType, maxLifeTime, shooterId);
+                this, this.spatialGrid, phyVals, bodyType, maxLifeTime, shooterId);
 
         body.activate();
 
@@ -404,14 +399,17 @@ public class Model implements BodyEventProcessor {
         return AbstractBody.getDeadQuantity();
     }
 
-    public ArrayList<BodyDTO> getDynamicsData() {
+    public ArrayList<BodyData> snapshotRenderData() {
         this.scratchDynamicsBuffer.clear();
 
         this.dynamicBodies.forEach((entityId, body) -> {
-            BodyDTO bodyInfo = new BodyDTO(entityId, body.getBodyType(), body.getPhysicsValues());
-            if (bodyInfo != null) {
-                this.scratchDynamicsBuffer.add(bodyInfo);
+            PhysicsValuesDTO phyValues = body.getPhysicsValues();
+            if (phyValues == null) {
+                return;
             }
+
+            BodyData bodyInfo = body.getBodyData();
+            this.scratchDynamicsBuffer.add(bodyInfo);
         });
 
         return this.scratchDynamicsBuffer;
@@ -431,8 +429,8 @@ public class Model implements BodyEventProcessor {
         return playerData;
     }
 
-    public ArrayList<BodyDTO> getStaticsData() {
-        ArrayList<BodyDTO> staticsInfo;
+    public ArrayList<BodyData> getStaticsData() {
+        ArrayList<BodyData> staticsInfo;
 
         staticsInfo = this.getBodiesData(this.decorators);
         staticsInfo.addAll(this.getBodiesData(this.gravityBodies));
@@ -445,7 +443,7 @@ public class Model implements BodyEventProcessor {
     }
 
     public SpatialGridStatisticsDTO getSpatialGridStatistics() {
-        return this.spatialGridForDynamics.getStatistics();
+        return this.spatialGrid.getStatistics();
     }
 
     public DoubleVector getWorldDimension() {
@@ -532,6 +530,23 @@ public class Model implements BodyEventProcessor {
     }
     // endregion Player Actions
 
+    // region Query methods (query***)
+    public ArrayList<String> queryEntitiesInRegion(
+            double minX, double maxX, double minY, double maxY,
+            int[] scratchCellIdxs, ArrayList<String> outEntityIds) {
+
+        if (this.spatialGrid == null) {
+            outEntityIds.clear();
+            return outEntityIds;
+        }
+
+        this.spatialGrid.queryRegion(
+                minX, maxX, minY, maxY,
+                scratchCellIdxs, outEntityIds);
+
+        return outEntityIds;
+    }
+
     // region Remove and destroy (remove***)
     public void removeBody(AbstractBody body) {
         body.die();
@@ -539,14 +554,14 @@ public class Model implements BodyEventProcessor {
         switch (body.getBodyType()) {
             case PLAYER:
                 this.domainEventProcessor.notifyPlayerIsDead(body.getBodyId());
-                this.spatialGridForDynamics.remove(body.getBodyId());
+                this.spatialGrid.remove(body.getBodyId());
                 this.dynamicBodies.remove(body.getBodyId());
                 break;
 
             case DYNAMIC:
             case PROJECTILE:
                 this.domainEventProcessor.notifyDynamicIsDead(body.getBodyId());
-                this.spatialGridForDynamics.remove(body.getBodyId());
+                this.spatialGrid.remove(body.getBodyId());
                 this.dynamicBodies.remove(body.getBodyId());
                 break;
 
@@ -582,13 +597,9 @@ public class Model implements BodyEventProcessor {
         this.worldWidth = worldDim.x;
         this.worldHeight = worldDim.y;
 
-        this.spatialGridForDynamics = new SpatialGrid(
+        this.spatialGrid = new SpatialGrid(
                 worldDim.x, worldDim.y,
                 SPATIAL_GRID_CELL_SIZE, MAX_CELLS_PER_BODY);
-
-        this.spatialGridForGravities = new SpatialGrid(
-                worldDim.x, worldDim.y,
-                SPATIAL_GRID_CELL_SIZE * 2, MAX_CELLS_PER_BODY * 2);
     }
     // endregion
 
@@ -689,7 +700,7 @@ public class Model implements BodyEventProcessor {
 
     private boolean checkCollisionCandidates(AbstractBody checkBody, ArrayList<String> candidates) {
         final String checkBodyId = checkBody.getBodyId();
-        this.spatialGridForDynamics.queryCollisionCandidates(checkBodyId, candidates);
+        this.spatialGrid.queryCollisionCandidates(checkBodyId, candidates);
 
         if (candidates.isEmpty())
             return false; // ------ No collision candidates ------>
@@ -979,11 +990,11 @@ public class Model implements BodyEventProcessor {
     }
 
     // region getters private (get***)
-    private ArrayList<BodyDTO> getBodiesData(Map<String, AbstractBody> bodies) {
-        ArrayList<BodyDTO> bodyInfos = new ArrayList<>(bodies.size());
+    private ArrayList<BodyData> getBodiesData(Map<String, AbstractBody> bodies) {
+        ArrayList<BodyData> bodyInfos = new ArrayList<>(bodies.size());
 
         bodies.forEach((entityId, body) -> {
-            BodyDTO bodyInfo = new BodyDTO(entityId, body.getBodyType(), body.getPhysicsValues());
+            BodyData bodyInfo = new BodyData(entityId, body.getBodyType(), body.getPhysicsValues());
             if (bodyInfo != null) {
                 bodyInfos.add(bodyInfo);
             }

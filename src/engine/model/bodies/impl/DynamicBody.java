@@ -54,6 +54,8 @@ public class DynamicBody extends AbstractBody implements Runnable {
     private double maxAngularAcc; // degrees*s^-2
     private double angularSpeed; // degrees*s^-1
     private String trailId;
+    private int spatialCellRadius = -1;
+    private double spatialCellSize = -1.0d;
     // endregion
 
 
@@ -165,14 +167,11 @@ public class DynamicBody extends AbstractBody implements Runnable {
             if (this.getBodyState() == BodyState.ALIVE) {
                 newPhyValues = this.getPhysicsEngine().calcNewPhysicsValues();
 
-                if (this.spatialCellSize <= 0.0d) {
-                    this.spatialCellSize = this.getSpatialGrid().getCellSize();
-                }
-
-                if (this.spatialCellRadius < 0 || this.spatialCellSize <= 0.0d) {
-                    double r = newPhyValues.size * 0.5d;
-                    this.spatialCellRadius = (int) Math.ceil(r / this.spatialCellSize);
-                }
+                double r = newPhyValues.size * 0.5;
+                double minX = newPhyValues.posX - r;
+                double maxX = newPhyValues.posX + r;
+                double minY = newPhyValues.posY - r;
+                double maxY = newPhyValues.posY + r;
 
                 this.getSpatialGrid().upsert(
                         this.getBodyId(), minX, maxX, minY, maxY, this.getScratchIdxs());

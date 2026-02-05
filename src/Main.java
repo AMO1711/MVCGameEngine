@@ -16,8 +16,8 @@ public class Main {
 
 		DoubleVector worldDimension = new DoubleVector(40000, 40000);
 		DoubleVector viewDimension = new DoubleVector(2400, 1500);
-		int maxBodies = 1500;
-		int maxAsteroidCreationDelay = 5;
+		int maxBodies = 1000;
+		int maxAsteroidCreationDelay = 25;
 
 		ProjectAssets projectAssets = new ProjectAssets();
 
@@ -33,11 +33,8 @@ public class Main {
 
 		// region Controller
 		Controller controller = new Controller(
-				worldDimension,
-				viewDimension,
-				maxBodies,
-				new View(),
-				new Model(),
+				worldDimension, viewDimension, maxBodies,
+				new View(), new Model(),
 				gameRules);
 
 		controller.activate();

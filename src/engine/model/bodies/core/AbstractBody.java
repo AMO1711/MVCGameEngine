@@ -11,6 +11,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import engine.actions.ActionDTO;
 import engine.events.domain.ports.BodyRefDTO;
 import engine.events.domain.ports.eventtype.DomainEvent;
+import engine.model.bodies.ports.BodyData;
 import engine.model.bodies.ports.BodyEventProcessor;
 import engine.model.bodies.ports.BodyState;
 import engine.model.bodies.ports.BodyType;
@@ -217,7 +218,6 @@ public abstract class AbstractBody {
     private final String bodyEmitterId; // ID of the body that emit this body (or null)
     private final BodyEventProcessor bodyEventProcessor;
     private final String bodyId;
-    private final BodyRefDTO bodyRef;
     private final long bornTime = System.nanoTime();
     private final Map<String, BasicEmitter> emitters = new ConcurrentHashMap<>();
     private final double maxLifeInSeconds; // Infinite life by default
@@ -226,8 +226,10 @@ public abstract class AbstractBody {
     private Thread thread;
     private final BodyType type;
     // endregion
-
+    
     // region Scratch buffers
+    private final BodyRefDTO bodyRef;
+    private final BodyData bodyData;
     private final SpatialGrid spatialGrid;
     private final int[] scratchIdxs;
     private final ArrayList<String> scratchCandidateIds;
@@ -261,6 +263,7 @@ public abstract class AbstractBody {
         this.bodyId = UUID.randomUUID().toString();
         this.state = BodyState.STARTING;
         this.bodyRef = new BodyRefDTO(this.bodyId, this.type);
+        this.bodyData = new BodyData(this.bodyId, this.type, null);
     }
     // endregion
 
@@ -350,6 +353,11 @@ public abstract class AbstractBody {
     // endregion
 
     // region Body getters (getBody***())
+    public BodyData getBodyData() {
+        this.bodyData.setPhysicsValues(this.getPhysicsValues());
+        return this.bodyData;
+    }
+
     public String getBodyEmitterId() {
         return this.bodyEmitterId; // Body that emitted this body (emissor body)
     }
@@ -416,7 +424,8 @@ public abstract class AbstractBody {
     // region Scratch getters (getScratch***())
     public List<ActionDTO> getActionsQueue() {
         // Do NOT clear here - external actions may have been enqueued
-        // The queue will be cleared after actions are executed in Model.executeActionList()
+        // The queue will be cleared after actions are executed in
+        // Model.executeActionList()
         return this.actionsQueue;
     }
 
