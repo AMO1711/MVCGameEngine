@@ -6,9 +6,10 @@ import engine.model.bodies.ports.BodyState;
 import engine.model.bodies.ports.BodyType;
 import engine.model.physics.implementations.NullPhysicsEngine;
 import engine.utils.spatial.core.SpatialGrid;
+import engine.utils.threading.ThreadPoolManager;
 
 /**
- * StaticBody
+ * StaticBody 
  * ----------
  *
  * Represents a single static entity in the simulation model.
@@ -68,14 +69,8 @@ public class StaticBody extends AbstractBody implements Runnable {
     public synchronized void activate() {
         super.activate();
 
-        Thread thread = new Thread(this);
-        thread.setName("Body " + this.getBodyId());
-        thread.setPriority(Thread.NORM_PRIORITY - 1);
-        thread.start();
-
-        this.setThread(thread);
-
         this.setState(BodyState.ALIVE);
+        ThreadPoolManager.submit(this);
     }
 
     @Override

@@ -574,4 +574,4 @@ public abstract class AbstractBody {
         return AbstractBody.deadQuantity;
     }
     // endregion
-}
+} 

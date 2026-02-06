@@ -159,7 +159,9 @@ public final class SpatialGrid {
         if (this.sameCells(oldEntityCells, newCount, newCellIdxs))
             return;
 
-        if (newCount < 3) {
+        if (newCount < 3 && oldEntityCells.count < 3) {
+            // If new cells are few, it's (probably) cheaper delete old cells
+            // and insert new ones, without checks => maximum 2 removes + 2 inserts...
             this.upsertSmall(entityId, newCount, oldEntityCells, newCellIdxs);
         } else {
             this.upsertLarge(entityId, newCount, oldEntityCells, scratchIdxs);
@@ -192,23 +194,53 @@ public final class SpatialGrid {
     }
 
     private void upsertLarge(String entityId, int newCount, Cells oldEntityCells, int[] newCellIdxs) {
-        // olds not in news ---> body not in those cells anymore
-        for (int i = 0; i < oldEntityCells.count; i++)
-            if (!contains(newCellIdxs, newCount, oldEntityCells.idxs[i]))
-                grid[oldEntityCells.idxs[i]].remove(entityId); // Remove entity from cell
+        // Linear merge diff O(k) instead of O(k²) contains checks
+        // Both oldEntityCells.idxs and newCellIdxs are ordered by computeCellIdxsClamped
+        // Traverse both in parallel:
+        // - Remove cells in old but not in new
+        // - Add cells in new but not in old
+        // - Keep cells that are in both
 
-        // news not in olds ---> body now in those cells
-        for (int i = 0; i < newCount; i++)
-            if (!contains(oldEntityCells.idxs, oldEntityCells.count, newCellIdxs[i]))
-                grid[newCellIdxs[i]].put(entityId, Boolean.TRUE); // Add entity to cell
+        int oldCount = oldEntityCells.count;
+        int i = 0; // pointer to old cells
+        int j = 0; // pointer to new cells
+
+        // Merge phase: compare old and new cell indices
+        while (i < oldCount && j < newCount) {
+            int oldIdx = oldEntityCells.idxs[i];
+            int newIdx = newCellIdxs[j];
+
+            if (oldIdx == newIdx) {
+                // Cell exists in both → keep it
+                i++;
+                j++;
+            } else if (oldIdx < newIdx) {
+                // Cell is in old but not in new → remove
+                grid[oldIdx].remove(entityId);
+                i++;
+            } else {
+                // Cell is in new but not in old → add
+                grid[newIdx].put(entityId, Boolean.TRUE);
+                j++;
+            }
+        }
+
+        // Remove remaining old cells
+        while (i < oldCount) {
+            grid[oldEntityCells.idxs[i]].remove(entityId);
+            i++;
+        }
+
+        // Add remaining new cells
+        while (j < newCount) {
+            grid[newCellIdxs[j]].put(entityId, Boolean.TRUE);
+            j++;
+        }
 
         // New are now old
         oldEntityCells.updateFrom(newCellIdxs, newCount);
     }
 
-    /**
-     * Use it when an entityId leaves the world or is removed.
-     */
     public void remove(String entityId) {
         if (entityId == null || entityId.isEmpty())
             return;

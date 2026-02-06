@@ -3,6 +3,7 @@ import engine.controller.impl.Controller;
 import engine.controller.ports.ActionsGenerator;
 import engine.model.impl.Model;
 import engine.utils.helpers.DoubleVector;
+import engine.utils.threading.ThreadPoolManager;
 import engine.view.core.View;
 import engine.world.ports.WorldDefinition;
 import engine.world.ports.WorldDefinitionProvider;
@@ -13,13 +14,18 @@ public class Main {
 	public static void main(String[] args) {
 
 		System.setProperty("sun.java2d.uiScale", "1.0");
+		System.setProperty("sun.java2d.opengl", "true");
+		System.setProperty("sun.java2d.d3d", "false"); //  OpenGL
 
 		DoubleVector worldDimension = new DoubleVector(40000, 40000);
 		DoubleVector viewDimension = new DoubleVector(2400, 1500);
 		int maxBodies = 1000;
-		int maxAsteroidCreationDelay = 25;
+		int maxAsteroidCreationDelay = 5;
 
 		ProjectAssets projectAssets = new ProjectAssets();
+
+		ThreadPoolManager.configure(maxBodies);
+		ThreadPoolManager.prestartAllCoreThreads();
 
 		// ActionsGenerator gameRules = new gamerules.LimitRebound();
 		// ActionsGenerator gameRules = new gamerules.ReboundAndCollision();

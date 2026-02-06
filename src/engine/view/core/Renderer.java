@@ -122,7 +122,7 @@ import java.awt.Toolkit;
 public class Renderer extends Canvas implements Runnable {
 
     // region Constants
-    private static final int REFRESH_DELAY_IN_MILLIS = 2; //
+    private static final int REFRESH_DELAY_IN_MILLIS = 5; //
     private static final long MONITORING_PERIOD_NS = 500_000_000L;
     // endregion
 
