@@ -8,6 +8,7 @@ import engine.model.emitter.impl.BasicEmitter;
 import engine.model.physics.ports.PhysicsEngine;
 import engine.model.physics.ports.PhysicsValuesDTO;
 import engine.utils.spatial.core.SpatialGrid;
+import engine.utils.threading.ThreadPoolManager;
 
 /**
  * DynamicBody
@@ -77,12 +78,8 @@ public class DynamicBody extends AbstractBody implements Runnable {
     public synchronized void activate() {
         super.activate();
 
-        Thread thread = new Thread(this);
-        thread.setName("Body " + this.getBodyId());
-        thread.setPriority(Thread.NORM_PRIORITY - 1);
-        thread.start();
-        this.setThread(thread);
         this.setState(BodyState.ALIVE);
+        ThreadPoolManager.submit(this);
     }
 
     // region Acceleration control (acceleration***)
