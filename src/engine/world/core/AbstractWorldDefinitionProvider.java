@@ -58,6 +58,8 @@ public abstract class AbstractWorldDefinitionProvider implements WorldDefinition
     public final ArrayList<DefEmitterDTO> weapons = new ArrayList<>();
     // endregion
 
+    public String musicAssetId;
+
     // *** CONSTRUCTORS ***
 
     public AbstractWorldDefinitionProvider(DoubleVector worldDimension, ProjectAssets assets) {
@@ -537,6 +539,7 @@ public abstract class AbstractWorldDefinitionProvider implements WorldDefinition
         this.spaceships.clear();
         this.trailEmitters.clear();
         this.weapons.clear();
+        this.musicAssetId = null;
     }
 
     private final void validateDefinition() {
@@ -580,7 +583,8 @@ public abstract class AbstractWorldDefinitionProvider implements WorldDefinition
                 new ArrayList<>(this.asteroids),
                 new ArrayList<>(this.spaceships),
                 new ArrayList<>(this.trailEmitters),
-                new ArrayList<>(this.weapons));
+                new ArrayList<>(this.weapons),
+                this.musicAssetId);
     }
     // endregion
 
@@ -657,4 +661,9 @@ public abstract class AbstractWorldDefinitionProvider implements WorldDefinition
             throw new IllegalArgumentException(msg);
     }
     // endregion
+
+    protected final void setMusic(String assetId) {
+        requireNotNull(assetId, "music assetId cannot be null.");
+        this.musicAssetId = assetId;
+    }
 }

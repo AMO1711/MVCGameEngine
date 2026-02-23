@@ -6,6 +6,7 @@ import engine.utils.helpers.DoubleVector;
 import engine.view.core.View;
 import engine.world.ports.WorldDefinition;
 import engine.world.ports.WorldDefinitionProvider;
+import gameworld.AudioManager;
 import gameworld.ProjectAssets;
 
 public class Main {
@@ -36,12 +37,14 @@ public class Main {
 
 		ProjectAssets projectAssets = new ProjectAssets();
 
+		AudioManager audioManager = new AudioManager(projectAssets.musicCatalog);
+
 		// ActionsGenerator gameRules = new gamerules.LimitRebound();
 		// ActionsGenerator gameRules = new gamerules.ReboundAndCollision();
 		ActionsGenerator gameRules = new gamerules.InLimitsGoToCenter();
 
 		// *** WORLD DEFINITION PROVIDER ***
-		WorldDefinitionProvider worldProv = new gameworld.IceWorldDefinitionProvider(
+		WorldDefinitionProvider worldProv = new gameworld.GrassWorldDefinitionProvider(
 				worldDimension, projectAssets);
 
 		// *** CORE ENGINE ***
@@ -60,7 +63,9 @@ public class Main {
 		// region World definition
 		WorldDefinition worldDef = worldProv.provide();
 		// endregion
-
+		if (worldDef.musicAssetId != null) {
+			audioManager.playMusic(worldDef.musicAssetId);
+		}
 		// region Level generator (Level***)
 		new gamelevel.LevelBasic(controller, worldDef);
 		// endregion
@@ -68,5 +73,7 @@ public class Main {
 		// region AI generator (AI***)
 		new gameai.AIBasicSpawner(controller, worldDef, maxAsteroidCreationDelay).activate();
 		// endregion
+
+
 	}
 }

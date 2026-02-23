@@ -22,7 +22,7 @@ public class WorldDefinition {
 	public final ArrayList<DefEmitterDTO> trailEmitters;
 	public final ArrayList<DefEmitterDTO> weapons;
 	// endregion
-
+	public String musicAssetId;
 	// *** CONSTRUCTOR ***
 
 	public WorldDefinition(
@@ -47,5 +47,31 @@ public class WorldDefinition {
 		this.weapons = weapons;
 		this.spaceships = spaceships;
 		this.trailEmitters = trailEmitters;
+	}
+
+	public WorldDefinition(
+			double worldWidth,
+			double worldHeight,
+			AssetCatalog gameAssets,
+			DefBackgroundDTO background,
+			ArrayList<DefItem> spaceDecorators,
+			ArrayList<DefItem> gravityBodies,
+			ArrayList<DefItem> asteroids,
+			ArrayList<DefItem> spaceships,
+			ArrayList<DefEmitterDTO> trailEmitters,
+			ArrayList<DefEmitterDTO> weapons,
+			String musicAssetId) {
+
+		this.worldWidth = worldWidth;
+		this.worldHeight = worldHeight;
+		this.gameAssets = gameAssets;
+		this.background = background;
+		this.spaceDecorators = spaceDecorators;
+		this.gravityBodies = gravityBodies;
+		this.asteroids = asteroids;
+		this.weapons = weapons;
+		this.spaceships = spaceships;
+		this.trailEmitters = trailEmitters;
+		this.musicAssetId = musicAssetId;
 	}
 }
