@@ -16,8 +16,11 @@ import engine.model.bodies.ports.BodyEventProcessor;
 import engine.model.bodies.ports.BodyState;
 import engine.model.bodies.ports.BodyType;
 import engine.model.emitter.impl.BasicEmitter;
+import engine.model.impl.Model;
+import engine.model.physics.core.AbstractPhysicsEngine;
 import engine.model.physics.ports.PhysicsEngine;
 import engine.model.physics.ports.PhysicsValuesDTO;
+import engine.utils.pooling.PoolMDTO;
 import engine.utils.spatial.core.SpatialGrid;
 
 /**
@@ -277,6 +280,18 @@ public abstract class AbstractBody {
         this.state = BodyState.ALIVE;
     }
 
+    /**
+     * Execute one physics/logic tick for this body.
+     * 
+     * This method contains the core logic that should be executed once per frame.
+     * It is called either:
+     * - From the body's own run() loop (when using individual threads)
+     * - From MultiBodyRunner.executeBodyStep() (when using batched execution)
+     * 
+     * Subclasses must implement this to define their per-tick behavior.
+     */
+    public abstract void onTick();
+
     public void enqueueExternalAction(ActionDTO action) {
         if (action == null) {
             throw new IllegalArgumentException("Action cannot be null");
@@ -295,6 +310,18 @@ public abstract class AbstractBody {
 
         if (AbstractBody.aliveQuantity > 0) {
             AbstractBody.aliveQuantity--;
+        }
+        
+        // Release 3 DTOs to pool from physics engine
+        if (this.bodyEventProcessor instanceof Model && this.phyEngine instanceof AbstractPhysicsEngine) {
+            Model model = (Model) this.bodyEventProcessor;
+            AbstractPhysicsEngine engine = (AbstractPhysicsEngine) this.phyEngine;
+            PoolMDTO<PhysicsValuesDTO> pool = model.getPhysicsValuesPool();
+            
+            // Release all 3 DTOs: current, next, and snapshot
+            pool.release(engine.getPhysicsValues());
+            pool.release(engine.getNextPhyValues());
+            pool.release(engine.getSnapshotDTO());
         }
     }
 

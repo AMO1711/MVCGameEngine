@@ -4,9 +4,9 @@ import engine.model.bodies.core.AbstractBody;
 import engine.model.bodies.ports.BodyEventProcessor;
 import engine.model.bodies.ports.BodyState;
 import engine.model.bodies.ports.BodyType;
-import engine.model.physics.implementations.NullPhysicsEngine;
+import engine.model.physics.ports.PhysicsEngine;
+import engine.model.physics.ports.PhysicsValuesDTO;
 import engine.utils.spatial.core.SpatialGrid;
-import engine.utils.threading.ThreadPoolManager;
 
 /**
  * StaticBody 
@@ -50,13 +50,12 @@ public class StaticBody extends AbstractBody implements Runnable {
 
     public StaticBody(
             BodyEventProcessor bodyEventProcessor, SpatialGrid spatialGrid,
-            BodyType bodyType,
-            double size, double x, double y, double angle,
+            PhysicsEngine phyEngine, BodyType bodyType,
             double maxLifeInSeconds, String emitterId) {
 
         super(
                 bodyEventProcessor, spatialGrid,
-                new NullPhysicsEngine(size, x, y, angle),
+                phyEngine,
                 bodyType,
                 maxLifeInSeconds, emitterId);
     }
@@ -70,25 +69,35 @@ public class StaticBody extends AbstractBody implements Runnable {
         super.activate();
 
         this.setState(BodyState.ALIVE);
-        ThreadPoolManager.submit(this);
+        // Threading is now handled by Model/BodyBatchManager
     }
 
+    // region AbstractBody
+    @Override
+    public void onTick() {
+        if (this.isLifeOver()) {
+            PhysicsValuesDTO phyValues = this.getPhysicsValues();
+            this.processBodyEvents(this, phyValues, phyValues);
+        }
+    }
+    // endregionexit
+    
+
+    // region Runnable
     @Override
     public void run() {
         while (this.getBodyState() != BodyState.DEAD) {
-
             if (this.getBodyState() == BodyState.ALIVE) {
-
-                if (this.isLifeOver()) {
-                    this.processBodyEvents(this, getPhysicsValues(), getPhysicsValues());
-                }
+                onTick();
             }
 
             try {
                 Thread.sleep(30);
             } catch (InterruptedException ex) {
-                System.err.println("ERROR Sleeping in StaticBody thread! (StaticBody) · " + ex.getMessage());
+                Thread.currentThread().interrupt();
+                throw new RuntimeException("StaticBody: Thread interrupted", ex);
             }
         }
     }
+    // endregion
 }

@@ -1,5 +1,6 @@
 package engine.model.impl;
 
+// region imports
 import static java.lang.System.nanoTime;
 import java.util.ArrayList;
 import java.util.Map;
@@ -33,9 +34,13 @@ import engine.model.emitter.ports.EmitterConfigDto;
 import engine.model.physics.ports.PhysicsValuesDTO;
 import engine.model.ports.DomainEventProcessor;
 import engine.model.ports.ModelState;
+import engine.model.ports.ProfilingStatisticsDTO;
 import engine.utils.helpers.DoubleVector;
+import engine.utils.pooling.PoolMDTO;
+import engine.utils.profiling.impl.BodyProfiler;
 import engine.utils.spatial.core.SpatialGrid;
 import engine.utils.spatial.ports.SpatialGridStatisticsDTO;
+// endregion
 
 /**
  * Model
@@ -158,9 +163,10 @@ import engine.utils.spatial.ports.SpatialGridStatisticsDTO;
 public class Model implements BodyEventProcessor {
 
     // region Constants
-    private static final int DEFAULT_MAX_BODIES = 1000;
-    private static final int SPATIAL_GRID_CELL_SIZE = 512;
-    private static final int MAX_CELLS_PER_BODY = 512;
+    private static final int DEFAULT_MAX_BODIES = 5000;
+    private static final int SPATIAL_GRID_CELL_SIZE = 128;
+    private static final int MAX_CELLS_PER_BODY = 1512;
+    private static final int DEFAULT_BATCH_SIZE = 10;
     // endregion
 
     // region Fields
@@ -173,32 +179,39 @@ public class Model implements BodyEventProcessor {
     private final Map<String, AbstractBody> decorators = new ConcurrentHashMap<>(200);
     private final Map<String, AbstractBody> dynamicBodies = new ConcurrentHashMap<>(DEFAULT_MAX_BODIES);
     private final Map<String, AbstractBody> gravityBodies = new ConcurrentHashMap<>(200);
+    private final BodyProfiler bodyProfiler;
+    private final BodyBatchManager bodyBatchManager;
     // endregion
 
-    // regions Scratch buffers (for zero-allocation snapshot generation)
-    private final ArrayList<BodyData> scratchDynamicsBuffer = new ArrayList<>(DEFAULT_MAX_BODIES);
+    // region Buffer (for zero-allocation snapshot generation)
+    private PoolMDTO<PhysicsValuesDTO> physicsValuesPool;
+    private ArrayList<BodyData> scratchDynamicsBuffer;
     // endregion
 
     // region Constructors
-    public Model() {
-        this.maxBodies = DEFAULT_MAX_BODIES;
-    }
-
     public Model(DoubleVector worldDimension, int maxDynamicBodies) {
-        this();
-
-        if (worldDimension == null || worldDimension.x <= 0 || worldDimension.y <= 0) {
+        if (worldDimension == null || worldDimension.x <= 0 || worldDimension.y <= 0)
             throw new IllegalArgumentException("Invalid world dimension");
-        }
-        if (maxDynamicBodies <= 0 || maxDynamicBodies > DEFAULT_MAX_BODIES) {
-            throw new IllegalArgumentException("Invalid maxDynamicBodies");
-        }
 
+        if (maxDynamicBodies <= 0)
+            throw new IllegalArgumentException("Invalid maxDynamicBodies: must be > 0");
+
+        this.maxBodies = maxDynamicBodies;
         this.worldWidth = worldDimension.x;
         this.worldHeight = worldDimension.y;
 
-        this.spatialGrid = new SpatialGrid(
-                worldDimension.x, worldDimension.y,
+        // Create scratch buffer and preallocate physics DTO pool
+        scratchDynamicsBuffer = new ArrayList<>(maxDynamicBodies);
+        this.physicsValuesPool = new PoolMDTO<>(() -> new PhysicsValuesDTO(0L, 0, 0, 0, 0));
+        this.physicsValuesPool.preallocate(4 * this.maxBodies);
+        
+        // Calculate thread pool size based on expected batching (maxBodies/batchSize + margin for players)
+        int threadPoolSize = (int) Math.ceil(maxDynamicBodies / (double) DEFAULT_BATCH_SIZE) + 50;
+        this.bodyBatchManager = new BodyBatchManager(threadPoolSize);
+
+        this.bodyProfiler = new BodyProfiler();
+
+        this.spatialGrid = new SpatialGrid(worldDimension.x, worldDimension.y,
                 SPATIAL_GRID_CELL_SIZE, MAX_CELLS_PER_BODY);
     }
     // endregion
@@ -217,6 +230,7 @@ public class Model implements BodyEventProcessor {
         }
 
         System.out.println("Model: Activated");
+        this.bodyBatchManager.activate();
         this.state = ModelState.ALIVE;
     }
 
@@ -241,20 +255,36 @@ public class Model implements BodyEventProcessor {
             throw new IllegalArgumentException("maxLifeInSeconds must be greater than zero o -1 for infinite life");
         }
 
-        PhysicsValuesDTO phyVals = new PhysicsValuesDTO(
-                nanoTime(), posX, posY, angle, size,
-                speedX, speedY, accX, accY, angularSpeed, angularAcc,
-                thrust);
+        // Acquire 3 DTOs from pool for physics engine double buffer + snapshot
+        // in order to avoid allocations in the critical path of body creation 
+        // and activation and also to ensure thread-safe access to physics values.
+        PhysicsValuesDTO phyValues1 = this.physicsValuesPool.acquire();
+        PhysicsValuesDTO phyValues2 = this.physicsValuesPool.acquire();
+        PhysicsValuesDTO phyValues3 = this.physicsValuesPool.acquire();
 
+        // Initialize dto1 with physics values
+        phyValues1.update(nanoTime(), posX, posY, angle, size,
+                speedX, speedY, accX, accY, angularSpeed, angularAcc, thrust);
+
+        // Create body (WITHOUT threading concerns)
         AbstractBody body = BodyFactory.create(
-                this, this.spatialGrid, phyVals, bodyType, maxLifeTime, shooterId);
+                this, this.spatialGrid, 
+                phyValues1, phyValues2, phyValues3, // Three for thread-safety
+                bodyType, 
+                maxLifeTime, 
+                shooterId, 
+                this.bodyProfiler);
 
+        // Prepare body state
         body.activate();
+
+        // Assign body to thread pool (BodyBatchManager decides batch size based on type)
+        this.bodyBatchManager.activateBody(body);
 
         Map<String, AbstractBody> bodyMap = this.getBodyMap(bodyType);
         bodyMap.put(body.getBodyId(), body);
 
-        this.spatialGridUpsert(body); // &++
+        this.spatialGridUpsert(body);
 
         return body.getBodyId();
     }
@@ -419,6 +449,14 @@ public class Model implements BodyEventProcessor {
         return this.maxBodies;
     }
 
+    public PoolMDTO<PhysicsValuesDTO> getPhysicsValuesPool() {
+        return this.physicsValuesPool;
+    }
+
+    public ProfilingStatisticsDTO getProfilingStatistics() {
+        return new ProfilingStatisticsDTO(this.bodyProfiler.getAllMetrics());
+    }
+
     public PlayerDTO getPlayerData(String playerId) {
         PlayerBody pBody = (PlayerBody) this.dynamicBodies.get(playerId);
         if (pBody == null) {
@@ -546,6 +584,7 @@ public class Model implements BodyEventProcessor {
 
         return outEntityIds;
     }
+    // endregion
 
     // region Remove and destroy (remove***)
     public void removeBody(AbstractBody body) {
@@ -586,7 +625,18 @@ public class Model implements BodyEventProcessor {
     }
 
     public void setMaxBodies(int maxBodies) {
-        this.maxBodies = maxBodies;
+        if (maxBodies <= 0) {
+            maxBodies = DEFAULT_MAX_BODIES;
+        }
+
+        // Allow maxBodies to exceed DEFAULT_MAX_BODIES (no clamping)
+        // Only reinitialize pool if maxBodies changed
+        if (this.maxBodies != maxBodies) {
+            this.maxBodies = maxBodies;
+
+            this.physicsValuesPool = new PoolMDTO<>(() -> new PhysicsValuesDTO(0L, 0, 0, 0, 0));
+            this.physicsValuesPool.preallocate(Math.max(5000, 5 * this.maxBodies));
+        }
     }
 
     public void setWorldDimension(DoubleVector worldDim) {
@@ -620,16 +670,22 @@ public class Model implements BodyEventProcessor {
         try {
             // 1 => Detect events -------------------
             List<DomainEvent> domainEvents = checkBody.getScratchClearEvents();
+            long detectStart = this.bodyProfiler.startInterval();
             this.detectEvents(checkBody, checkBodyNewPhyValues, checkBodyOldPhyValues, domainEvents);
+            this.bodyProfiler.stopInterval("EVENTS_DETECT", detectStart);
 
             // 2 => Decide actions ------------------
             List<ActionDTO> actions = checkBody.getActionsQueue();
             if (actions.size() > 0) {
             }
+            long decideStart = this.bodyProfiler.startInterval();
             this.provideActions(checkBody, domainEvents, actions);
+            this.bodyProfiler.stopInterval("EVENTS_DECIDE", decideStart);
 
             // 3 => Execute actions -----------------
+            long executeStart = this.bodyProfiler.startInterval();
             this.executeActionList(checkBody.getBodyId(), actions, checkBodyNewPhyValues);
+            this.bodyProfiler.stopInterval("EVENTS_EXECUTE", executeStart);
 
         } catch (Exception e) { // Fallback anti-zombi
             if (checkBody.getBodyState() == BodyState.HANDS_OFF) {
@@ -751,6 +807,10 @@ public class Model implements BodyEventProcessor {
         }
         double dtSeconds = ((double) (newPhyValues.timeStamp - checkBody.getPhysicsValues().timeStamp))
                 / 1_000_000_000.0;
+        if (dtSeconds <= 0.0) {
+            // Guard against negative/zero dt to prevent emitter cooldown from growing
+            dtSeconds = 0.001;
+        }
 
         for (BasicEmitter emitter : checkBody.emittersList()) {
             if (emitter.mustEmitNow(dtSeconds)) {
@@ -1139,6 +1199,20 @@ public class Model implements BodyEventProcessor {
         if (body == null)
             return;
 
+        long spatialGridStart = this.bodyProfiler.startInterval();
         body.spatialGridUpsert();
+        this.bodyProfiler.stopInterval("SPATIAL_GRID", spatialGridStart);
+    }
+
+    // *** SHUTDOWN ***
+
+    /**
+     * Gracefully shutdown the model and all managed resources.
+     * 
+     * Stops all running threads and runners in the batch manager.
+     */
+    public void shutdown() {
+        this.state = ModelState.STOPPED;
+        this.bodyBatchManager.shutdown();
     }
 }

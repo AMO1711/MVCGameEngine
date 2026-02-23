@@ -1,103 +1,127 @@
 package engine.utils.threading;
 
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.RejectedExecutionException;
+import java.util.concurrent.RejectedExecutionHandler;
 
 /**
- * ThreadPoolManager
- * -----------------
- *
- * Singleton thread pool manager that recycles a fixed pool of threads
- * for body physics computation tasks.
+ * Generic thread pool executor for task execution.
+ * 
+ * - Fixed-size core pool with fair queue-based work distribution.
+ * - No knowledge of specific task types (completely decoupled from domain logic).
+ * - Reusable by any component needing threaded execution.
+ * - Early fail: validates pool size at constructor.
  */
 public final class ThreadPoolManager {
 
-    // region Singleton instance
-    private static ThreadPoolManager instance;
-    private static int configuredPoolSize = -1;
-    private final ExecutorService executor;
-
+    // region Constants
     private static final int DEFAULT_POOL_SIZE = 250;
+    private static final int SHUTDOWN_TIMEOUT_SECONDS = 30;
     // endregion
 
+    // region Fields
+    private final ThreadPoolExecutor executor;
+    private volatile boolean isShutdown = false;
+    // endregion
+
+    // region Constructors
     /**
-     * Private constructor - ensures singleton pattern via lazy initialization
+     * Create pool with default size (250 threads).
      */
-    private ThreadPoolManager(int poolSize) {
-        this.executor = Executors.newFixedThreadPool(poolSize,
+    public ThreadPoolManager() {
+        this(DEFAULT_POOL_SIZE);
+    }
+
+    /**
+     * Create pool with specified size.
+     * 
+     * @param poolSize number of core threads (must be > 0)
+     * @throws IllegalArgumentException if poolSize <= 0 (early fail)
+     */
+    public ThreadPoolManager(int poolSize) {
+        if (poolSize <= 0) {
+            throw new IllegalArgumentException("poolSize must be > 0, got: " + poolSize);
+        }
+
+        BlockingQueue<Runnable> queue = new LinkedBlockingQueue<>();
+        RejectedExecutionHandler handler = (r, e) -> {
+            throw new RejectedExecutionException("Task rejected - pool is shutdown");
+        };
+
+        this.executor = new ThreadPoolExecutor(
+                poolSize, poolSize,  // Fixed size
+                0L, TimeUnit.MILLISECONDS,
+                queue,
                 r -> {
                     Thread t = new Thread(r);
-                    t.setName("BodyThread-" + System.nanoTime());
+                    t.setName("PoolThread-" + System.nanoTime());
                     t.setPriority(Thread.NORM_PRIORITY - 1);
+                    t.setDaemon(false);
+                    t.setUncaughtExceptionHandler((thread, throwable) -> {
+                        throwable.printStackTrace();
+                    });
                     return t;
-                });
+                },
+                handler);
     }
+    // endregion
 
-    private static synchronized ThreadPoolManager getInstance() {
-        if (instance == null) {
-            int poolSize = configuredPoolSize > 0 ? configuredPoolSize : DEFAULT_POOL_SIZE;
-            instance = new ThreadPoolManager(poolSize);
-        }
-        return instance;
+    // *** PUBLICS ***
+
+    /**
+     * Pre-create all core threads to avoid lazy startup.
+     */
+    public void prestartAllCoreThreads() {
+        this.executor.prestartAllCoreThreads();
     }
 
     /**
-     * Configure pool size BEFORE first submit.
-     * If the pool is already created, this call is ignored.
-     *
-     * @param poolSize desired pool size (typically maxBodies)
+     * Submit task for execution.
+     * 
+     * @param task the Runnable to execute (cannot be null)
+     * @throws NullPointerException if task is null (early fail)
+     * @throws RejectedExecutionException if pool is shutdown
      */
-    public static synchronized void configure(int poolSize) {
-        if (poolSize <= 0) {
-            throw new IllegalArgumentException("poolSize must be > 0");
+    public void submit(Runnable task) {
+        if (task == null) {
+            throw new NullPointerException("Task cannot be null");
         }
-        if (instance != null) {
-            return;
-        }
-        configuredPoolSize = poolSize;
+        this.executor.submit(task);
     }
 
     /**
-     * Submit a body's Runnable task to the thread pool.
-     *
-     * @param task the Runnable body to execute
+     * Gracefully shutdown: stop accepting tasks, wait for running tasks.
+     * 
+     * @return true if all tasks completed within timeout, false otherwise
      */
-    public static void submit(Runnable task) {
-        getInstance().executor.submit(task);
-    }
-
-    /**
-     * Prestart all core threads to avoid startup jitter.
-     */
-    public static void prestartAllCoreThreads() {
-        ExecutorService executor = getInstance().executor;
-        if (executor instanceof ThreadPoolExecutor) {
-            ((ThreadPoolExecutor) executor).prestartAllCoreThreads();
+    public boolean shutdown() {
+        if (this.isShutdown) {
+            return true;
         }
-    }
 
-    /**
-     * Shutdown the thread pool (for testing or application shutdown).
-     */
-    public static void shutdown() {
-        if (instance != null) {
-            instance.executor.shutdown();
+        this.isShutdown = true;
+        this.executor.shutdown();
+
+        try {
+            boolean terminated = this.executor.awaitTermination(SHUTDOWN_TIMEOUT_SECONDS, TimeUnit.SECONDS);
+            if (!terminated) {
+                this.executor.shutdownNow();
+            }
+            return terminated;
+        } catch (InterruptedException e) {
+            this.executor.shutdownNow();
+            Thread.currentThread().interrupt();
+            return false;
         }
     }
 
     /**
-     * Get current queue size (for debugging/monitoring).
-     *
-     * @return approximate number of pending tasks in the thread pool queue
+     * Check if pool is shutdown.
      */
-    public static int getQueueSize() {
-        if (instance == null) {
-            return 0;
-        }
-        if (instance.executor instanceof ThreadPoolExecutor) {
-            return ((ThreadPoolExecutor) instance.executor).getQueue().size();
-        }
-        return -1;
+    boolean isShutdown() {
+        return this.isShutdown;
     }
 }

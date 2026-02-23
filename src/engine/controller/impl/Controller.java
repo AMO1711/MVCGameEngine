@@ -8,6 +8,7 @@ import engine.assets.core.AssetCatalog;
 import engine.controller.mappers.DynamicRenderableMapper;
 import engine.controller.mappers.EmitterMapper;
 import engine.controller.mappers.PlayerRenderableMapper;
+import engine.controller.mappers.ProfilingStatisticsMapper;
 import engine.controller.mappers.RenderableMapper;
 import engine.controller.mappers.SpatialGridStatisticsMapper;
 import engine.controller.ports.ActionsGenerator;
@@ -271,6 +272,11 @@ public class Controller implements WorldManager, DomainEventProcessor {
         return PlayerRenderableMapper.fromPlayerDTO(this.model.getPlayerData(playerId));
     }
 
+    public Object[] getProfilingHUDValues(long fps) {
+        return ProfilingStatisticsMapper.fromProfilingStatistics(
+                this.model.getProfilingStatistics(), fps);
+    }
+
     public SpatialGridStatisticsRenderDTO getSpatialGridStatistics() {
         return SpatialGridStatisticsMapper.fromSpatialGridStatisticsDTO(
 
@@ -374,6 +380,11 @@ public class Controller implements WorldManager, DomainEventProcessor {
         }
 
         return renderables;
+    }
+
+    public ArrayList<DynamicRenderDTO> snapshotRenderData(DynamicRenderableMapper mapper) {
+        ArrayList<BodyData> snapshot = this.model.snapshotRenderData();
+        return mapper.fromBodyDTOPooled(snapshot);
     }
 
     // *** INTERFACE IMPLEMENTATIONS (one region per interface) ***

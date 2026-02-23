@@ -7,53 +7,20 @@ import engine.model.bodies.ports.BodyType;
 import engine.model.emitter.impl.BasicEmitter;
 import engine.model.physics.ports.PhysicsEngine;
 import engine.model.physics.ports.PhysicsValuesDTO;
+import engine.utils.profiling.impl.BodyProfiler;
 import engine.utils.spatial.core.SpatialGrid;
-import engine.utils.threading.ThreadPoolManager;
 
 /**
- * DynamicBody
- * -----------
- *
- * Represents a single dynamic entity in the simulation model.
- *
- * Each DynamicBody maintains:
- * - A unique identifier and visual attributes (assetId, size)
- * - Its own PhysicsEngine instance, which stores and updates the immutable
- * PhysicsValues snapshot (position, speed, acceleration, angle, etc.)
- * - A dedicated thread responsible for advancing its physics state over time
- *
- * Dynamic bodies interact exclusively with the Model, reporting physics updates
- * and requesting event processing (collisions, rebounds, etc.). The view layer
- * never reads mutable state directly; instead, DynamicBody produces a
- * DBodyInfoDTO snapshot encapsulating all visual and physical data required
- * for rendering.
- *
- * Lifecycle control (STARTING → ALIVE → DEAD) is managed internally, and static
- * counters (inherited from AbstractEntity) track global quantities of created,
- * active and dead entities.
- *
- * Threading model
- * ---------------
- * Each DynamicBody runs on its own thread (implements Runnable). The physics
- * engine is updated continuously in the run() loop, with the entity checking
- * for events and processing actions based on game rules determined by the
- * Controller.
- *
- * The goal of this class is to isolate per-object behavior and physics
- * evolution
- * while keeping the simulation thread-safe through immutable snapshots and a
- * clearly separated rendering pipeline.
+ * Dynamic body with its own physics engine.
+ * Processed by MultiBodyRunner instances from the shared thread pool.
  */
-public class DynamicBody extends AbstractBody implements Runnable {
-
-    // region Constants
-    private static final int SLEEP_TIME_MS = 15;
-    // endregion
+public class DynamicBody extends AbstractBody {
 
     // region Fields
     private double maxThrustForce; //
     private double maxAngularAcc; // degrees*s^-2
     private double angularSpeed; // degrees*s^-1
+    private BodyProfiler profiler;
     private String trailId;
     private int spatialCellRadius = -1;
     private double spatialCellSize = -1.0d;
@@ -62,13 +29,15 @@ public class DynamicBody extends AbstractBody implements Runnable {
 
     // region Constructors
     public DynamicBody(BodyEventProcessor bodyEventProcessor, SpatialGrid spatialGrid,
-            PhysicsEngine phyEngine, BodyType bodyType, double maxLifeInSeconds, String emitterId) {
+            PhysicsEngine phyEngine, BodyType bodyType, double maxLifeInSeconds, String emitterId, 
+            BodyProfiler profiler) {
 
         super(bodyEventProcessor, spatialGrid,
                 phyEngine,
                 bodyType,
                 maxLifeInSeconds, 
                 emitterId);
+        this.profiler = profiler;
     }
     // endregion
 
@@ -79,7 +48,7 @@ public class DynamicBody extends AbstractBody implements Runnable {
         super.activate();
 
         this.setState(BodyState.ALIVE);
-        ThreadPoolManager.submit(this);
+        // Threading is now handled by Model/BodyBatchManager
     }
 
     // region Acceleration control (acceleration***)
@@ -154,39 +123,31 @@ public class DynamicBody extends AbstractBody implements Runnable {
 
     // *** INTERFACE IMPLEMENTATIONS ***
 
-    // regions Runnable
+    // region AbstractBody
     @Override
-    public void run() {
-        PhysicsValuesDTO newPhyValues;
+    public void onTick() {
+        // Physics calculation (already profiled in BasicPhysicsEngine)
+        PhysicsValuesDTO newPhyValues = this.getPhysicsEngine().calcNewPhysicsValues();
 
-        while (this.getBodyState() != BodyState.DEAD) {
+        // Spatial grid update
+        long spatialStart = this.profiler.startInterval();
+        double r = newPhyValues.size * 0.5;
+        this.getSpatialGrid().upsert(
+                this.getBodyId(), 
+                newPhyValues.posX - r, newPhyValues.posX + r,
+                newPhyValues.posY - r, newPhyValues.posY + r,
+                this.getScratchIdxs());
+        this.profiler.stopInterval("SPATIAL_GRID", spatialStart);
 
-            if (this.getBodyState() == BodyState.ALIVE) {
-                newPhyValues = this.getPhysicsEngine().calcNewPhysicsValues();
-
-                double r = newPhyValues.size * 0.5;
-                double minX = newPhyValues.posX - r;
-                double maxX = newPhyValues.posX + r;
-                double minY = newPhyValues.posY - r;
-                double maxY = newPhyValues.posY + r;
-
-                this.getSpatialGrid().upsert(
-                        this.getBodyId(), minX, maxX, minY, maxY, this.getScratchIdxs());
-
-                if (this.isThrusting()) {
-                    if (this.trailId != null)
-                        this.emitterRequest(this.trailId);
-                }
-
-                this.processBodyEvents(this, newPhyValues, this.getPhysicsEngine().getPhysicsValues());
-            }
-
-            try {
-                Thread.sleep(SLEEP_TIME_MS);
-            } catch (InterruptedException ex) {
-                throw new RuntimeException(ex);
-            }
+        // Trail emitter
+        if (this.isThrusting() && this.trailId != null) {
+            long emitterStart = this.profiler.startInterval();
+            this.emitterRequest(this.trailId);
+            this.profiler.stopInterval("EMITTERS", emitterStart);
         }
+
+        // Event processing (already profiled in Model.processBodyEvents)
+        this.processBodyEvents(this, newPhyValues, this.getPhysicsEngine().getPhysicsValues());
     }
     // endregion
 

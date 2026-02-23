@@ -10,9 +10,12 @@ import engine.model.emitter.impl.BasicEmitter;
 import engine.model.emitter.ports.EmitterConfigDto;
 import engine.model.physics.ports.PhysicsEngine;
 import engine.model.physics.ports.PhysicsValuesDTO;
+import engine.utils.profiling.impl.BodyProfiler;
 import engine.utils.spatial.core.SpatialGrid;
 
 public class PlayerBody extends DynamicBody {
+
+    private static final boolean PLAYERS_EXCLUSIVE = true;
 
     // region Fields
     private final List<String> weaponIds = new java.util.ArrayList<>(4);
@@ -28,18 +31,29 @@ public class PlayerBody extends DynamicBody {
             SpatialGrid spatialGrid,
             PhysicsEngine physicsEngine,
             double maxLifeInSeconds,
-            String emitterId) {
+            String emitterId,
+            BodyProfiler profiler) {
 
         super(bodyEventProcessor,
                 spatialGrid,
                 physicsEngine,
                 BodyType.PLAYER,
                 maxLifeInSeconds,
-                emitterId);
+                emitterId,
+                profiler);
 
         this.setMaxThrustForce(800);
         this.setMaxAngularAcceleration(1000);
         this.setAngularSpeed(30);
+    }
+
+    @Override
+    public synchronized void activate() {
+        super.activate(); // Calls AbstractBody.activate()
+
+        this.setState(engine.model.bodies.ports.BodyState.ALIVE);
+        // Threading is now handled by Model/BodyBatchManager
+        // Players will be assigned to batch size 1 (exclusive) by Model
     }
 
     public void addWeapon(String emitterId) {
@@ -76,33 +90,43 @@ public class PlayerBody extends DynamicBody {
         return (emitter != null) ? emitter.getConfig() : null;
     }
 
-    public int getAmmoStatusPrimary() {
+    public double getAmmoStatusPrimary() {
         return getAmmoStatus(0);
     }
 
-    public int getAmmoStatusSecondary() {
+    public double getAmmoStatusSecondary() {
         return getAmmoStatus(1);
     }
 
-    public int getAmmoStatusMines() {
+    public double getAmmoStatusMines() {
         return getAmmoStatus(2);
     }
 
-    public int getAmmoStatusMissiles() {
+    public double getAmmoStatusMissiles() {
         return getAmmoStatus(3);
     }
 
-    private int getAmmoStatus(int weaponIndex) {
+    private double getAmmoStatus(int weaponIndex) {
         if (weaponIndex < 0 || weaponIndex >= this.weaponIds.size()) {
-            return 0;
+            return 0.0d;
         }
 
         BasicEmitter emitter = this.getEmitter(this.weaponIds.get(weaponIndex));
         if (emitter == null) {
-            return 0;
+            return 0.0d;
         }
 
-        return emitter.getBodiesRemaining();
+        if (emitter.getConfig().unlimitedBodies) {
+            return 1.0d;
+        }
+
+        int maxBodies = emitter.getConfig().maxBodiesEmitted;
+        if (maxBodies <= 0) {
+            return 0.0d;
+        }
+
+        double ratio = emitter.getBodiesRemaining() / (double) maxBodies;
+        return Math.max(0.0d, Math.min(1.0d, ratio));
     }
 
     public double getDamage() {
