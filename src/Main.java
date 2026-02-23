@@ -28,10 +28,10 @@ public class Main {
 		// => *** or... no set viewDimension                         ***
 		// => **********************************************************
 		DoubleVector viewDimension = new DoubleVector(1280, 720);
-		DoubleVector worldDimension = new DoubleVector(40000, 40000);
+		DoubleVector worldDimension = new DoubleVector(4000, 7000);
 		// endregion
 
-		int maxBodies = 1000;
+		int maxBodies = 10;
 		int maxAsteroidCreationDelay = 3; // Used by AIBasicSpawner
 
 		ProjectAssets projectAssets = new ProjectAssets();
@@ -41,7 +41,7 @@ public class Main {
 		ActionsGenerator gameRules = new gamerules.InLimitsGoToCenter();
 
 		// *** WORLD DEFINITION PROVIDER ***
-		WorldDefinitionProvider worldProv = new gameworld.RandomWorldDefinitionProvider(
+		WorldDefinitionProvider worldProv = new gameworld.IceWorldDefinitionProvider(
 				worldDimension, projectAssets);
 
 		// *** CORE ENGINE ***
