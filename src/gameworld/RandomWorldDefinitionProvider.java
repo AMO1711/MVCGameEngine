@@ -20,7 +20,7 @@ public final class RandomWorldDefinitionProvider extends AbstractWorldDefinition
 		double density = 100d;
 
 		// region Background
-		this.setBackgroundStatic("back_12");
+		this.setBackgroundStatic("backCesped");
 		// endregion
 
 		// region Decoration

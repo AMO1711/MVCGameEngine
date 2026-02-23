@@ -48,6 +48,8 @@ public final class ProjectAssets {
         this.catalog.register("back_23", "bg-23-space-seamless.jpg", AssetType.BACKGROUND, AssetIntensity.LOW);
         this.catalog.register("back_24", "bg-24-space-seamless.jpg", AssetType.BACKGROUND, AssetIntensity.LOW);
         this.catalog.register("back_25", "bg-25-space-seamless.jpg", AssetType.BACKGROUND, AssetIntensity.LOW);
+        this.catalog.register("backHielo", "backHielo.jpg", AssetType.BACKGROUND, AssetIntensity.LOW);
+        this.catalog.register("backCesped", "backCesped.jpg", AssetType.BACKGROUND, AssetIntensity.HIGH);
         // endregion
 
         // region black holes (black-hole-***)
