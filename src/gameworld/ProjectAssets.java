@@ -7,9 +7,11 @@ import engine.assets.ports.AssetType;
 public final class ProjectAssets {
 
     public final AssetCatalog catalog;
+    public final AssetCatalog musicCatalog;
 
     public ProjectAssets() {
         this.catalog = new AssetCatalog("src/resources/images/");
+        this.musicCatalog = new AssetCatalog("src/resources/music/");
 
         // region FrostByte assets
         this.catalog.register("playerRight", "playerRight.png", AssetType.SPACESHIP, AssetIntensity.HIGH);
@@ -19,6 +21,10 @@ public final class ProjectAssets {
 
         this.catalog.register("enemy", "enemy.png", AssetType.ENEMY, AssetIntensity.HIGH);
         //this.catalog.register("enemyDead", "enemyDead.png", AssetType.ENEMY, AssetIntensity.MEDIUM);
+
+        this.musicCatalog.register("musicaMenu", "Bocanada.WAV", AssetType.MUSIC, AssetIntensity.HIGH);
+        this.musicCatalog.register("musicaCesped", "yro.WAV", AssetType.MUSIC, AssetIntensity.HIGH);
+        this.musicCatalog.register("musicaHielo", "inviernoFrenetico.WAV", AssetType.MUSIC, AssetIntensity.HIGH);
 
         this.catalog.register("playerAttackingRight", "playerAttackingRight.png", AssetType.SPACESHIP, AssetIntensity.HIGH);
         this.catalog.register("playerAttackingLeft", "playerAttackingLeft.png", AssetType.SPACESHIP, AssetIntensity.HIGH);
@@ -254,6 +260,7 @@ public final class ProjectAssets {
         // region ui signs (ui-signs-***)
         this.catalog.register("signs_01", "ui-signs-1.png", AssetType.UI_SIGN, AssetIntensity.HIGH);
         // endregion
+
 
     }
 }

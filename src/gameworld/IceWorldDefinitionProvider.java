@@ -19,6 +19,8 @@ public class IceWorldDefinitionProvider extends AbstractWorldDefinitionProvider{
 		this.setBackgroundStatic("backHielo");
 		// endregion
 
+		this.setMusic("musicaHielo");
+
 		// region Gravity bodies => Static bodies
 		this.addGravityBody("lab_01", 12000, 24000, 400);
 
