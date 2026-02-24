@@ -32,8 +32,8 @@ public class GrassWorldDefinitionProvider extends AbstractWorldDefinitionProvide
                 10, 750,
                 0, 150);
 
-        this.addSpaceshipAnywhereRandomAsset(1, AssetType.ENEMY, 50, 100, 100);
-        // endregion
+        this.addEnemyPrototypeAnywhereRandomAsset(1, AssetType.ENEMY, 120, 180, 0, 0, 0, 0);
+		// endregion
 
         // region Players
         this.addSpaceship("playerRight", 6000, 12000, 100);

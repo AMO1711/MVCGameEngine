@@ -45,7 +45,7 @@ public class AIEnemyShooter implements Runnable {
                         double dy = playerPos.y - enemyPos.y;
                         double angle = Math.toDegrees(Math.atan2(dy, dx));
                         
-                        this.worldManager.playerRotate(enemyId, angle);
+                        // this.worldManager.playerRotate(enemyId, angle);
                         this.worldManager.playerFire(enemyId);
                     } else {
                         // Limpieza: si getBodyPosition es null, el ID ya no sirve

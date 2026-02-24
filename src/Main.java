@@ -1,4 +1,21 @@
 
+import java.awt.BorderLayout;
+import java.awt.Color;
+import java.awt.Dimension;
+import java.awt.Font;
+import java.awt.Graphics;
+import java.awt.image.BufferedImage;
+import java.io.File;
+import java.io.IOException;
+
+import javax.imageio.ImageIO;
+import javax.swing.BorderFactory;
+import javax.swing.Box;
+import javax.swing.JButton;
+import javax.swing.JFrame;
+import javax.swing.JPanel;
+import javax.swing.SwingUtilities;
+
 import engine.controller.impl.Controller;
 import engine.controller.ports.ActionsGenerator;
 import engine.model.impl.Model;
@@ -8,13 +25,6 @@ import engine.world.ports.WorldDefinition;
 import engine.world.ports.WorldDefinitionProvider;
 import gameworld.AudioManager;
 import gameworld.ProjectAssets;
-
-import javax.imageio.ImageIO;
-import javax.swing.*;
-import java.awt.*;
-import java.awt.image.BufferedImage;
-import java.io.File;
-import java.io.IOException;
 
 public class Main {
 
@@ -113,7 +123,7 @@ public class Main {
 
 	private static void startGame(WorldDefinitionProvider worldProv) {
 		int maxBodies = 10;
-		int maxAsteroidCreationDelay = 3;
+		int maxAsteroidCreationDelay = 3000;
 
 		ActionsGenerator gameRules = new gamerules.InLimitsGoToCenter();
 

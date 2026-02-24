@@ -61,9 +61,10 @@ public class WorldDefinition {
 			ArrayList<DefItem> gravityBodies,
 			ArrayList<DefItem> asteroids,
 			ArrayList<DefItem> spaceships,
+			ArrayList<DefItem> enemies,
 			ArrayList<DefEmitterDTO> trailEmitters,
 			ArrayList<DefEmitterDTO> weapons,
-			String musicAssetId) {
+			String musicAssetId) { 
 
 		this.worldWidth = worldWidth;
 		this.worldHeight = worldHeight;
@@ -72,6 +73,7 @@ public class WorldDefinition {
 		this.spaceDecorators = spaceDecorators;
 		this.gravityBodies = gravityBodies;
 		this.asteroids = asteroids;
+		this.enemies = enemies;
 		this.weapons = weapons;
 		this.spaceships = spaceships;
 		this.trailEmitters = trailEmitters;
