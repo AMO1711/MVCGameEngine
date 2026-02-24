@@ -28,17 +28,17 @@ public class Main {
 		// => *** or... no set viewDimension                         ***
 		// => **********************************************************
 		DoubleVector viewDimension = new DoubleVector(1280, 720);
-		DoubleVector worldDimension = new DoubleVector(4000, 7000);
+		DoubleVector worldDimension = new DoubleVector(4000, 4000);
 		// endregion
 
 		int maxBodies = 10;
-		int maxAsteroidCreationDelay = 3; // Used by AIBasicSpawner
+		int maxAsteroidCreationDelay = 3000; // Used by AIBasicSpawner
 
 		ProjectAssets projectAssets = new ProjectAssets();
 
 		// ActionsGenerator gameRules = new gamerules.LimitRebound();
 		// ActionsGenerator gameRules = new gamerules.ReboundAndCollision();
-		ActionsGenerator gameRules = new gamerules.InLimitsGoToCenter();
+		ActionsGenerator gameRules = new gamerules.ReboundCollisionPlayerImmunity();
 
 		// *** WORLD DEFINITION PROVIDER ***
 		WorldDefinitionProvider worldProv = new gameworld.IceWorldDefinitionProvider(

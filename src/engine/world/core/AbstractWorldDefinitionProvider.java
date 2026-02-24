@@ -54,6 +54,7 @@ public abstract class AbstractWorldDefinitionProvider implements WorldDefinition
     public final ArrayList<DefItem> gravityBodies = new ArrayList<>();
     public final ArrayList<DefItem> asteroids = new ArrayList<>();
     public final ArrayList<DefItem> spaceships = new ArrayList<>();
+    public final ArrayList<DefItem> enemies = new ArrayList<>();
     public final ArrayList<DefEmitterDTO> trailEmitters = new ArrayList<>();
     public final ArrayList<DefEmitterDTO> weapons = new ArrayList<>();
     // endregion
@@ -78,6 +79,77 @@ public abstract class AbstractWorldDefinitionProvider implements WorldDefinition
     }
 
     // *** PROTECTED ***
+
+    // region Enemy adders (addEnemy ***)
+    protected final void addEnemy(
+            String assetId, double posX, double posY,
+            double size, double angle, double density) {
+
+        requireNotNull(assetId, "assetId cannot be null");
+        this.assetsRegister.registerAssetId(assetId);
+        this.enemies.add(new DefItemDTO(assetId, size, angle, posX, posY, density));
+    }
+
+    protected final void addEnemy(
+            String assetId, double posX, double posY, double size) {
+
+        addEnemy(assetId, posX, posY, size, randomAngle(), DEFAULT_DENSITY);
+    }
+
+    protected final void addEnemyRandomAsset(
+            int num, AssetType assetType,
+            double angle, double density, double size, double posX, double posY) {
+
+        this.addRandomAsset(this.enemies, num, assetType, angle, density, size, posX, posY);
+    }
+
+    protected final void addEnemyAnywhereRandomAsset(
+            int num, AssetType assetType, double density, double minSize, double maxSize) {
+
+        requirePositiveInt(num, "num must be a positive integer.");
+
+        for (int i = 0; i < num; i++) {
+            double angle = randomAngle();
+            double posX = randomDouble(WORLD_MIN, this.worldWidth);
+            double posY = randomDouble(WORLD_MIN, this.worldHeight);
+            double size = randomDouble(minSize, maxSize);
+
+            this.addEnemyRandomAsset(1, assetType, angle, density, size, posX, posY);
+        }
+    }
+
+    protected final void addEnemyPrototypeRandomAsset(
+            int num, AssetType assetType, double density,
+            double minAngle, double maxAngle,
+            double minSize, double maxSize,
+            double posMinX, double posMaxX,
+            double posMinY, double posMaxY,
+            double speedMin, double speedMax,
+            double angularSpeedMin, double angularSpeedMax) {
+
+        this.addRandomPrototypeRandomAsset(this.enemies, num, assetType, density,
+                minAngle, maxAngle, minSize, maxSize,
+                posMinX, posMaxX, posMinY, posMaxY,
+                speedMin, speedMax,
+                0, 0, // thrustMin/Max por defecto a 0 si no se requieren
+                angularSpeedMin, angularSpeedMax);
+    }
+
+    protected final void addEnemyPrototypeAnywhereRandomAsset(
+            int num, AssetType assetType, double minSize, double maxSize,
+            double speedMin, double speedMax,
+            double angularSpeedMin, double angularSpeedMax) {
+
+        this.addEnemyPrototypeRandomAsset(
+                num, assetType, DEFAULT_DENSITY,
+                ANY_HEADING_MIN_DEG, ANY_HEADING_MAX_DEG,
+                minSize, maxSize,
+                WORLD_MIN, this.worldWidth,
+                WORLD_MIN, this.worldHeight,
+                speedMin, speedMax,
+                angularSpeedMin, angularSpeedMax);
+    }
+    // endregion
 
     // region Asteroid adders (addAsteroid ***)
     protected final void addAsteroidRandomAsset(
@@ -535,6 +607,7 @@ public abstract class AbstractWorldDefinitionProvider implements WorldDefinition
         this.gravityBodies.clear();
         this.asteroids.clear();
         this.spaceships.clear();
+        this.enemies.clear();
         this.trailEmitters.clear();
         this.weapons.clear();
     }
@@ -544,11 +617,12 @@ public abstract class AbstractWorldDefinitionProvider implements WorldDefinition
         if (this.decorators.isEmpty() &&
                 this.gravityBodies.isEmpty() &&
                 this.asteroids.isEmpty() &&
-                this.spaceships.isEmpty()) {
+                this.spaceships.isEmpty() &&
+                this.enemies.isEmpty()) {
 
             throw new IllegalStateException(
                     "WorldDefinition must define at least one item " +
-                            "(decorators/gravityBodies/asteroids/spaceships).");
+                            "(decorators/gravityBodies/asteroids/spaceships/enemies).");
         }
 
         // Background is mandatory: no background => no rendering
@@ -579,6 +653,7 @@ public abstract class AbstractWorldDefinitionProvider implements WorldDefinition
                 new ArrayList<>(this.gravityBodies),
                 new ArrayList<>(this.asteroids),
                 new ArrayList<>(this.spaceships),
+                new ArrayList<>(this.enemies),
                 new ArrayList<>(this.trailEmitters),
                 new ArrayList<>(this.weapons));
     }

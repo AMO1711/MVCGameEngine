@@ -199,6 +199,10 @@ public class View extends JFrame implements KeyListener, WindowFocusListener {
     public DoubleVector getViewDimension() {
         return new DoubleVector(this.viewDimension);
     }
+
+    public String getLocalPlayerId() {
+        return this.localPlayerId;
+    }
     // endregion
 
     // region Setters (set***)
@@ -300,10 +304,6 @@ public class View extends JFrame implements KeyListener, WindowFocusListener {
         }
 
         return this.controller.getPlayerRenderData(this.localPlayerId);
-    }
-
-    protected String getLocalPlayerId() {
-        return this.localPlayerId;
     }
 
     protected Object[] getProfilingHUDValues(long fps) {

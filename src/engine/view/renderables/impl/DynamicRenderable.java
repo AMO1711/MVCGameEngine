@@ -23,8 +23,12 @@ public class DynamicRenderable extends Renderable {
     // endregion
 
     public void update(DynamicRenderDTO renderInfo, long currentFrame) {
+        if (renderInfo == null || renderInfo.size <= 0) { //He añadido la comprobacion del size mayor a 0
+            return; 
+        }
+
         DynamicRenderDTO current = (DynamicRenderDTO) this.getRenderData();
-        if (current != null && renderInfo != null) {
+        if (current != null) {
             current.updateFrom(renderInfo);
             super.update(current, currentFrame);
             return;

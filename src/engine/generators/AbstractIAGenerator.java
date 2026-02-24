@@ -9,7 +9,6 @@ import engine.utils.helpers.DoubleVector;
 import engine.world.ports.DefEmitterDTO;
 import engine.world.ports.DefItem;
 import engine.world.ports.DefItemDTO;
-import engine.world.ports.DefWeaponDTO;
 import engine.world.ports.WorldDefinition;
 
 public abstract class AbstractIAGenerator implements Runnable {
@@ -80,7 +79,7 @@ public abstract class AbstractIAGenerator implements Runnable {
                 bodyDef.posX, bodyDef.posY,
                 bodyDef.speedX, bodyDef.speedY,
                 0, 0,
-                bodyDef.angle, bodyDef.angularSpeed,
+                bodyDef.angle, 0,
                 0,
                 bodyDef.thrust);
 
@@ -93,6 +92,27 @@ public abstract class AbstractIAGenerator implements Runnable {
 
         this.worldEvolver.setLocalPlayer(playerId);
         return playerId;
+    }
+
+    protected String addEnemyIntoTheGame(
+            DefItemDTO bodyDef, ArrayList<DefEmitterDTO> weaponDefs) {
+
+        String enemyId = this.worldEvolver.addPlayer(
+                bodyDef.assetId, bodyDef.size,
+                bodyDef.posX, bodyDef.posY,
+                bodyDef.speedX, bodyDef.speedY,
+                0, 0,
+                bodyDef.angle, 0d,
+                0,
+                bodyDef.thrust);
+
+        if (enemyId == null) {
+            throw new IllegalStateException("Failed to create enemy.");
+        }
+
+        this.equipWeapons(enemyId, weaponDefs);
+
+        return enemyId;
     }
     // endregion
 

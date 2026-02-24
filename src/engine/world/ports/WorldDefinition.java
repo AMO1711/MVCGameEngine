@@ -18,6 +18,7 @@ public class WorldDefinition {
 	public final ArrayList<DefItem> gravityBodies;
 	public final ArrayList<DefItem> asteroids;
 	public final ArrayList<DefItem> spaceships;
+	public final ArrayList<DefItem> enemies;
 
 	public final ArrayList<DefEmitterDTO> trailEmitters;
 	public final ArrayList<DefEmitterDTO> weapons;
@@ -34,6 +35,7 @@ public class WorldDefinition {
 			ArrayList<DefItem> gravityBodies,
 			ArrayList<DefItem> asteroids,
 			ArrayList<DefItem> spaceships,
+			ArrayList<DefItem> enemies,
 			ArrayList<DefEmitterDTO> trailEmitters,
 			ArrayList<DefEmitterDTO> weapons) {
 
@@ -46,6 +48,7 @@ public class WorldDefinition {
 		this.asteroids = asteroids;
 		this.weapons = weapons;
 		this.spaceships = spaceships;
+		this.enemies = enemies;
 		this.trailEmitters = trailEmitters;
 	}
 }

@@ -300,7 +300,7 @@ public abstract class AbstractBody {
         this.actionsQueue.add(action);
     }
 
-    public synchronized void die() {
+    public synchronized void die() { 
         if (this.state == BodyState.DEAD) {
             return;
         }

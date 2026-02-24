@@ -3,13 +3,13 @@ package engine.model.impl;
 // region imports
 import static java.lang.System.nanoTime;
 import java.util.ArrayList;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
-import engine.actions.ActionType;
 import engine.actions.ActionDTO;
+import engine.actions.ActionType;
 import engine.events.domain.ports.BodyRefDTO;
 import engine.events.domain.ports.BodyToEmitDTO;
 import engine.events.domain.ports.DomainEventType;
@@ -398,6 +398,47 @@ public class Model implements BodyEventProcessor {
     // endregion
 
     // region Getters (get***)
+
+    public DoubleVector getBodyPosition(String id) {
+        AbstractBody body = this.getBody(id);
+        // Solo devolvemos posición si el cuerpo está vivo y tiene un tamaño real
+        if (body != null && body.getBodyState() == BodyState.ALIVE) {
+            PhysicsValuesDTO phy = body.getPhysicsValues();
+            if (phy.size > 0) {
+                return new DoubleVector(phy.posX, phy.posY);
+            }
+        }
+        return null;
+    }
+
+    public void rotateBody(String id, double angle) {
+        AbstractBody body = this.getBody(id);
+        if (body != null && body.getBodyState() == BodyState.ALIVE) {
+            PhysicsValuesDTO c = body.getPhysicsValues();
+
+            if (c.timeStamp <= 0 || c.size <= 0) {
+                return; 
+            }
+
+            PhysicsValuesDTO updated = new PhysicsValuesDTO(
+                c.timeStamp, 
+                c.posX, 
+                c.posY, 
+                angle, 
+                c.size, 
+                c.speedX, 
+                c.speedY, 
+                c.accX, 
+                c.accY, 
+                c.angularSpeed, 
+                c.angularAcc, 
+                c.thrust
+            );
+
+            body.doMovement(updated);
+        }
+    }
+
     public int getAliveQuantity() {
         return AbstractBody.getAliveQuantity();
     }

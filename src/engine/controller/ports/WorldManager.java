@@ -31,4 +31,14 @@ public interface WorldManager {
 
         public void loadAssets(AssetCatalog assets);
 
+        //---------------------------------------------------------
+
+        public void playerFire(String playerId);
+
+        public void playerRotate(String playerId, double angle); 
+
+        public String getLocalPlayerId();
+
+        public DoubleVector getBodyPosition(String id);
+
 }

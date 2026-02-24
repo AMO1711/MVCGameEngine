@@ -44,10 +44,10 @@ public class BasicPhysicsEngine extends AbstractPhysicsEngine {
         long dtStart = this.profiler.startInterval();
         PhysicsValuesDTO phyVals = this.getPhysicsValues();
         long now = nanoTime();
-        long elapsedNanos = now - phyVals.timeStamp;
+        long elapsedNanos = now - phyVals.timeStamp; 
         double dt = ((double) elapsedNanos) / 1_000_000_000.0d; // Nanos to seconds
 
-        // ✅ Protección contra valores anómalos
+        // ✅ Protección contra valores anómalos. Jaja, no has quitado el tick de la IA (Adrián)
         if (dt <= 0.0) {
             System.err.println("WARNING: Negative dt detected:  " + dt + "s.  Using 0.001s");
         } else if (dt > 0.5) {

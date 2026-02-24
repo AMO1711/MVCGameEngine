@@ -31,11 +31,11 @@ public class IceWorldDefinitionProvider extends AbstractWorldDefinitionProvider{
 				10, 750,
 				0, 150);
 
-		this.addSpaceshipAnywhereRandomAsset(1, AssetType.ENEMY, 50, 100, 100);
+		this.addEnemyPrototypeAnywhereRandomAsset(1, AssetType.ENEMY, 120, 180, 0, 0, 0, 0);
 		// endregion
 
 		// region Players
-		this.addSpaceship("playerRight", 6000, 12000, 100);
+		this.addSpaceship("playerRight", 2000, 2000, 100);
 		this.addTrailEmitterCosmetic("stars_05", 150, BodyType.DECORATOR, 25);
 		// endregion
 

@@ -495,6 +495,21 @@ public class Controller implements WorldManager, DomainEventProcessor {
     public void loadAssets(AssetCatalog assets) {
         this.view.loadAssets(assets);
     }
+
+    @Override
+    public String getLocalPlayerId() {
+        return this.view.getLocalPlayerId();
+    }
+
+    @Override
+    public DoubleVector getBodyPosition(String id) {
+        return this.model.getBodyPosition(id); 
+    }
+
+    @Override
+    public void playerRotate(String playerId, double angle) {
+        this.model.rotateBody(playerId, angle);
+    }
     // endregion
 
     // *** PRIVATE (Internal, helpers, ...) ***

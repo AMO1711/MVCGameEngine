@@ -15,7 +15,7 @@ public final class ProjectAssets {
         this.catalog.register("playerRight", "playerRight.png", AssetType.SPACESHIP, AssetIntensity.HIGH);
         this.catalog.register("playerLeft", "playerLeft.png", AssetType.SPACESHIP, AssetIntensity.HIGH);
 
-        this.catalog.register("projectile", "projectile.png", AssetType.ASTEROID, AssetIntensity.MEDIUM);
+        this.catalog.register("projectile", "projectile.png", AssetType.BULLET, AssetIntensity.MEDIUM);
 
         this.catalog.register("enemy", "enemy.png", AssetType.ENEMY, AssetIntensity.HIGH);
         //this.catalog.register("enemyDead", "enemyDead.png", AssetType.ENEMY, AssetIntensity.MEDIUM);
@@ -83,7 +83,7 @@ public final class ProjectAssets {
         // endregion
 
         // region bullets (bullet-***)
-        this.catalog.register("bullet_01", "bullet-01.png", AssetType.BULLET, AssetIntensity.LOW);
+        //this.catalog.register("bullet_01", "bullet-01.png", AssetType.BULLET, AssetIntensity.LOW);
         // endregion
 
         // region bombs (bomb-***)
