@@ -9,71 +9,129 @@ import engine.world.ports.WorldDefinitionProvider;
 import gameworld.AudioManager;
 import gameworld.ProjectAssets;
 
+import javax.imageio.ImageIO;
+import javax.swing.*;
+import java.awt.*;
+import java.awt.image.BufferedImage;
+import java.io.File;
+import java.io.IOException;
+
 public class Main {
 
-	public static void main(String[] args) {
 
-		// region Graphics configuration
+	private static ProjectAssets projectAssets;
+	private static AudioManager audioManager;
+	private static final DoubleVector viewDimensions = new DoubleVector(1280, 720);
+	private static final DoubleVector worldDimensions = new DoubleVector(4000, 7000);
+
+
+	public static void main(String[] args) {
 		System.setProperty("sun.java2d.uiScale", "1.0");
 		System.setProperty("sun.java2d.opengl", "true");
-		System.setProperty("sun.java2d.d3d", "false"); // OpenGL
-		// endregion
-		
-		// region Dimensions and limits
-		// Due a recognized issue with BufferStrategy when
-		// Canvas size > screen size causes BufferStrategy to fail (blank window)
-		// in that case engine whill throw an error and exit.
-		//
-		// => **********************************************************
-		// => *** Keep viewDimension smaller than actual screen size ***
-		// => *** or... no set viewDimension                         ***
-		// => **********************************************************
-		DoubleVector viewDimension = new DoubleVector(1280, 720);
-		DoubleVector worldDimension = new DoubleVector(4000, 7000);
-		// endregion
+		System.setProperty("sun.java2d.d3d", "false");
 
+		projectAssets = new ProjectAssets();
+		audioManager = new AudioManager(projectAssets.musicCatalog);
+
+		audioManager.playMusic("musicaMenu");
+
+		SwingUtilities.invokeLater(Main::createMainMenu);
+	}
+
+	private static void createMainMenu()  {
+		JFrame menuFrame = new JFrame("FrostByte -- Skate & Slash!");
+
+		menuFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+		menuFrame.setSize((int)viewDimensions.x, (int)viewDimensions.y);
+		menuFrame.setLocationRelativeTo(null);
+		menuFrame.setResizable(false);
+
+		JPanel bgPanel = new JPanel(new BorderLayout()) {
+			private BufferedImage bgImage;
+
+			{
+
+
+				try {
+					bgImage = ImageIO.read(new File("src/resources/images/MainScreen.png"));
+
+
+				} catch (IOException e) {
+					System.out.println("No se encontró la imagen de menu");
+				}
+			}
+			@Override
+			protected void paintComponent(Graphics g) {
+				super.paintComponent(g);
+				if (bgImage != null) {
+					g.drawImage(bgImage, 0, 0, getWidth(), getHeight(), this);
+				} else {
+					g.setColor(Color.BLACK);
+					g.fillRect(0, 0, getWidth(), getHeight());
+				}
+			}
+		};
+
+		JPanel buttonPanel = new JPanel();
+		buttonPanel.setOpaque(false);
+		buttonPanel.setBorder(BorderFactory.createEmptyBorder(0, 0, 80, 0));
+
+
+		JButton btnIce = new JButton("Nivel Hielo");
+		btnIce.setFont(new Font("Arial", Font.BOLD, 28));
+		btnIce.setFocusPainted(false);
+
+		JButton btnGrass = new JButton("Nivel Césped");
+		btnGrass.setFont(new Font("Arial", Font.BOLD, 28));
+		btnGrass.setFocusPainted(false);
+
+		buttonPanel.add(btnIce);
+		buttonPanel.add(Box.createRigidArea(new Dimension(100, 0)));
+		buttonPanel.add(btnGrass);
+
+		bgPanel.add(buttonPanel, BorderLayout.SOUTH);
+		menuFrame.add(bgPanel);
+		menuFrame.setVisible(true);
+
+
+		btnIce.addActionListener(e -> {
+			menuFrame.dispose();
+
+			new Thread(() -> {
+				startGame(new gameworld.IceWorldDefinitionProvider(worldDimensions, projectAssets));
+			}).start();
+		});
+
+		btnGrass.addActionListener(e -> {
+			menuFrame.dispose();
+
+			new Thread(() -> {
+				startGame(new gameworld.GrassWorldDefinitionProvider(worldDimensions, projectAssets));
+			}).start();
+		});
+	}
+
+	private static void startGame(WorldDefinitionProvider worldProv) {
 		int maxBodies = 10;
-		int maxAsteroidCreationDelay = 3; // Used by AIBasicSpawner
+		int maxAsteroidCreationDelay = 3;
 
-		ProjectAssets projectAssets = new ProjectAssets();
-
-		AudioManager audioManager = new AudioManager(projectAssets.musicCatalog);
-
-		// ActionsGenerator gameRules = new gamerules.LimitRebound();
-		// ActionsGenerator gameRules = new gamerules.ReboundAndCollision();
 		ActionsGenerator gameRules = new gamerules.InLimitsGoToCenter();
 
-		// *** WORLD DEFINITION PROVIDER ***
-		WorldDefinitionProvider worldProv = new gameworld.GrassWorldDefinitionProvider(
-				worldDimension, projectAssets);
-
-		// *** CORE ENGINE ***
-
-		// region Controller
 		Controller controller = new Controller(
-				worldDimension, viewDimension, maxBodies,
-				new View(), new Model(worldDimension, maxBodies),
+				worldDimensions, viewDimensions, maxBodies,
+				new View(), new Model(worldDimensions, maxBodies),
 				gameRules);
 
 		controller.activate();
-		// endregion
 
-		// *** SCENE ***
-
-		// region World definition
 		WorldDefinition worldDef = worldProv.provide();
-		// endregion
+
 		if (worldDef.musicAssetId != null) {
 			audioManager.playMusic(worldDef.musicAssetId);
 		}
-		// region Level generator (Level***)
+
 		new gamelevel.LevelBasic(controller, worldDef);
-		// endregion
 
-		// region AI generator (AI***)
 		new gameai.AIBasicSpawner(controller, worldDef, maxAsteroidCreationDelay).activate();
-		// endregion
-
-
 	}
 }
