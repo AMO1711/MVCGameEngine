@@ -29,12 +29,18 @@ public class DynamicRenderable extends Renderable {
 
         DynamicRenderDTO current = (DynamicRenderDTO) this.getRenderData();
         if (current != null) {
+            double angleForLogic = renderInfo.angle;
             current.updateFrom(renderInfo);
+            current.angle = 0.0;
             super.update(current, currentFrame);
+            current.angle = angleForLogic;
             return;
         }
 
+        double originalAngle = renderInfo.angle;
+        renderInfo.angle = 0.0;
         super.update(renderInfo, currentFrame);
+        renderInfo.angle = originalAngle;
     }
 
     @Override

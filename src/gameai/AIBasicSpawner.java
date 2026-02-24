@@ -85,7 +85,7 @@ public class AIBasicSpawner extends AbstractIAGenerator {
         // or you can accept definition values
         // as they came form world definition.
         // ... or do nothing.
-        bodyDef = new DefItemDTO(bodyDef.assetId, bodyDef.size, bodyDef.angle, posX, posY, bodyDef.density);
+        bodyDef = new DefItemDTO(bodyDef.assetId, bodyDef.size, 0.0, posX, posY, bodyDef.density);
 
         // Injecting enemy into the game
         return this.addEnemyIntoTheGame(bodyDef, worldDefinition.weapons);
