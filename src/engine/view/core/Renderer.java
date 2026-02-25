@@ -7,6 +7,7 @@ import java.awt.Dimension;
 import java.awt.Graphics2D;
 import java.awt.GraphicsConfiguration;
 import java.awt.GraphicsEnvironment;
+import java.awt.Toolkit;
 import java.awt.Transparency;
 import java.awt.geom.AffineTransform;
 import java.awt.image.BufferStrategy;
@@ -18,24 +19,22 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import engine.controller.mappers.DynamicRenderableMapper;
 import engine.controller.ports.EngineState;
+import engine.utils.helpers.DoubleVector;
 import engine.utils.images.ImageCache;
 import engine.utils.images.Images;
+import engine.utils.pooling.PoolMDTO;
 import engine.utils.profiling.impl.RendererProfiler;
-import engine.utils.helpers.DoubleVector;
 import engine.view.hud.impl.InstrumentationHUD;
 import engine.view.hud.impl.PlayerHUD;
 import engine.view.hud.impl.SpatialGridHUD;
 import engine.view.hud.impl.SystemHUD;
 import engine.view.renderables.impl.DynamicRenderable;
 import engine.view.renderables.impl.Renderable;
-import engine.utils.pooling.PoolMDTO;
 import engine.view.renderables.ports.DynamicRenderDTO;
 import engine.view.renderables.ports.PlayerRenderDTO;
 import engine.view.renderables.ports.RenderDTO;
 import engine.view.renderables.ports.RenderMetricsDTO;
 import engine.view.renderables.ports.SpatialGridStatisticsRenderDTO;
-
-import java.awt.Toolkit;
 
 /**
  * Renderer
@@ -209,7 +208,7 @@ public class Renderer extends Canvas implements Runnable {
 
         // Initialize DTO pooling
         this.dynamicRenderDtoPool = new PoolMDTO<>(
-                () -> new DynamicRenderDTO(null, 0, 0, 0, 0, 0L, 0, 0, 0, 0, 0L));
+                () -> new DynamicRenderDTO(null, 0, 0, 0, 0, 0L, 0, 0, 0, 0, 0L, null));
         this.dynamicRenderMapper = new DynamicRenderableMapper(this.dynamicRenderDtoPool);
 
         this.thread = new Thread(this);

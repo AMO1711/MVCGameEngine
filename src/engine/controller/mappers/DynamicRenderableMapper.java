@@ -24,7 +24,8 @@ public class DynamicRenderableMapper extends DTOPooledMapper<DynamicRenderDTO> {
                 phyValues.timeStamp,
                 phyValues.speedX, phyValues.speedY,
                 phyValues.accX, phyValues.accY,
-                phyValues.timeStamp);
+                phyValues.timeStamp,
+                bodyData.assetId);
 
         return renderablesData;
     }
@@ -84,7 +85,8 @@ public class DynamicRenderableMapper extends DTOPooledMapper<DynamicRenderDTO> {
                 phyValues.timeStamp,
                 phyValues.speedX, phyValues.speedY,
                 phyValues.accX, phyValues.accY,
-                phyValues.timeStamp);
+                phyValues.timeStamp,
+                bodyData.assetId);
 
         return true;
     }

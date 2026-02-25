@@ -511,37 +511,14 @@ public class View extends JFrame implements KeyListener, WindowFocusListener {
      * NO se llama en key repeat.
      */
     private void processKeyPress(int keyCode) {
+        String pId = this.localPlayerId;
         switch (keyCode) {
-            case KeyEvent.VK_UP:
-            case KeyEvent.VK_W:
-                this.controller.playerThrustOn(this.localPlayerId);
-                break;
-
-            case KeyEvent.VK_DOWN:
-            case KeyEvent.VK_X:
-                this.controller.playerReverseThrust(this.localPlayerId);
-                break;
-
-            case KeyEvent.VK_LEFT:
-            case KeyEvent.VK_A:
-                this.controller.playerRotateLeftOn(this.localPlayerId);
-                break;
-
-            case KeyEvent.VK_RIGHT:
-            case KeyEvent.VK_D:
-                this.controller.playerRotateRightOn(this.localPlayerId);
-                break;
-
-            case KeyEvent.VK_SPACE:
-                if (!this.fireKeyDown.get()) {
-                    this.fireKeyDown.set(true);
-                    this.controller.playerFire(this.localPlayerId);
-                }
-                break;
-
-            case KeyEvent.VK_1:
-                this.controller.playerSelectNextWeapon(this.localPlayerId);
-                break;
+            case KeyEvent.VK_W -> controller.playerUp(pId);
+            case KeyEvent.VK_S -> controller.playerDown(pId);
+            case KeyEvent.VK_A -> controller.playerLeft(pId);
+            case KeyEvent.VK_D -> controller.playerRight(pId);
+            case KeyEvent.VK_SPACE -> controller.playerAttack(pId);
+            case KeyEvent.VK_ALT -> controller.playerDodge(pId);
         }
     }
 
@@ -550,31 +527,9 @@ public class View extends JFrame implements KeyListener, WindowFocusListener {
      * Puede no llamarse si el OS consume el evento.
      */
     private void processKeyRelease(int keyCode) {
-        switch (keyCode) {
-            case KeyEvent.VK_UP:
-            case KeyEvent.VK_W:
-                this.controller.playerThrustOff(this.localPlayerId);
-                break;
-
-            case KeyEvent.VK_DOWN:
-            case KeyEvent.VK_X:
-                this.controller.playerThrustOff(this.localPlayerId);
-                break;
-
-            case KeyEvent.VK_LEFT:
-            case KeyEvent.VK_A:
-                this.controller.playerRotateOff(this.localPlayerId);
-                break;
-
-            case KeyEvent.VK_RIGHT:
-            case KeyEvent.VK_D:
-                this.controller.playerRotateOff(this.localPlayerId);
-                break;
-
-            case KeyEvent.VK_SPACE:
-                this.fireKeyDown.set(false);
-                break;
-        }
+        if (keyCode == KeyEvent.VK_W || keyCode == KeyEvent.VK_S || keyCode == KeyEvent.VK_A || keyCode == KeyEvent.VK_D) {
+        controller.playerStop(this.localPlayerId);
+    }
     }
     // endregion
 

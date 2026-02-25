@@ -9,7 +9,7 @@ import engine.view.renderables.ports.RenderDTO;
 public class Renderable {
 
     private final String entityId;
-    private final String assetId;
+    protected  String assetId;
     private final ImageCache cache;
 
     private long lastFrameSeen;
@@ -104,6 +104,12 @@ public class Renderable {
 
     public void updateImageFromCache(RenderDTO entityInfo) {
         this.updateImageFromCache(this.assetId, (int) entityInfo.size, entityInfo.angle);
+    }
+
+    public void refreshImage() {
+        if (this.renderData != null) {
+            this.updateImageFromCache(this.assetId, (int) this.renderData.size, this.renderData.angle);
+        }
     }
 
     private boolean updateImageFromCache(String assetId, int size, double angle) {

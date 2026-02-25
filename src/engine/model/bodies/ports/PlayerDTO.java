@@ -1,7 +1,7 @@
 package engine.model.bodies.ports;
 
 public class PlayerDTO {
-   public final String entityId;
+    public final String entityId;
 
     public final String playerName;
     public final double damage;

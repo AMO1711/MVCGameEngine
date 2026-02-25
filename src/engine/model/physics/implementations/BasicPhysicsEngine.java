@@ -185,6 +185,24 @@ public class BasicPhysicsEngine extends AbstractPhysicsEngine {
     // endregion
 
     @Override
+    public void setAngle(double angle) {
+        PhysicsValuesDTO old = this.getPhysicsValues();
+        
+        // Update nextPhyValues instead of creating new DTO
+        nextPhyValues.update(
+                old.timeStamp,
+                old.posX, old.posY, angle,
+                old.size,
+                old.speedX, old.speedY,
+                old.accX, old.accY,
+                old.angularSpeed,
+                old.angularAcc,
+                old.thrust);
+        
+        this.setPhysicsValues(nextPhyValues);
+    }
+
+    @Override
     public void setAngularSpeed(double angularSpeed) {
         PhysicsValuesDTO old = this.getPhysicsValues();
         

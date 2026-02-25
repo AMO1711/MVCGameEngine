@@ -2,8 +2,8 @@ package gamerules;
 
 import java.util.List;
 
-import engine.actions.ActionType;
 import engine.actions.ActionDTO;
+import engine.actions.ActionType;
 import engine.controller.ports.ActionsGenerator;
 import engine.events.domain.ports.DomainEventType;
 import engine.events.domain.ports.eventtype.CollisionEvent;
@@ -105,6 +105,21 @@ public class ReboundAndCollision implements ActionsGenerator {
         // Check shooter immunity for PLAYER vs PROJECTILE and viceversa
         if (event.payload.haveImmunity) {
             return; // Projectile passes through its shooter during immunity period
+        }
+
+        if (event.payload.isAttacking) {
+            // Si el jugador está atacando, solo muere el enemigo
+            if (primary == BodyType.PLAYER) {
+                actions.add(new ActionDTO(
+                        event.secondaryBodyRef.id(), event.secondaryBodyRef.type(),
+                        ActionType.DIE, event));
+            } else if (secondary == BodyType.PLAYER) {
+                actions.add(new ActionDTO(
+                        event.primaryBodyRef.id(), event.primaryBodyRef.type(),
+                        ActionType.DIE, event));
+            }
+            return;
+
         }
 
         // Default: Both die

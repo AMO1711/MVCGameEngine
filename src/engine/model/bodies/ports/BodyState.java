@@ -14,5 +14,7 @@ public enum BodyState implements Serializable {
     PAUSED,
     COLLIDED,
     HANDS_OFF,
-    DEAD
+    DEAD,
+    DODGING,
+    ATTACKING
 }

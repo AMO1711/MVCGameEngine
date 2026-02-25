@@ -607,6 +607,15 @@ public class Model implements BodyEventProcessor {
 
         pBody.selectNextWeapon();
     }
+
+    public void playerMoveUp(String id) { PlayerBody p = (PlayerBody)getBody(id); if(p!=null) p.moveUp(); }
+    public void playerMoveDown(String id) { PlayerBody p = (PlayerBody)getBody(id); if(p!=null) p.moveDown(); }
+    public void playerMoveLeft(String id) { PlayerBody p = (PlayerBody)getBody(id); if(p!=null) p.moveLeft(); }
+    public void playerMoveRight(String id) { PlayerBody p = (PlayerBody)getBody(id); if(p!=null) p.moveRight(); }
+    public void playerStop(String id) { PlayerBody p = (PlayerBody)getBody(id); if(p!=null) p.stopMoving();}
+    public void playerAttack(String id) { PlayerBody p = (PlayerBody)getBody(id); if(p!=null) p.meleeAttack(); }
+    public void playerDodge(String id) { PlayerBody p = (PlayerBody)getBody(id); if(p!=null) p.dodge(); }
+
     // endregion Player Actions
 
     // region Query methods (query***)
@@ -787,8 +796,17 @@ public class Model implements BodyEventProcessor {
             // Immunity check inmunity for projectiles and their shooters
             boolean haveInmunity = this.checkCollisionImmunity(checkBody, otherBody);
 
+            if (otherBody.getBodyState() == BodyState.DODGING || 
+                    checkBody.getBodyState() == BodyState.DODGING) {
+                haveInmunity = true; // Si está esquivando tiene inmunidad a las colisiones
+            }
+
+            // Miramos si el jugador está atacando para decidir si la colisión es ofensiva
+            boolean isAttacking = checkBody.getBodyState() == BodyState.ATTACKING || 
+                otherBody.getBodyState() == BodyState.ATTACKING;
+
             // Create collision event ALSO when inmunity is active!!!!
-            CollisionPayload payload = new CollisionPayload(haveInmunity);
+            CollisionPayload payload = new CollisionPayload(haveInmunity, isAttacking);
             CollisionEvent collisionEvent = new CollisionEvent(
                     checkBody.getBodyRef(), otherBody.getBodyRef(), payload);
             domainEvents.add(collisionEvent);
@@ -1095,7 +1113,7 @@ public class Model implements BodyEventProcessor {
         ArrayList<BodyData> bodyInfos = new ArrayList<>(bodies.size());
 
         bodies.forEach((entityId, body) -> {
-            BodyData bodyInfo = new BodyData(entityId, body.getBodyType(), body.getPhysicsValues());
+            BodyData bodyInfo = new BodyData(entityId, body.getBodyType(), body.getPhysicsValues(), body.getBodyState(), body.getAssetId());
             if (bodyInfo != null) {
                 bodyInfos.add(bodyInfo);
             }
@@ -1155,7 +1173,9 @@ public class Model implements BodyEventProcessor {
     private boolean isProcessable(AbstractBody entity) {
         return entity != null
                 && this.state == ModelState.ALIVE
-                && entity.getBodyState() == BodyState.ALIVE;
+                && (entity.getBodyState() == BodyState.ALIVE || 
+                entity.getBodyState() == BodyState.ATTACKING || 
+                entity.getBodyState() == BodyState.DODGING);
     }
     // endregion
 

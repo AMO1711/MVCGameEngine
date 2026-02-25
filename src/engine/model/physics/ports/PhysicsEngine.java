@@ -24,6 +24,8 @@ public interface PhysicsEngine {
 
         public void resetAcceleration();
 
+        public void setAngle(double angle);
+
         public void setAngularAcceleration(double angularAcceleration);
 
         public void setAngularSpeed(double angularSpeed);

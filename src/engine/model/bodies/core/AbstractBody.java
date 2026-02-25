@@ -228,6 +228,8 @@ public abstract class AbstractBody {
     private volatile BodyState state;
     private Thread thread;
     private final BodyType type;
+
+    protected String assetId;
     // endregion
     
     // region Scratch buffers
@@ -266,7 +268,7 @@ public abstract class AbstractBody {
         this.bodyId = UUID.randomUUID().toString();
         this.state = BodyState.STARTING;
         this.bodyRef = new BodyRefDTO(this.bodyId, this.type);
-        this.bodyData = new BodyData(this.bodyId, this.type, null);
+        this.bodyData = new BodyData(this.bodyId, this.type, null, state, assetId);
     }
     // endregion
 
@@ -403,6 +405,10 @@ public abstract class AbstractBody {
 
     public BodyType getBodyType() {
         return this.type;
+    }
+
+    public String getAssetId() {
+        return this.assetId;
     }
     // endregion
 
@@ -541,6 +547,10 @@ public abstract class AbstractBody {
 
     public void setThread(Thread thread) {
         this.thread = thread;
+    }
+
+    public void setAssetId(String assetId) {
+        this.assetId = assetId;
     }
     // endregion
 

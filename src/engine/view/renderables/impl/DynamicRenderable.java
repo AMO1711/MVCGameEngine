@@ -22,6 +22,11 @@ public class DynamicRenderable extends Renderable {
     }
     // endregion
 
+    public void changeAssetId(String newAssetId) {
+        this.assetId = newAssetId;
+        this.refreshImage(); 
+    }
+
     public void update(DynamicRenderDTO renderInfo, long currentFrame) {
         if (renderInfo == null || renderInfo.size <= 0) { //He añadido la comprobacion del size mayor a 0
             return; 
@@ -29,6 +34,10 @@ public class DynamicRenderable extends Renderable {
 
         DynamicRenderDTO current = (DynamicRenderDTO) this.getRenderData();
         if (current != null) {
+            if (renderInfo.assetId != null && !renderInfo.assetId.equals(this.assetId)) {
+                this.changeAssetId(renderInfo.assetId);
+            }
+
             double angleForLogic = renderInfo.angle;
             current.updateFrom(renderInfo);
             current.angle = 0.0;

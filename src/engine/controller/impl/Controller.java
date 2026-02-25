@@ -316,7 +316,15 @@ public class Controller implements WorldManager, DomainEventProcessor {
     public void playerSelectNextWeapon(String playerId) {
         this.model.playerSelectNextWeapon(playerId);
     }
-    // endregion
+
+    public void playerUp(String id) { model.playerMoveUp(id); }
+    public void playerDown(String id) { model.playerMoveDown(id); }
+    public void playerLeft(String id) { model.playerMoveLeft(id); }
+    public void playerRight(String id) { model.playerMoveRight(id); }
+    public void playerStop(String id) { model.playerStop(id); }
+    public void playerAttack(String id) { model.playerAttack(id); }
+    public void playerDodge(String id) { model.playerDodge(id); }
+        // endregion
 
     // region Queries
     public ArrayList<String> queryEntitiesInRegion(

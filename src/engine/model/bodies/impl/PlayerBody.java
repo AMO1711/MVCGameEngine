@@ -25,6 +25,9 @@ public class PlayerBody extends DynamicBody {
     private int temperature = 1;
     private double shield = 1D;
     private int score = 0;
+
+    private long actionLockedUntil = 0L;
+    private boolean isFacingRight = true;
     // endregion
 
     public PlayerBody(BodyEventProcessor bodyEventProcessor,
@@ -45,6 +48,7 @@ public class PlayerBody extends DynamicBody {
         this.setMaxThrustForce(800);
         this.setMaxAngularAcceleration(1000);
         this.setAngularSpeed(0);
+        this.assetId = "playerRight";
     }
 
     @Override
@@ -265,4 +269,59 @@ public class PlayerBody extends DynamicBody {
 
         return emitter.mustEmitNow(dtSeconds);
     }
+
+    public void moveUp() { 
+        if(isLocked()) return;
+        this.getPhysicsEngine().setAngle(270);
+        this.getPhysicsEngine().setThrust(1000);
+    }
+    public void moveDown() { 
+        if(isLocked()) return; 
+        this.getPhysicsEngine().setAngle(90); 
+        this.getPhysicsEngine().setThrust(1000);
+    }
+    public void moveLeft() { 
+        if(isLocked()) return; 
+        this.getPhysicsEngine().setAngle(180); 
+        this.getPhysicsEngine().setThrust(1000); 
+        this.isFacingRight = false;
+        this.assetId = "playerLeft";
+    }
+    public void moveRight() { 
+        if(isLocked()) return; 
+        this.getPhysicsEngine().setAngle(0); 
+        this.getPhysicsEngine().setThrust(1000); 
+        this.isFacingRight = true;
+        this.assetId = "playerRight";
+    }
+    public void stopMoving() { 
+        this.getPhysicsEngine().setThrust(0); 
+    }
+
+    // --- NUEVOS MÉTODOS DE ACCIÓN ---
+    public void meleeAttack() {
+        if (isLocked()) return;
+        this.actionLockedUntil = System.currentTimeMillis() + 1000;
+        this.assetId = isFacingRight ? "playerAttackingRight" : "playerAttackingLeft";
+    }
+
+    public void dodge() {
+        if (isLocked()) return;
+        this.actionLockedUntil = System.currentTimeMillis() + 1000;
+        this.assetId = isFacingRight ? "playerDodgingRight" : "playerDodgingLeft";
+    }
+
+    private boolean isLocked() { return System.currentTimeMillis() < actionLockedUntil; }
+
+    @Override
+    public void onTick() {
+        // Si el tiempo de bloqueo ha terminado, nos aseguramos de volver al sprite base
+        if (!isLocked()) {
+            this.assetId = isFacingRight ? "playerRight" : "playerLeft";
+        }
+        
+        // Llamamos al onTick de DynamicBody para procesar física y colisiones
+        super.onTick();
+    }
+
 }
