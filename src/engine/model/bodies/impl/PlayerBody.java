@@ -301,12 +301,16 @@ public class PlayerBody extends DynamicBody {
     // --- NUEVOS MÉTODOS DE ACCIÓN ---
     public void meleeAttack() {
         if (isLocked()) return;
+        System.out.println("> Player performed melee attack!");
+        this.setAttacking(true);
         this.actionLockedUntil = System.currentTimeMillis() + 1000;
         this.assetId = isFacingRight ? "playerAttackingRight" : "playerAttackingLeft";
     }
 
     public void dodge() {
         if (isLocked()) return;
+        System.out.println("> Player performed dodge!");
+        this.setDodging(true);
         this.actionLockedUntil = System.currentTimeMillis() + 1000;
         this.assetId = isFacingRight ? "playerDodgingRight" : "playerDodgingLeft";
     }
@@ -317,6 +321,8 @@ public class PlayerBody extends DynamicBody {
     public void onTick() {
         // Si el tiempo de bloqueo ha terminado, nos aseguramos de volver al sprite base
         if (!isLocked()) {
+            this.setAttacking(false);
+            this.setDodging(false);
             this.assetId = isFacingRight ? "playerRight" : "playerLeft";
         }
         

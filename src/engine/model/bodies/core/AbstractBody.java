@@ -230,6 +230,8 @@ public abstract class AbstractBody {
     private final BodyType type;
 
     protected String assetId;
+    private boolean isDodging = false;
+    private boolean isAttacking = false;
     // endregion
     
     // region Scratch buffers
@@ -410,6 +412,14 @@ public abstract class AbstractBody {
     public String getAssetId() {
         return this.assetId;
     }
+
+    public boolean isDodging() {
+        return this.isDodging;
+    }
+
+    public boolean isAttacking() {
+        return this.isAttacking;
+    }
     // endregion
 
     // region getEmitter()
@@ -551,6 +561,14 @@ public abstract class AbstractBody {
 
     public void setAssetId(String assetId) {
         this.assetId = assetId;
+    }
+
+    public void setDodging(boolean dodging) {
+        this.isDodging = dodging;
+    }
+
+    public void setAttacking(boolean attacking) {
+        this.isAttacking = attacking;
     }
     // endregion
 

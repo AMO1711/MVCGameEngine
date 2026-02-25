@@ -169,12 +169,28 @@ public class View extends JFrame implements KeyListener, WindowFocusListener {
         DoubleVector renderDimension = this.viewportDimension == null
                 ? this.viewDimension
                 : this.viewportDimension;
-        this.renderer.setViewDimension(renderDimension);
+        // 1. Decirle al Renderer qué tamaño preferido tiene
+        this.renderer.setPreferredSize(new java.awt.Dimension(
+                (int) renderDimension.x,
+                (int) renderDimension.y
+        ));
 
-        // this.renderer.setViewDimension(this.viewDimension);
+        this.renderer.setViewDimension(renderDimension);
         this.renderer.activate();
+
+        // 2. Empaquetar la ventana con los tamaños nuevos
         this.pack();
-        System.out.println("View: Activated");
+
+        // 3. Centrar la ventana en la pantalla
+        this.setLocationRelativeTo(null);
+
+        // 4. Mostrar la ventana
+        this.setVisible(true);
+
+        System.out.println("View: Activated and Centered");
+
+        // Solicitar foco después de ser visible
+        SwingUtilities.invokeLater(() -> this.requestFocusInWindow());
     }
 
     // region adders (add***)
@@ -255,7 +271,19 @@ public class View extends JFrame implements KeyListener, WindowFocusListener {
     }
 
     public void notifyPlayerIsDead(String entityId) {
+        
+        this.resetAllKeyStates();
+
         this.setLocalPlayer(null);
+
+        SwingUtilities.invokeLater(() -> {
+            if (this.controller != null) {
+                this.controller.engineStop();
+            }
+
+            this.dispose();
+            main.Main.createMainMenu();
+        });
     }
     // endregion
 

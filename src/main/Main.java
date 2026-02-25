@@ -1,3 +1,4 @@
+package main;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
@@ -27,8 +28,6 @@ import gameworld.AudioManager;
 import gameworld.ProjectAssets;
 
 public class Main {
-
-
 	private static ProjectAssets projectAssets;
 	private static AudioManager audioManager;
 	private static final DoubleVector viewDimensions = new DoubleVector(1280, 720);
@@ -48,7 +47,7 @@ public class Main {
 		SwingUtilities.invokeLater(Main::createMainMenu);
 	}
 
-	private static void createMainMenu()  {
+	public static void createMainMenu()  {
 		JFrame menuFrame = new JFrame("FrostByte -- Skate & Slash!");
 
 		menuFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -125,7 +124,7 @@ public class Main {
 		int maxBodies = 10;
 		int maxAsteroidCreationDelay = 3000;
 
-		ActionsGenerator gameRules = new gamerules.InLimitsGoToCenter();
+		ActionsGenerator gameRules = new gamerules.ReboundAndCollision();
 
 		Controller controller = new Controller(
 				worldDimensions, viewDimensions, maxBodies,

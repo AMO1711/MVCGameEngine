@@ -796,14 +796,12 @@ public class Model implements BodyEventProcessor {
             // Immunity check inmunity for projectiles and their shooters
             boolean haveInmunity = this.checkCollisionImmunity(checkBody, otherBody);
 
-            if (otherBody.getBodyState() == BodyState.DODGING || 
-                    checkBody.getBodyState() == BodyState.DODGING) {
+            if (otherBody.isDodging() || checkBody.isDodging()) {
                 haveInmunity = true; // Si está esquivando tiene inmunidad a las colisiones
             }
 
             // Miramos si el jugador está atacando para decidir si la colisión es ofensiva
-            boolean isAttacking = checkBody.getBodyState() == BodyState.ATTACKING || 
-                otherBody.getBodyState() == BodyState.ATTACKING;
+            boolean isAttacking = checkBody.isAttacking() || otherBody.isAttacking();
 
             // Create collision event ALSO when inmunity is active!!!!
             CollisionPayload payload = new CollisionPayload(haveInmunity, isAttacking);

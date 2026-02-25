@@ -36,7 +36,7 @@ public class GrassWorldDefinitionProvider extends AbstractWorldDefinitionProvide
 		// endregion
 
         // region Players
-        this.addSpaceship("playerRight", 6000, 12000, 100);
+        this.addSpaceship("playerRight", 2000, 2000, 100);  
         this.addTrailEmitterCosmetic("stars_05", 150, BodyType.DECORATOR, 25);
         // endregion
         // region Weapons (addWeapon***)
