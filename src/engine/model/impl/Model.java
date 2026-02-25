@@ -804,7 +804,7 @@ public class Model implements BodyEventProcessor {
             boolean isAttacking = checkBody.isAttacking() || otherBody.isAttacking();
 
             // Create collision event ALSO when inmunity is active!!!!
-            CollisionPayload payload = new CollisionPayload(haveInmunity, isAttacking);
+            CollisionPayload payload = new CollisionPayload(haveInmunity, isAttacking); 
             CollisionEvent collisionEvent = new CollisionEvent(
                     checkBody.getBodyRef(), otherBody.getBodyRef(), payload);
             domainEvents.add(collisionEvent);

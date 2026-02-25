@@ -273,7 +273,7 @@ public class View extends JFrame implements KeyListener, WindowFocusListener {
     }
 
     public void notifyPlayerIsDead(String entityId) {
-        if (!playerIsDead) {
+        if (!playerIsDead && entityId.equals(this.localPlayerId)) {
             this.playerIsDead = true;
             this.resetAllKeyStates();
 

@@ -108,18 +108,13 @@ public class ReboundAndCollision implements ActionsGenerator {
         }
 
         if (event.payload.isAttacking) {
-            // Si el jugador está atacando, solo muere el enemigo
-            if (primary == BodyType.PLAYER) {
-                actions.add(new ActionDTO(
-                        event.secondaryBodyRef.id(), event.secondaryBodyRef.type(),
-                        ActionType.DIE, event));
-            } else if (secondary == BodyType.PLAYER) {
-                actions.add(new ActionDTO(
-                        event.primaryBodyRef.id(), event.primaryBodyRef.type(),
-                        ActionType.DIE, event));
-            }
-            return;
+            // Falta saber quién ataca a quién, al no saberlo no podemos continuar.
+            // El model (quien llama a los eventos) no puede acceder a la información 
+            // del View sobre quien es el jugador
 
+            // Por ahora, al estar atacando se es inmune
+            
+            return;
         }
 
         // Default: Both die
