@@ -128,6 +128,8 @@ public class View extends JFrame implements KeyListener, WindowFocusListener {
     // Key state tracking (OS may consume key events without firing keyReleased)
     private final Set<Integer> pressedKeys = new HashSet<>();
     private boolean wasWindowFocused = true;
+
+    private boolean playerIsDead = false;
     // endregion Fields
 
     // region Constructors
@@ -271,19 +273,21 @@ public class View extends JFrame implements KeyListener, WindowFocusListener {
     }
 
     public void notifyPlayerIsDead(String entityId) {
-        
-        this.resetAllKeyStates();
+        if (!playerIsDead) {
+            this.playerIsDead = true;
+            this.resetAllKeyStates();
 
-        this.setLocalPlayer(null);
+            this.setLocalPlayer(null);
 
-        SwingUtilities.invokeLater(() -> {
-            if (this.controller != null) {
-                this.controller.engineStop();
-            }
+            SwingUtilities.invokeLater(() -> {
+                if (this.controller != null) {
+                    this.controller.engineStop();
+                }
 
-            this.dispose();
-            main.Main.createMainMenu();
-        });
+                this.dispose();
+                main.Main.createMainMenu();
+            });
+        }
     }
     // endregion
 
@@ -541,10 +545,10 @@ public class View extends JFrame implements KeyListener, WindowFocusListener {
     private void processKeyPress(int keyCode) {
         String pId = this.localPlayerId;
         switch (keyCode) {
-            case KeyEvent.VK_W -> controller.playerUp(pId);
-            case KeyEvent.VK_S -> controller.playerDown(pId);
-            case KeyEvent.VK_A -> controller.playerLeft(pId);
-            case KeyEvent.VK_D -> controller.playerRight(pId);
+            case KeyEvent.VK_UP -> controller.playerUp(pId);
+            case KeyEvent.VK_DOWN -> controller.playerDown(pId);
+            case KeyEvent.VK_LEFT -> controller.playerLeft(pId);
+            case KeyEvent.VK_RIGHT -> controller.playerRight(pId);
             case KeyEvent.VK_SPACE -> controller.playerAttack(pId);
             case KeyEvent.VK_ALT -> controller.playerDodge(pId);
         }
@@ -555,7 +559,7 @@ public class View extends JFrame implements KeyListener, WindowFocusListener {
      * Puede no llamarse si el OS consume el evento.
      */
     private void processKeyRelease(int keyCode) {
-        if (keyCode == KeyEvent.VK_W || keyCode == KeyEvent.VK_S || keyCode == KeyEvent.VK_A || keyCode == KeyEvent.VK_D) {
+        if (keyCode == KeyEvent.VK_UP || keyCode == KeyEvent.VK_DOWN || keyCode == KeyEvent.VK_LEFT || keyCode == KeyEvent.VK_RIGHT) {
         controller.playerStop(this.localPlayerId);
     }
     }
