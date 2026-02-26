@@ -32,28 +32,40 @@ public class AIEnemyShooter implements Runnable {
     @Override
     public void run() {
         while (this.worldManager.getEngineState() != EngineState.STOPPED) {
+            
             if (this.worldManager.getEngineState() == EngineState.ALIVE) {
+                
                 String playerId = this.worldManager.getLocalPlayerId();
-                DoubleVector playerPos = this.worldManager.getBodyPosition(playerId);
+                // Si el jugador no existe, playerPos será null de forma segura
+                DoubleVector playerPos = (playerId != null) ? this.worldManager.getBodyPosition(playerId) : null;
 
                 for (String enemyId : this.enemyIds) {
                     DoubleVector enemyPos = this.worldManager.getBodyPosition(enemyId);
-
-                    // Si getBodyPosition nos da null, el enemigo ha muerto o no es válido
-                    if (playerPos != null && enemyPos != null) {
+                    
+                    if (enemyPos == null) {
+                        // Limpieza: El enemigo ha muerto, lo quitamos de la lista
+                        this.enemyIds.remove(enemyId);
+                        continue; // Pasamos al siguiente enemigo
+                    }
+                    
+                    if (playerPos != null) {
+                        // El jugador está vivo, apuntamos y disparamos
                         double dx = playerPos.x - enemyPos.x;
                         double dy = playerPos.y - enemyPos.y;
                         double angle = Math.toDegrees(Math.atan2(dy, dx));
                         
                         this.worldManager.playerRotate(enemyId, angle);
                         this.worldManager.playerFire(enemyId);
-                    } else {
-                        // Limpieza: si getBodyPosition es null, el ID ya no sirve
-                        this.enemyIds.remove(enemyId);
                     }
                 }
             }
-            try { Thread.sleep(2000); } catch (InterruptedException e) {}
+            
+            try { 
+                Thread.sleep(2000); 
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                break;
+            }
         }
     }
 }

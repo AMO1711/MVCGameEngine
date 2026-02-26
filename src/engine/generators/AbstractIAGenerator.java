@@ -97,7 +97,7 @@ public abstract class AbstractIAGenerator implements Runnable {
     protected String addEnemyIntoTheGame(
             DefItemDTO bodyDef, ArrayList<DefEmitterDTO> weaponDefs) {
 
-        String enemyId = this.worldEvolver.addPlayer(
+        String enemyId = this.worldEvolver.addEnemy(
                 bodyDef.assetId, bodyDef.size,
                 bodyDef.posX, bodyDef.posY,
                 bodyDef.speedX, bodyDef.speedY,

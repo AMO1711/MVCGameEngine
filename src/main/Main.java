@@ -30,7 +30,7 @@ import gameworld.ProjectAssets;
 public class Main {
 	private static ProjectAssets projectAssets;
 	private static AudioManager audioManager;
-	private static final DoubleVector viewDimensions = new DoubleVector(1280, 720);
+	private static final DoubleVector viewDimensions = new DoubleVector(1400, 1000);
 	private static final DoubleVector worldDimensions = new DoubleVector(4000, 7000);
 
 

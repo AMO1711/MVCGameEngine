@@ -336,6 +336,20 @@ public class Model implements BodyEventProcessor {
         return entityId;
     }
 
+    public String addEnemy(double size,
+            double posX, double posY, double speedX, double speedY,
+            double accX, double accY,
+            double angle, double angularSpeed, double angularAcc,
+            double thrust, double maxLifeInSeconds) {
+
+        String entityId = this.addBody(BodyType.ENEMY,
+                size, posX, posY, speedX, speedY, accX, accY,
+                angle, angularSpeed, angularAcc,
+                thrust, maxLifeInSeconds, null);
+
+        return entityId;
+    }
+
     public String addProjectile(double size,
             double posX, double posY, double speedX, double speedY,
             double accX, double accY,
@@ -452,6 +466,7 @@ public class Model implements BodyEventProcessor {
             case DYNAMIC:
             case PLAYER:
             case PROJECTILE:
+            case ENEMY:
                 return this.dynamicBodies.get(entityId);
 
             case GRAVITY:
@@ -538,7 +553,7 @@ public class Model implements BodyEventProcessor {
 
     // region Player equipment (playerEquip***)
     public void playerEquipWeapon(String playerId, EmitterConfigDto emitterConfig) {
-        PlayerBody pBody = (PlayerBody) this.dynamicBodies.get(playerId);
+        DynamicBody pBody = (DynamicBody) this.dynamicBodies.get(playerId);
         if (pBody == null) {
             throw new IllegalArgumentException("Equip weapon: Player not found");
         }
@@ -551,9 +566,17 @@ public class Model implements BodyEventProcessor {
 
     // region Player Actions (player***)
     public void playerFire(String playerId) {
-        PlayerBody pBody = (PlayerBody) this.dynamicBodies.get(playerId);
-        if (pBody != null) {
+        DynamicBody dbody = (DynamicBody) this.dynamicBodies.get(playerId);
+
+        if (dbody == null) {
+            return; // Player not found, ignore action
+        }
+
+        if (dbody.getBodyType() == BodyType.PLAYER) {
+            PlayerBody pBody = (PlayerBody) dbody;
             pBody.registerFireRequest();
+        } else if (dbody.getBodyType() == BodyType.ENEMY) {
+            dbody.registerFireRequest();
         }
     }
 
@@ -649,6 +672,7 @@ public class Model implements BodyEventProcessor {
 
             case DYNAMIC:
             case PROJECTILE:
+            case ENEMY:
                 this.domainEventProcessor.notifyDynamicIsDead(body.getBodyId());
                 this.spatialGrid.remove(body.getBodyId());
                 this.dynamicBodies.remove(body.getBodyId());
@@ -888,21 +912,36 @@ public class Model implements BodyEventProcessor {
         BodyType bodyType = checkBody.getBodyType();
         BodyRefDTO primaryBodyRef = checkBody.getBodyRef();
 
-        if (bodyType != BodyType.PLAYER) {
+        if (bodyType != BodyType.PLAYER && bodyType != BodyType.ENEMY) {
             return; // ======= Only players can fire =======>
         }
 
-        PlayerBody pBody = (PlayerBody) checkBody;
+        if (bodyType == BodyType.ENEMY) {
+            DynamicBody dBody = (DynamicBody) checkBody;
+            if (dBody.mustFireNow(newPhyValues)) {
+                EmitPayloadDTO payload = new EmitPayloadDTO(
+                        primaryBodyRef, dBody.getProjectileConfig());
 
-        if (pBody.mustFireNow(newPhyValues)) {
-            EmitPayloadDTO payload = new EmitPayloadDTO(
-                    primaryBodyRef, pBody.getProjectileConfig());
+                EmitEvent fireEvent = new EmitEvent(DomainEventType.FIRE_REQUESTED,
+                        primaryBodyRef, payload);
 
-            EmitEvent fireEvent = new EmitEvent(DomainEventType.FIRE_REQUESTED,
-                    primaryBodyRef, payload);
+                domainEvents.add(fireEvent);
+            }
+        } else{
+            PlayerBody pBody = (PlayerBody) checkBody;
 
-            domainEvents.add(fireEvent);
+            if (pBody.mustFireNow(newPhyValues)) {
+                EmitPayloadDTO payload = new EmitPayloadDTO(
+                        primaryBodyRef, pBody.getProjectileConfig());
+
+                EmitEvent fireEvent = new EmitEvent(DomainEventType.FIRE_REQUESTED,
+                        primaryBodyRef, payload);
+
+                domainEvents.add(fireEvent);
+            }
         }
+
+        
     }
 
     private void checkLifeOverEvents(AbstractBody checkBody, List<DomainEvent> domainEvents) {
@@ -1130,6 +1169,7 @@ public class Model implements BodyEventProcessor {
 
             case DYNAMIC:
             case PLAYER:
+            case ENEMY:
             case PROJECTILE:
                 bodyMap = this.dynamicBodies;
                 break;

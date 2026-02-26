@@ -49,6 +49,14 @@ public class BodyFactory {
                         maxLifeTime, null, profiler);
                 break;
 
+            case ENEMY:
+                phyEngine = new BasicPhysicsEngine(dto1, dto2, dto3, profiler);
+                body = new DynamicBody(
+                        bodyEventProcessor, spatialGrid, phyEngine,
+                        BodyType.ENEMY,
+                        maxLifeTime, null, profiler);
+                break;
+
             case PROJECTILE:
                 phyEngine = new BasicPhysicsEngine(dto1, dto2, dto3, profiler);
                 body = new DynamicBody(

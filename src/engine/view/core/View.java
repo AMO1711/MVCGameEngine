@@ -544,13 +544,16 @@ public class View extends JFrame implements KeyListener, WindowFocusListener {
      */
     private void processKeyPress(int keyCode) {
         String pId = this.localPlayerId;
+
+        if (this.localPlayerId == null) return;
+
         switch (keyCode) {
             case KeyEvent.VK_UP -> controller.playerUp(pId);
             case KeyEvent.VK_DOWN -> controller.playerDown(pId);
             case KeyEvent.VK_LEFT -> controller.playerLeft(pId);
             case KeyEvent.VK_RIGHT -> controller.playerRight(pId);
             case KeyEvent.VK_SPACE -> controller.playerAttack(pId);
-            case KeyEvent.VK_ALT -> controller.playerDodge(pId);
+            case KeyEvent.VK_C -> controller.playerDodge(pId);
         }
     }
 
@@ -559,6 +562,8 @@ public class View extends JFrame implements KeyListener, WindowFocusListener {
      * Puede no llamarse si el OS consume el evento.
      */
     private void processKeyRelease(int keyCode) {
+        if (this.localPlayerId == null) return;
+
         if (keyCode == KeyEvent.VK_UP || keyCode == KeyEvent.VK_DOWN || keyCode == KeyEvent.VK_LEFT || keyCode == KeyEvent.VK_RIGHT) {
         controller.playerStop(this.localPlayerId);
     }

@@ -475,6 +475,22 @@ public class Controller implements WorldManager, DomainEventProcessor {
     }
 
     @Override
+    public String addEnemy(String assetId, double size, double posX, double posY,
+            double speedX, double speedY, double accX, double accY,
+            double angle, double angularSpeed, double angularAcc, double thrust) {
+
+        String entityId = this.model.addEnemy(size, posX, posY, speedX, speedY,
+                accX, accY, angle, angularSpeed, angularAcc, thrust, -1L);
+
+        if (entityId == null) {
+            return null; // ======= Max entity quantity reached =======>>
+        }
+
+        this.view.addDynamicRenderable(entityId, assetId);
+        return entityId;
+    }
+
+    @Override
     public void addStaticBody(String assetId, double size, double posX, double posY, double angle) {
 
         String entityId = this.model.addStatic(size, posX, posY, angle, -1L);

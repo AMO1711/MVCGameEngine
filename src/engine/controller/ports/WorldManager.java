@@ -41,4 +41,8 @@ public interface WorldManager {
 
         public DoubleVector getBodyPosition(String id);
 
+        public String addEnemy(String assetId, double size, double posX, double posY,
+                        double speedX, double speedY, double accX, double accY,
+                        double angle, double angularSpeed, double angularAcc, double thrust);
+
 }

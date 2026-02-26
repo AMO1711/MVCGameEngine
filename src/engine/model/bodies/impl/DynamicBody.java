@@ -1,5 +1,8 @@
 package engine.model.bodies.impl;
 
+import java.util.List;
+
+import engine.events.domain.ports.BodyToEmitDTO;
 import engine.model.bodies.core.AbstractBody;
 import engine.model.bodies.ports.BodyEventProcessor;
 import engine.model.bodies.ports.BodyState;
@@ -24,6 +27,9 @@ public class DynamicBody extends AbstractBody {
     private String trailId;
     private int spatialCellRadius = -1;
     private double spatialCellSize = -1.0d;
+
+    private final List<String> weaponIds = new java.util.ArrayList<>(4);
+    private int currentWeaponIndex = -1; // -1 = sin arma
     // endregion
 
 
@@ -49,6 +55,59 @@ public class DynamicBody extends AbstractBody {
 
         this.setState(BodyState.ALIVE);
         // Threading is now handled by Model/BodyBatchManager
+    }
+
+    public void addWeapon(String emitterId) {
+        this.weaponIds.add(emitterId);
+
+        if (this.currentWeaponIndex < 0) {
+            // Signaling existence of weapon in the spaceship
+            this.currentWeaponIndex = 0;
+        }
+    }
+
+    public void registerFireRequest() {
+        if (this.currentWeaponIndex < 0 || this.currentWeaponIndex >= this.weaponIds.size()) {
+            System.out.println("> No weapon active or no weapons!");
+            return;
+        }
+
+        BasicEmitter emitter = this.getEmitter(this.weaponIds.get(this.currentWeaponIndex));
+        if (emitter == null) {
+            // There is no weapon in this slot
+            return;
+        }
+
+        emitter.registerRequest();
+    }
+
+    public boolean mustFireNow(PhysicsValuesDTO newPhyValues) {
+        if (this.currentWeaponIndex < 0 || this.currentWeaponIndex >= this.weaponIds.size()) {
+            return false;
+        }
+
+        BasicEmitter emitter = this.getEmitter(this.weaponIds.get(this.currentWeaponIndex));
+        if (emitter == null) {
+            return false;
+        }
+
+        double dtNanos = newPhyValues.timeStamp - this.getPhysicsValues().timeStamp;
+        double dtSeconds = ((double) dtNanos) / 1_000_000_0000.0d;
+
+        return emitter.mustEmitNow(dtSeconds);
+    }
+
+    public BodyToEmitDTO getProjectileConfig() {
+        if (this.currentWeaponIndex < 0 || this.currentWeaponIndex >= this.weaponIds.size()) {
+            return null;
+        }
+
+        BasicEmitter emitter = this.getEmitter(this.weaponIds.get(this.currentWeaponIndex));
+        if (emitter == null) {
+            return null;
+        }
+
+        return emitter.getBodyToEmitConfig();
     }
 
     // region Acceleration control (acceleration***)
@@ -85,6 +144,10 @@ public class DynamicBody extends AbstractBody {
 
     public double getMaxAngularAcceleration() {
         return this.maxAngularAcc;
+    }
+
+    public List<String> getWeaponIds() {
+        return this.weaponIds;
     }
     // endregion
 
